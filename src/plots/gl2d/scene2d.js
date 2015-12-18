@@ -9,7 +9,6 @@
 
 'use strict';
 
-var Plots = require('../../plots/plots');
 var Axes = require('../../plots/cartesian/axes');
 var Fx = require('../../plots/cartesian/graph_interact');
 
@@ -19,7 +18,6 @@ var createSelectBox = require('gl-select-box');
 
 var createOptions = require('./convert');
 var createCamera = require('./camera');
-
 var htmlToUnicode = require('../../lib/html2unicode');
 var showNoWebGlMsg = require('../../lib/show_no_webgl_msg');
 
@@ -294,11 +292,11 @@ proto.destroy = function() {
     this.glplot.dispose();
 };
 
-proto.plot = function(fullData, fullLayout) {
+proto.plot = function(fullData, calcData, fullLayout) {
     var glplot = this.glplot,
         pixelRatio = this.pixelRatio;
 
-    var i, j;
+    var i, j, trace;
 
     this.fullLayout = fullLayout;
     this.updateAxes(fullLayout);
@@ -315,21 +313,18 @@ proto.plot = function(fullData, fullLayout) {
         canvas.height = pixelHeight;
     }
 
-    if(!fullData) fullData = [];
-    else if(!Array.isArray(fullData)) fullData = [fullData];
-
     // update traces
-    var traceData, trace;
     for(i = 0; i < fullData.length; ++i) {
-        traceData = fullData[i];
-        trace = this.traces[traceData.uid];
+        var fullTrace = fullData[i],
+            calcTrace = calcData[i];
+        trace = this.traces[fullTrace.uid];
 
-        if(trace) trace.update(traceData);
+        if(trace) trace.update(fullTrace, calcTrace);
         else {
-            var traceModule = Plots.getModule(traceData.type);
-            trace = traceModule.plot(this, traceData);
+            trace = fullTrace._module.plot(this, fullTrace, calcTrace);
         }
-        this.traces[traceData.uid] = trace;
+
+        this.traces[fullTrace.uid] = trace;
     }
 
     // remove empty traces
@@ -337,8 +332,8 @@ proto.plot = function(fullData, fullLayout) {
 
     trace_id_loop:
     for(i = 0; i < traceIds.length; ++i) {
-        for(j = 0; j < fullData.length; ++j) {
-            if(fullData[j].uid === traceIds[i]) continue trace_id_loop;
+        for(j = 0; j < calcData.length; ++j) {
+            if(calcData[j][0].trace.uid === traceIds[i]) continue trace_id_loop;
         }
 
         trace = this.traces[traceIds[i]];
@@ -441,8 +436,11 @@ proto.draw = function() {
             (y / glplot.pixelRatio) - (size.t + (1-domainY[1]) * size.h)
         );
 
+
         if(result && fullLayout.hovermode) {
             var nextSelection = result.object._trace.handlePick(result);
+
+            console.log(result.dataCoord, result.pointId)
 
             if(nextSelection && (
                 !this.lastPickResult ||

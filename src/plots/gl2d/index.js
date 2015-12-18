@@ -62,6 +62,6 @@ exports.plot = function plotGl2d(gd) {
             subplotObj._scene2d = scene;
         }
 
-        scene.plot(fullSubplotData, fullLayout, gd.layout);
+        scene.plot(fullSubplotData, gd.calcdata, fullLayout, gd.layout);
     }
 };
