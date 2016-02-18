@@ -163,5 +163,82 @@ module.exports = function linePoints(d, opts) {
         segments.push(pts.slice(0, pti));
     }
 
+    console.log('segments', segments);
+    // console.log('xaxis', opts.xaxis.range);
+    // console.log('yaxis', opts.yaxis.range);
+    test(d, opts);
+
     return segments;
 };
+
+
+function test(points, opts) {
+    var xRange = opts.xaxis.range,
+        yRange = opts.yaxis.range;
+
+    // Plot bounding points.
+    var bounds = [
+        { x: xRange[0], y: yRange[0] },
+        { x: xRange[0], y: yRange[1] },
+        { x: xRange[1], y: yRange[1] },
+        { x: xRange[1], y: yRange[0] }
+    ];
+
+    var segmentss = [],
+        added = false;
+
+    for(var i = 0; i < points.length; i++){
+        var point = points[i];
+
+        if(insideBox(point) && !added) segmentss.push(point);
+        if(i + 1 >= points.length) break;
+
+        var line = [points[i], points[i + 1]],
+            lineSlope = (line[1].y - line[0].y) / (line[1].x - line[0].x),
+            slopes = [];
+
+        for(var k = 0; k < bounds.length; k++){
+            var slope = (bounds[k].y - line[0].y) / (bounds[k].x - line[0].x);
+            slopes.push(slope);
+        }
+
+        slopes.sort(function(a, b){
+            return a - b;
+        });
+
+        var sweepsPlotArea = lineSlope >= slopes[0] && lineSlope <= slopes[slopes.length - 1];
+
+        if(sweepsPlotArea || insideBox(line[1])){
+            if(!added){
+                segmentss.push(points[i]);
+            }
+            segmentss.push(points[i + 1]);
+            added = true;
+        }else{
+            added = false;
+        }
+    }
+
+    function insideBox(p){
+        return (
+            bounds[0].x < p.x && p.x < bounds[2].x &&
+            bounds[0].y < p.y && p.y < bounds[2].y
+        );
+    }
+
+    function getPt(p) {
+        var x = opts.xaxis.c2p(p.x),
+            y = opts.yaxis.c2p(p.y);
+        if(x === Axes.badnum || y === Axes.badnum) return false;
+        return [x, y];
+    }
+
+    // Decimate now.
+    for(var j = 0; j < segmentss.length; j++){
+        segmentss[j] = getPt(segmentss[j]);
+    }
+
+    console.log('my segments', [segmentss]);
+
+    return [segmentss.reverse()];
+}
