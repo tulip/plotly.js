@@ -17,7 +17,7 @@ var customMatchers = require('../assets/custom_matchers');
  */
 
 var PLOT_DELAY = 0;
-var MOUSE_DELAY = 20;
+var MOUSE_DELAY = 0;
 var MODEBAR_DELAY = 500;
 
 
