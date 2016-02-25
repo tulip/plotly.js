@@ -66,6 +66,7 @@ describe('Test gl plot interactions', function() {
             gd = createGraphDiv();
             Plotly.plot(gd, mock.data, mock.layout).then(function() {
                 delay(done);
+//                 done();
             });
         });
 
