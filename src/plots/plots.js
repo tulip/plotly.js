@@ -257,6 +257,16 @@ plots.resize = function(gd) {
     });
 };
 
+plots.updateViewBoxes = function(gd, viewBox) {
+    var plotinfos = gd._fullLayout._plots,
+        subplots = Object.keys(plotinfos);
+
+    for(var i = 0; i < subplots.length; i++) {
+        var plotinfo = plotinfos[subplots[i]];
+
+        plotinfo.plot.attr('viewBox', viewBox.join(' '));
+    }
+};
 
 // for use in Lib.syncOrAsync, check if there are any
 // pending promises in this plot and wait for them

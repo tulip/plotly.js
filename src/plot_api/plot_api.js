@@ -2042,6 +2042,8 @@ function swapXYData(trace) {
 Plotly.relayout = function relayout(gd, astr, val) {
     gd = getGraphDiv(gd);
 
+    console.log('in relayout')
+
     if(gd.framework && gd.framework.isPolar) {
         return Promise.resolve(gd);
     }

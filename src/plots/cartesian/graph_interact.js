@@ -1705,6 +1705,8 @@ function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             }
         }
 
+        console.log(xActive, yActive)
+
         if(xActive === 'ew' || yActive === 'ns') {
             if(xActive) dragAxList(xa, dx);
             if(yActive) dragAxList(ya, dy);
@@ -1867,6 +1869,8 @@ function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
             ya2,
             editX,
             editY;
+
+        console.log(viewBox)
 
         for(i = 0; i < subplots.length; i++) {
             plotinfo2 = plotinfos[subplots[i]];
