@@ -1316,6 +1316,9 @@ function numFormat(v, ax, fmtoverride, hover) {
     var tickformat = axes.getTickFormat(ax);
     var separatethousands = ax.separatethousands;
 
+    // Dynamic tickformat function
+    if(typeof tickformat === 'function') return tickformat(v);
+
     // special case for hover: set exponent just for this value, and
     // add a couple more digits of precision over tick labels
     if(hover) {

@@ -54,6 +54,9 @@ var numericNameWarningCountLimit = 5;
  *      all the stuff that doesn't pertain to any individual trace
  * @param {object} config
  *      configuration options (see ./plot_config.js for more info)
+ * @param {object} dynamicBehavior
+ *      object containing Javascript functions that mirror the behavior of options
+ *      in data, layout, and config.
  *
  * OR
  *
@@ -63,7 +66,7 @@ var numericNameWarningCountLimit = 5;
  *      object containing `data`, `layout`, `config`, and `frames` members
  *
  */
-function plot(gd, data, layout, config) {
+function plot(gd, data, layout, config, dynamicBehavior) {
     var frames;
 
     gd = Lib.getGraphDiv(gd);
@@ -79,7 +82,7 @@ function plot(gd, data, layout, config) {
         frames = obj.frames;
     }
 
-    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config]);
+    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config, dynamicBehavior]);
     if(okToPlot === false) return Promise.reject();
 
     // if there's no data or layout, and this isn't yet a plotly plot
@@ -88,6 +91,8 @@ function plot(gd, data, layout, config) {
         Lib.warn('Calling Plotly.plot as if redrawing ' +
             'but this container doesn\'t yet have a plot.', gd);
     }
+    
+    gd.dynamicBehavior = dynamicBehavior || {};
 
     function addFrames() {
         if(frames) {
@@ -97,7 +102,7 @@ function plot(gd, data, layout, config) {
 
     // transfer configuration options to gd until we move over to
     // a more OO like model
-    setPlotContext(gd, config);
+    setPlotContext(gd, config, dynamicBehavior.config);
 
     if(!layout) layout = {};
 
@@ -136,7 +141,7 @@ function plot(gd, data, layout, config) {
         gd.layout = helpers.cleanLayout(layout);
     }
 
-    Plots.supplyDefaults(gd);
+    Plots.supplyDefaults(gd, dynamicBehavior);
 
     var fullLayout = gd._fullLayout;
     var hasCartesian = fullLayout._has('cartesian');
@@ -405,7 +410,7 @@ function opaqueSetBackground(gd, bgColor) {
     setBackground(gd, blend);
 }
 
-function setPlotContext(gd, config) {
+function setPlotContext(gd, config, dynamicConfig) {
     if(!gd._context) {
         gd._context = Lib.extendDeep({}, dfltConfig);
 
@@ -430,6 +435,17 @@ function setPlotContext(gd, config) {
                     context[key] = opaqueSetBackground;
                 } else {
                     context[key] = config[key];
+                }
+            }
+        }
+
+        if (dynamicConfig) {
+            keys = Object.keys(dynamicConfig);
+            for(i = 0; i < keys.length; i++) {
+                key = keys[i];
+                // Prefer dynamic functions over static options
+                if(key in context && typeof dynamicConfig[key] === 'function') {
+                    context[key] = dynamicConfig[key];
                 }
             }
         }
@@ -631,15 +647,16 @@ function redraw(gd) {
  * @param {Object[]} data
  * @param {Object} layout
  * @param {Object} config
+ * @param {Object} dynamicBehavior
  */
-function newPlot(gd, data, layout, config) {
+function newPlot(gd, data, layout, config, dynamicBehavior) {
     gd = Lib.getGraphDiv(gd);
 
     // remove gl contexts
     Plots.cleanPlot([], {}, gd._fullData || [], gd._fullLayout || {});
 
     Plots.purge(gd);
-    return exports.plot(gd, data, layout, config);
+    return exports.plot(gd, data, layout, config, dynamicBehavior);
 }
 
 /**
@@ -2338,6 +2355,8 @@ function update(gd, traceUpdate, layoutUpdate, _traces) {
     gd = Lib.getGraphDiv(gd);
     helpers.clearPromiseQueue(gd);
 
+    var dynamicBehavior = gd.dynamicBehavior;
+
     if(gd.framework && gd.framework.isPolar) {
         return Promise.resolve(gd);
     }
@@ -2371,7 +2390,7 @@ function update(gd, traceUpdate, layoutUpdate, _traces) {
         seq.push(exports.plot);
     } else {
         seq.push(Plots.previousPromises);
-        axRangeSupplyDefaultsByPass(gd, relayoutFlags, relayoutSpecs) || Plots.supplyDefaults(gd);
+        axRangeSupplyDefaultsByPass(gd, relayoutFlags, relayoutSpecs) || Plots.supplyDefaults(gd, dynamicBehavior);
 
         if(restyleFlags.style) seq.push(subroutines.doTraceStyle);
         if(restyleFlags.colorbars || relayoutFlags.colorbars) seq.push(subroutines.doColorBars);

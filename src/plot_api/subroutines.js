@@ -536,7 +536,7 @@ exports.doColorBars = function(gd) {
 exports.layoutReplot = function(gd) {
     var layout = gd.layout;
     gd.layout = undefined;
-    return Registry.call('plot', gd, '', layout);
+    return Registry.call('plot', gd, '', layout, gd.dynamicBehavior);
 };
 
 exports.doLegend = function(gd) {
