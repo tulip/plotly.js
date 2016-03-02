@@ -314,10 +314,12 @@ module.exports = {
         role: 'style',
         description: [
             'Sets the tick label formatting rule using the',
-            'python/d3 number formatting language.',
+            'python/d3 number formatting language, or provide a function in',
+            'the dynamicBehavior object that takes one argument',
+            '(the tick value) and returns a string.',
             'See https://github.com/mbostock/d3/wiki/Formatting#numbers',
             'or https://docs.python.org/release/3.1.3/library/string.html#formatspec',
-            'for more info.'
+            'for more info on python/d3 number formatting.'
         ].join(' ')
     },
     hoverformat: {

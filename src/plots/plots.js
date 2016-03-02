@@ -435,12 +435,39 @@ plots.sendDataToCloud = function(gd) {
     return false;
 };
 
-plots.supplyDefaults = function(gd) {
+// Recursively copy any function properties of b into a if a
+// already has the corresponding key.
+// If a = {key1: "val1", key2: "val2"} and b = {key1: func1, key3: func2},
+// sets a to {key1: func1, key2: "val2"}.
+function recursivelyCopyFunctions(a, b) {
+    if (!b) return;
+
+    Object.keys(a).forEach(function(key) {
+        // If a[key] and b[key] are objects, recurse down.
+        // Note that typeof returns 'object' on arrays.
+        if(typeof a[key] === 'object') {
+            if(typeof b[key] === 'object') {
+                recursivelyCopyFunctions(a[key], b[key]);
+            }
+        }
+        // If a[key] is anything besides an object and
+        // b[key] is a funciton, replace a[key] with b[key]
+        else if(typeof b[key] === 'function') {
+            a[key] = b[key];
+        }
+    });
+}
+
+plots.supplyDefaults = function(gd, dynamicBehavior) {
     // fill in default values:
     // gd.data, gd.layout:
     //   are precisely what the user specified
     // gd._fullData, gd._fullLayout:
     //   are complete descriptions of how to draw the plot
+    // dynamicBehavior.data, dynamicBehavior.layout:
+    //   are objects mirroring the format of gd.data and
+    //   gd.layout containing functions to override static
+    //   options in gd.data and gd.layout
     var oldFullLayout = gd._fullLayout || {},
         newFullLayout = gd._fullLayout = {},
         newLayout = gd.layout || {},
@@ -448,6 +475,8 @@ plots.supplyDefaults = function(gd) {
         newFullData = gd._fullData = [],
         newData = gd.data || [],
         modules = gd._modules = [];
+
+    dynamicBehavior = dynamicBehavior || {};
 
     var i, trace, fullTrace, _module, axList, ax;
 
@@ -491,8 +520,12 @@ plots.supplyDefaults = function(gd) {
         }
     }
 
-    // finally, fill in the pieces of layout that may need to look at data
+    // fill in the pieces of layout that may need to look at data
     plots.supplyLayoutModuleDefaults(newLayout, newFullLayout, newFullData);
+
+    // finally, fill in any functions from dynamicBehavior.data and .layout
+    recursivelyCopyFunctions(newFullData, dynamicBehavior.data);
+    recursivelyCopyFunctions(newFullLayout, dynamicBehavior.layout);
 
     // clean subplots and other artifacts from previous plot calls
     plots.cleanPlot(newFullData, newFullLayout, oldFullData, oldFullLayout);
