@@ -125,6 +125,13 @@ describe('Test Plots', function() {
 
     });
 
+    // STUFF HERE
+    describe('Plots.supplyDefaults', function() {
+        it('should copy functions from dynamicBehavior', function() {
+
+        });
+    });
+
     describe('Plots.supplyTraceDefaults', function() {
         var supplyTraceDefaults = Plots.supplyTraceDefaults,
             layout = {};
