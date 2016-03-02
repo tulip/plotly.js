@@ -31,7 +31,6 @@ var svgTextUtils = require('../lib/svg_text_utils');
 var helpers = require('./helpers');
 var subroutines = require('./subroutines');
 
-
 /**
  * Main plot-creation function
  *
@@ -44,15 +43,17 @@ var subroutines = require('./subroutines');
  *      all the stuff that doesn't pertain to any individual trace
  * @param {object} config
  *      configuration options (see ./plot_config.js for more info)
- *
+ * @param {object} dynamicBehavior
+ *      object containing Javascript functions that mirror the behavior of options
+ *      in data, layout, and config.
  */
-Plotly.plot = function(gd, data, layout, config) {
+Plotly.plot = function(gd, data, layout, config, dynamicBehavior) {
     gd = helpers.getGraphDiv(gd);
 
     // Events.init is idempotent and bails early if gd has already been init'd
     Events.init(gd);
 
-    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config]);
+    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config, dynamicBehavior]);
     if(okToPlot === false) return Promise.reject();
 
     // if there's no data or layout, and this isn't yet a plotly plot
@@ -62,9 +63,12 @@ Plotly.plot = function(gd, data, layout, config) {
             'but this container doesn\'t yet have a plot.', gd);
     }
 
+    if(!dynamicBehavior) dynamicBehavior = {};
+    gd.dynamicBehavior = dynamicBehavior;
+
     // transfer configuration options to gd until we move over to
     // a more OO like model
-    setPlotContext(gd, config);
+    setPlotContext(gd, config, dynamicBehavior.config);
 
     if(!layout) layout = {};
 
@@ -113,7 +117,7 @@ Plotly.plot = function(gd, data, layout, config) {
         gd._replotPending = false;
     }
 
-    Plots.supplyDefaults(gd);
+    Plots.supplyDefaults(gd, dynamicBehavior);
 
     // Polar plots
     if(data && data[0] && data[0].r) return plotPolar(gd, data, layout);
@@ -348,13 +352,19 @@ function opaqueSetBackground(gd, bgColor) {
     Plotly.defaultConfig.setBackground(gd, bgColor);
 }
 
-function setPlotContext(gd, config) {
+function setPlotContext(gd, config, dynamicConfig) {
     if(!gd._context) gd._context = Lib.extendFlat({}, Plotly.defaultConfig);
     var context = gd._context;
 
+    if(!dynamicConfig) dynamicConfig = {};
+
     if(config) {
-        Object.keys(config).forEach(function(key) {
-            if(key in context) {
+        Object.keys(context).forEach(function(key) {
+            // Prefer dynamic functions over static options
+            if(typeof dynamicConfig[key] === 'function') {
+                context[key] = dynamicConfig[key];
+            }
+            else if(key in config) {
                 if(key === 'setBackground' && config[key] === 'opaque') {
                     context[key] = opaqueSetBackground;
                 }
@@ -503,15 +513,16 @@ Plotly.redraw = function(gd) {
  * @param {Object[]} data
  * @param {Object} layout
  * @param {Object} config
+ * @param {Object} dynamicBehavior
  */
-Plotly.newPlot = function(gd, data, layout, config) {
+Plotly.newPlot = function(gd, data, layout, config, dynamicBehavior) {
     gd = helpers.getGraphDiv(gd);
 
     // remove gl contexts
     Plots.cleanPlot([], {}, gd._fullData || {}, gd._fullLayout || {});
 
     Plots.purge(gd);
-    return Plotly.plot(gd, data, layout, config);
+    return Plotly.plot(gd, data, layout, config, dynamicBehavior);
 };
 
 /**
@@ -2060,6 +2071,8 @@ Plotly.update = function update(gd, traceUpdate, layoutUpdate, traces) {
     gd = helpers.getGraphDiv(gd);
     helpers.clearPromiseQueue(gd);
 
+    var dynamicBehavior = gd.dynamicBehavior;
+
     if(gd.framework && gd.framework.isPolar) {
         return Promise.resolve(gd);
     }
@@ -2091,7 +2104,7 @@ Plotly.update = function update(gd, traceUpdate, layoutUpdate, traces) {
         gd.data = undefined;
         gd.layout = undefined;
 
-        seq.push(function() { return Plotly.plot(gd, data, layout); });
+        seq.push(function() { return Plotly.plot(gd, data, layout, null, dynamicBehavior); });
     }
     else if(restyleFlags.fullReplot) {
         seq.push(Plotly.plot);

@@ -276,7 +276,7 @@ exports.doColorBars = function(gd) {
 exports.layoutReplot = function(gd) {
     var layout = gd.layout;
     gd.layout = undefined;
-    return Plotly.plot(gd, '', layout);
+    return Plotly.plot(gd, '', layout, null, gd.dynamicBehavior);
 };
 
 exports.doLegend = function(gd) {

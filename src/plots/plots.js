@@ -332,6 +332,29 @@ plots.sendDataToCloud = function(gd) {
     return false;
 };
 
+// Recursively copy any function properties of b into a if a
+// already has the corresponding key.
+// If a = {key1: "val1", key2: "val2"} and b = {key1: func1, key3: func2},
+// sets a to {key1: func1, key2: "val2"}.
+function recursivelyCopyFunctions(a, b) {
+    if (!b) return;
+
+    Object.keys(a).forEach(function(key) {
+        // If a[key] and b[key] are objects, recurse down.
+        // Note that typeof returns 'object' on arrays.
+        if(typeof a[key] === 'object') {
+            if(typeof b[key] === 'object') {
+                recursivelyCopyFunctions(a[key], b[key]);
+            }
+        }
+        // If a[key] is anything besides an object and
+        // b[key] is a funciton, replace a[key] with b[key]
+        else if(typeof b[key] === 'function') {
+            a[key] = b[key];
+        }
+    });
+}
+
 // Fill in default values:
 //
 // gd.data, gd.layout:
@@ -349,7 +372,7 @@ plots.sendDataToCloud = function(gd) {
 // gd._fullLayout._basePlotModules
 //   is a list of all the plot modules required to draw the plot.
 //
-plots.supplyDefaults = function(gd) {
+plots.supplyDefaults = function(gd, dynamicBehavior) {
     var oldFullLayout = gd._fullLayout || {},
         newFullLayout = gd._fullLayout = {},
         newLayout = gd.layout || {};
@@ -359,6 +382,8 @@ plots.supplyDefaults = function(gd) {
         newData = gd.data || [];
 
     var i;
+
+    dynamicBehavior = dynamicBehavior || {};
 
     // first fill in what we can of layout without looking at data
     // because fullData needs a few things from layout
@@ -387,7 +412,7 @@ plots.supplyDefaults = function(gd) {
         }
     }
 
-    // finally, fill in the pieces of layout that may need to look at data
+    // fill in the pieces of layout that may need to look at data
     plots.supplyLayoutModuleDefaults(newLayout, newFullLayout, newFullData);
 
     // TODO remove in v2.0.0
@@ -398,6 +423,10 @@ plots.supplyDefaults = function(gd) {
     newFullLayout._hasGL2D = newFullLayout._has('gl2d');
     newFullLayout._hasTernary = newFullLayout._has('ternary');
     newFullLayout._hasPie = newFullLayout._has('pie');
+
+    // finally, fill in any functions from dynamicBehavior.data and .layout
+    recursivelyCopyFunctions(newFullData, dynamicBehavior.data);
+    recursivelyCopyFunctions(newFullLayout, dynamicBehavior.layout);
 
     // clean subplots and other artifacts from previous plot calls
     plots.cleanPlot(newFullData, newFullLayout, oldFullData, oldFullLayout);
