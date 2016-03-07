@@ -66,6 +66,15 @@ describe('Test Plots', function() {
 
     });
 
+    // STUFF HERE
+    describe('Plots.supplyDefaults', function() {
+        var supplyDefaults = Plots.supplyDefults;
+
+        it('should copy functions from dynamicBehavior', function() {
+
+        });
+    });
+
     describe('Plots.supplyDataDefaults', function() {
         var supplyDataDefaults = Plots.supplyDataDefaults,
             layout = {};
