@@ -62845,7 +62845,6 @@ var Titles = require('../components/titles');
 var manageModeBar = require('../components/modebar/manage');
 var xmlnsNamespaces = require('../constants/xmlns_namespaces');
 
-
 /**
  * Main plot-creation function
  *
@@ -62883,6 +62882,7 @@ Plotly.plot = function(gd, data, layout, config, dynamicBehavior) {
     }
 
     if(!dynamicBehavior) dynamicBehavior = {};
+    gd.dynamicBehavior = dynamicBehavior;
 
     // transfer configuration options to gd until we move over to
     // a more OO like model
@@ -64911,6 +64911,7 @@ Plotly.relayout = function relayout(gd, astr, val) {
 
     var layout = gd.layout,
         fullLayout = gd._fullLayout,
+        dynamicBehavior = gd.dynamicBehavior,
         aobj = {},
         dolegend = false,
         doticks = false,
@@ -65205,7 +65206,7 @@ Plotly.relayout = function relayout(gd, astr, val) {
             if(docalc) gd.calcdata = undefined;
 
             // replot with the modified layout
-            return Plotly.plot(gd, '', layout);
+            return Plotly.plot(gd, '', layout, null, dynamicBehavior);
         });
     }
     else if(ak.length) {
