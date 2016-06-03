@@ -2539,6 +2539,7 @@ Plotly.purge = function purge(gd) {
     delete gd._mouseDownTime;
     delete gd._hmpixcount;
     delete gd._hmlumcount;
+    delete gd.dynamicBehavior;
 
     return gd;
 };

@@ -443,7 +443,7 @@ describe('Test Plots', function() {
         it('should unset everything in the gd except _context', function() {
             var expectedKeys = [
                 '_ev', 'on', 'once', 'removeListener', 'removeAllListeners',
-                'emit', '_context', '_replotPending', '_mouseDownTime',
+                'emit', 'dynamicBehavior', '_context', '_replotPending', '_mouseDownTime',
                 '_hmpixcount', '_hmlumcount'
             ];
 
