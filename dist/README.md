@@ -49,7 +49,7 @@ The main plotly.js bundle weights in at:
 
 | plotly.js | plotly.min.js | plotly.min.js + gzip | plotly-with-meta.js |
 |-----------|---------------|----------------------|---------------------|
-| 3.8 MB | 1.6 MB | 488.7 kB | 3.9 MB |
+| 3.8 MB | 1.6 MB | 487.8 kB | 3.9 MB |
 
 ## Partial bundles
 
@@ -64,7 +64,7 @@ Starting in `v1.15.0`, plotly.js also ships with several _partial_ bundles:
 
 ### plotly.js basic
 
-The `basic` partial bundle contains the `scatter`, `bar`and `pie` trace modules.
+The `basic` partial bundle contains the `scatter`, `bar` and `pie` trace modules.
 
 | Way to import | Location |
 |---------------|----------|
@@ -78,11 +78,11 @@ The `basic` partial bundle contains the `scatter`, `bar`and `pie` trace modules.
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 1.4 MB | 548.4 kB | 180.3 kB | 
+| 1.4 MB | 549 kB | 180.5 kB |
 
 ### plotly.js cartesian
 
-The `cartesian` partial bundle contains the `scatter`, `bar`, `box`, `heatmap`, `histogram`, `histogram2d`, `histogram2dcontour`, `pie`, `contour`and `scatterternary` trace modules.
+The `cartesian` partial bundle contains the `scatter`, `bar`, `box`, `heatmap`, `histogram`, `histogram2d`, `histogram2dcontour`, `pie`, `contour` and `scatterternary` trace modules.
 
 | Way to import | Location |
 |---------------|----------|
@@ -96,11 +96,11 @@ The `cartesian` partial bundle contains the `scatter`, `bar`, `box`, `heatmap`, 
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 1.6 MB | 617.5 kB | 201.1 kB | 
+| 1.6 MB | 618.2 kB | 201.3 kB |
 
 ### plotly.js geo
 
-The `geo` partial bundle contains the `scatter`, `scattergeo`and `choropleth` trace modules.
+The `geo` partial bundle contains the `scatter`, `scattergeo` and `choropleth` trace modules.
 
 | Way to import | Location |
 |---------------|----------|
@@ -114,11 +114,11 @@ The `geo` partial bundle contains the `scatter`, `scattergeo`and `choropleth` tr
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 1.4 MB | 577.8 kB | 191.3 kB | 
+| 1.5 MB | 578.4 kB | 191.4 kB |
 
 ### plotly.js gl3d
 
-The `gl3d` partial bundle contains the `scatter`, `scatter3d`, `surface`and `mesh3d` trace modules.
+The `gl3d` partial bundle contains the `scatter`, `scatter3d`, `surface` and `mesh3d` trace modules.
 
 | Way to import | Location |
 |---------------|----------|
@@ -132,11 +132,11 @@ The `gl3d` partial bundle contains the `scatter`, `scatter3d`, `surface`and `mes
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.3 MB | 984.4 kB | 310.4 kB | 
+| 2.3 MB | 982 kB | 309.4 kB |
 
 ### plotly.js gl2d
 
-The `gl2d` partial bundle contains the `scatter`, `scattergl`, `heatmapgl`and `contourgl` trace modules.
+The `gl2d` partial bundle contains the `scatter`, `scattergl`, `heatmapgl` and `contourgl` trace modules.
 
 | Way to import | Location |
 |---------------|----------|
@@ -150,11 +150,11 @@ The `gl2d` partial bundle contains the `scatter`, `scattergl`, `heatmapgl`and `c
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2 MB | 854 kB | 270.8 kB | 
+| 2 MB | 852.2 kB | 269.7 kB |
 
 ### plotly.js mapbox
 
-The `mapbox` partial bundle contains the `scatter`and `scattermapbox` trace modules.
+The `mapbox` partial bundle contains the `scatter` and `scattermapbox` trace modules.
 
 | Way to import | Location |
 |---------------|----------|
@@ -168,7 +168,7 @@ The `mapbox` partial bundle contains the `scatter`and `scattermapbox` trace modu
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.3 MB | 957.2 kB | 284.9 kB | 
+| 2.4 MB | 966.8 kB | 285.5 kB |
 
 ----------------
 
