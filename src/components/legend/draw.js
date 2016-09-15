@@ -543,6 +543,7 @@ function computeLegendDimensions(gd, groups, traces) {
     var opts = fullLayout.legend;
     var borderwidth = opts.borderwidth;
     var isGrouped = helpers.isGrouped(opts);
+    var isHorizontalColumn = helpers.isHorizontalColumn(opts);
 
     var extraWidth = 0;
 
@@ -659,14 +660,14 @@ function computeLegendDimensions(gd, groups, traces) {
         var offsetX = 0;
         var fullTracesWidth = 0;
 
-        // calculate largest width for traces and use for width of all legend items
+        // calculate largest width for traces and use for width of all legend items (if horizontalspacing mode is 'column')
         traces.each(function(d) {
             maxTraceWidth = Math.max(40 + d[0].width, maxTraceWidth);
             fullTracesWidth += 40 + d[0].width + traceGap;
         });
 
         // check if legend fits in one row
-        var oneRowLegend = fullLayout._size.w > borderwidth + fullTracesWidth - traceGap;
+        var oneRowLegend = !isHorizontalColumn || (fullLayout._size.w > borderwidth + fullTracesWidth - traceGap);
 
         traces.each(function(d) {
             var legendItem = d[0];

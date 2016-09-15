@@ -14,6 +14,7 @@ var delay = require('../assets/delay');
 var createGraphDiv = require('../assets/create_graph_div');
 var destroyGraphDiv = require('../assets/destroy_graph_div');
 var assertPlotSize = require('../assets/custom_assertions').assertPlotSize;
+var customMatchers = require('../assets/custom_matchers');
 
 var mock = require('@mocks/legend_horizontal.json');
 
@@ -496,6 +497,15 @@ describe('legend helpers:', function() {
             expect(isReversed({ traceorder: 'reversed+grouped' })).toBe(true);
             expect(isReversed({ traceorder: 'grouped+reversed' })).toBe(true);
             expect(isReversed({ traceorder: 'reversed' })).toBe(true);
+        });
+    });
+
+    describe('isHorizontalColumn', function() {
+        var isHorizontalColumn = helpers.isHorizontalColumn;
+
+        it('should return true when option horizontalspacing is "column"', function() {
+            expect(isHorizontalColumn({ horizontalspacing: 'column'})).toBe(true);
+            expect(isHorizontalColumn({ horizontalspacing: 'wrapped'})).toBe(false);
         });
     });
 });
@@ -1826,4 +1836,55 @@ describe('legend with custom doubleClickDelay', function() {
         .catch(failTest)
         .then(done);
     }, 3 * jasmine.DEFAULT_TIMEOUT_INTERVAL);
+});
+
+describe('legend horizontal spacing', function() {
+    'use strict';
+
+    beforeAll(function() {
+        jasmine.addMatchers(customMatchers);
+    });
+
+    afterEach(destroyGraphDiv);
+
+    it('should not space the items equally if horizontalspacing is wrapped', function(done) {
+        var mock = require('@mocks/0.json');
+        var mockCopy = Lib.extendDeep({}, mock);
+        var traceTransforms = [
+            'translate(1, 15.5)',
+            'translate(120, 15.5)',
+            'translate(231.68333435058594, 15.5)',
+        ];
+        var gd = createGraphDiv();
+        mockCopy.layout.legend.horizontalspacing = 'wrapped';
+        mockCopy.layout.legend.orientation = 'h';
+        Plotly.plot(gd, mockCopy.data, mockCopy.layout);
+        var nodes = d3.select(gd).selectAll('g.traces');
+        nodes.each(function(n, i) {
+            var node = d3.select(this);
+            var transform = node.attr('transform');
+            expect(transform).toEqual(traceTransforms[i]);
+        });
+        done();
+    });
+
+    it('should space the items equally if horizontalspacing is column', function(done) {
+        var mock = require('@mocks/0.json');
+        var mockCopy = Lib.extendDeep({}, mock);
+        var traceTransforms = [
+            'translate(1, 15.5)',
+            'translate(120, 15.5)',
+            'translate(239, 15.5)',
+        ];
+        var gd = createGraphDiv();
+        mockCopy.layout.legend.orientation = 'h';
+        Plotly.plot(gd, mockCopy.data, mockCopy.layout);
+        var nodes = d3.select(gd).selectAll('g.traces');
+        nodes.each(function(n, i) {
+            var node = d3.select(this);
+            var transform = node.attr('transform');
+            expect(transform).toEqual(traceTransforms[i]);
+        });
+        done();
+    });
 });

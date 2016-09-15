@@ -20,3 +20,7 @@ exports.isVertical = function isVertical(legendLayout) {
 exports.isReversed = function isReversed(legendLayout) {
     return (legendLayout.traceorder || '').indexOf('reversed') !== -1;
 };
+
+exports.isHorizontalColumn = function isHorizontalColumn(legendLayout) {
+    return legendLayout.horizontalspacing === 'column';
+}

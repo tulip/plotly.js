@@ -23,6 +23,7 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     var legendTraceCount = 0;
     var legendReallyHasATrace = false;
     var defaultOrder = 'normal';
+    var defaultHorizontalSpacing = 'column';
 
     var defaultX, defaultY, defaultXAnchor, defaultYAnchor;
 
@@ -111,5 +112,6 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     coerce('y', defaultY);
     coerce('yanchor', defaultYAnchor);
     coerce('valign');
+    coerce('horizontalspacing', defaultHorizontalSpacing);
     Lib.noneOrAll(containerIn, containerOut, ['x', 'y']);
 };
