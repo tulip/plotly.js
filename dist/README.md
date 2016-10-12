@@ -50,7 +50,7 @@ The main plotly.js bundle weights in at:
 
 | plotly.js | plotly.min.js | plotly.min.js + gzip | plotly-with-meta.js |
 |-----------|---------------|----------------------|---------------------|
-| 4 MB | 1.7 MB | 515.7 kB | 4.1 MB |
+| 4.1 MB | 1.7 MB | 514.8 kB | 4.2 MB |
 
 ## Partial bundles
 
@@ -79,7 +79,7 @@ The `basic` partial bundle contains the `scatter`, `bar` and `pie` trace modules
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 1.5 MB | 576.1 kB | 188.2 kB |
+| 1.5 MB | 593.8 kB | 192.4 kB |
 
 ### plotly.js cartesian
 
@@ -97,7 +97,7 @@ The `cartesian` partial bundle contains the `scatter`, `bar`, `box`, `heatmap`, 
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 1.7 MB | 645.8 kB | 209.2 kB |
+| 1.7 MB | 663.6 kB | 213.4 kB |
 
 ### plotly.js geo
 
@@ -115,7 +115,7 @@ The `geo` partial bundle contains the `scatter`, `scattergeo` and `choropleth` t
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 1.5 MB | 605.5 kB | 199.1 kB |
+| 1.6 MB | 625.2 kB | 204.1 kB |
 
 ### plotly.js gl3d
 
@@ -133,7 +133,7 @@ The `gl3d` partial bundle contains the `scatter`, `scatter3d`, `surface` and `me
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.4 MB | 1013 kB | 318.4 kB |
+| 2.4 MB | 1 MB | 321.4 kB |
 
 ### plotly.js gl2d
 
@@ -151,7 +151,7 @@ The `gl2d` partial bundle contains the `scatter`, `scattergl`, `pointcloud`, `he
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.1 MB | 899.7 kB | 283.7 kB |
+| 2.2 MB | 911.3 kB | 285 kB |
 
 ### plotly.js mapbox
 
@@ -169,7 +169,7 @@ The `mapbox` partial bundle contains the `scatter` and `scattermapbox` trace mod
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.5 MB | 1 MB | 306.5 kB |
+| 2.6 MB | 1 MB | 307.6 kB |
 
 ----------------
 

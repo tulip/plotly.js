@@ -68,7 +68,7 @@ for(var selector in rules) {
     Lib.addStyleRule(fullSelector, rules[selector]);
 }
 
-},{"../src/lib":299}],2:[function(require,module,exports){
+},{"../src/lib":282}],2:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -201,7 +201,7 @@ module.exports = {
 
 module.exports = require('../src/traces/contourgl');
 
-},{"../src/traces/contourgl":376}],4:[function(require,module,exports){
+},{"../src/traces/contourgl":360}],4:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -214,7 +214,7 @@ module.exports = require('../src/traces/contourgl');
 
 module.exports = require('../src/core');
 
-},{"../src/core":290}],5:[function(require,module,exports){
+},{"../src/core":273}],5:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -227,7 +227,7 @@ module.exports = require('../src/core');
 
 module.exports = require('../src/traces/heatmapgl');
 
-},{"../src/traces/heatmapgl":387}],6:[function(require,module,exports){
+},{"../src/traces/heatmapgl":371}],6:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -262,7 +262,7 @@ module.exports = Plotly;
 
 module.exports = require('../src/traces/pointcloud');
 
-},{"../src/traces/pointcloud":396}],8:[function(require,module,exports){
+},{"../src/traces/pointcloud":380}],8:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -275,7 +275,25 @@ module.exports = require('../src/traces/pointcloud');
 
 module.exports = require('../src/traces/scattergl');
 
-},{"../src/traces/scattergl":425}],9:[function(require,module,exports){
+},{"../src/traces/scattergl":409}],9:[function(require,module,exports){
+var padLeft = require('pad-left')
+
+module.exports = addLineNumbers
+function addLineNumbers (string, start, delim) {
+  start = typeof start === 'number' ? start : 1
+  delim = delim || ': '
+
+  var lines = string.split(/\r?\n/)
+  var totalDigits = String(lines.length + start - 1).length
+  return lines.map(function (line, i) {
+    var c = i + start
+    var digits = String(c).length
+    var prefix = padLeft(c, totalDigits - digits)
+    return prefix + delim + line
+  }).join('\n')
+}
+
+},{"pad-left":133}],10:[function(require,module,exports){
 'use strict';
 
 var arraytools  = function () {
@@ -464,7 +482,514 @@ var arraytools  = function () {
 
 module.exports = arraytools();
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
+module.exports = function _atob(str) {
+  return atob(str)
+}
+
+},{}],12:[function(require,module,exports){
+;(function (exports) {
+  'use strict'
+
+  var i
+  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+  var lookup = []
+  for (i = 0; i < code.length; i++) {
+    lookup[i] = code[i]
+  }
+  var revLookup = []
+
+  for (i = 0; i < code.length; ++i) {
+    revLookup[code.charCodeAt(i)] = i
+  }
+  revLookup['-'.charCodeAt(0)] = 62
+  revLookup['_'.charCodeAt(0)] = 63
+
+  var Arr = (typeof Uint8Array !== 'undefined')
+    ? Uint8Array
+    : Array
+
+  function decode (elt) {
+    var v = revLookup[elt.charCodeAt(0)]
+    return v !== undefined ? v : -1
+  }
+
+  function b64ToByteArray (b64) {
+    var i, j, l, tmp, placeHolders, arr
+
+    if (b64.length % 4 > 0) {
+      throw new Error('Invalid string. Length must be a multiple of 4')
+    }
+
+    // the number of equal signs (place holders)
+    // if there are two placeholders, than the two characters before it
+    // represent one byte
+    // if there is only one, then the three characters before it represent 2 bytes
+    // this is just a cheap hack to not do indexOf twice
+    var len = b64.length
+    placeHolders = b64.charAt(len - 2) === '=' ? 2 : b64.charAt(len - 1) === '=' ? 1 : 0
+
+    // base64 is 4/3 + up to two characters of the original data
+    arr = new Arr(b64.length * 3 / 4 - placeHolders)
+
+    // if there are placeholders, only get up to the last complete 4 chars
+    l = placeHolders > 0 ? b64.length - 4 : b64.length
+
+    var L = 0
+
+    function push (v) {
+      arr[L++] = v
+    }
+
+    for (i = 0, j = 0; i < l; i += 4, j += 3) {
+      tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
+      push((tmp & 0xFF0000) >> 16)
+      push((tmp & 0xFF00) >> 8)
+      push(tmp & 0xFF)
+    }
+
+    if (placeHolders === 2) {
+      tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
+      push(tmp & 0xFF)
+    } else if (placeHolders === 1) {
+      tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
+      push((tmp >> 8) & 0xFF)
+      push(tmp & 0xFF)
+    }
+
+    return arr
+  }
+
+  function encode (num) {
+    return lookup[num]
+  }
+
+  function tripletToBase64 (num) {
+    return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+  }
+
+  function encodeChunk (uint8, start, end) {
+    var temp
+    var output = []
+    for (var i = start; i < end; i += 3) {
+      temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+      output.push(tripletToBase64(temp))
+    }
+    return output.join('')
+  }
+
+  function uint8ToBase64 (uint8) {
+    var i
+    var extraBytes = uint8.length % 3 // if we have 1 byte left, pad 2 bytes
+    var output = ''
+    var parts = []
+    var temp, length
+    var maxChunkLength = 16383 // must be multiple of 3
+
+    // go through the array every three bytes, we'll deal with trailing stuff later
+
+    for (i = 0, length = uint8.length - extraBytes; i < length; i += maxChunkLength) {
+      parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > length ? length : (i + maxChunkLength)))
+    }
+
+    // pad the end with zeros, but make sure to not forget the extra bytes
+    switch (extraBytes) {
+      case 1:
+        temp = uint8[uint8.length - 1]
+        output += encode(temp >> 2)
+        output += encode((temp << 4) & 0x3F)
+        output += '=='
+        break
+      case 2:
+        temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
+        output += encode(temp >> 10)
+        output += encode((temp >> 4) & 0x3F)
+        output += encode((temp << 2) & 0x3F)
+        output += '='
+        break
+      default:
+        break
+    }
+
+    parts.push(output)
+
+    return parts.join('')
+  }
+
+  exports.toByteArray = b64ToByteArray
+  exports.fromByteArray = uint8ToBase64
+}(typeof exports === 'undefined' ? (this.base64js = {}) : exports))
+
+},{}],13:[function(require,module,exports){
+'use strict'
+
+var rationalize = require('./lib/rationalize')
+
+module.exports = add
+
+function add(a, b) {
+  return rationalize(
+    a[0].mul(b[1]).add(b[0].mul(a[1])),
+    a[1].mul(b[1]))
+}
+
+},{"./lib/rationalize":23}],14:[function(require,module,exports){
+'use strict'
+
+module.exports = cmp
+
+function cmp(a, b) {
+    return a[0].mul(b[1]).cmp(b[0].mul(a[1]))
+}
+
+},{}],15:[function(require,module,exports){
+'use strict'
+
+var rationalize = require('./lib/rationalize')
+
+module.exports = div
+
+function div(a, b) {
+  return rationalize(a[0].mul(b[1]), a[1].mul(b[0]))
+}
+
+},{"./lib/rationalize":23}],16:[function(require,module,exports){
+'use strict'
+
+var isRat = require('./is-rat')
+var isBN = require('./lib/is-bn')
+var num2bn = require('./lib/num-to-bn')
+var str2bn = require('./lib/str-to-bn')
+var rationalize = require('./lib/rationalize')
+var div = require('./div')
+
+module.exports = makeRational
+
+function makeRational(numer, denom) {
+  if(isRat(numer)) {
+    if(denom) {
+      return div(numer, makeRational(denom))
+    }
+    return [numer[0].clone(), numer[1].clone()]
+  }
+  var shift = 0
+  var a, b
+  if(isBN(numer)) {
+    a = numer.clone()
+  } else if(typeof numer === 'string') {
+    a = str2bn(numer)
+  } else if(numer === 0) {
+    return [num2bn(0), num2bn(1)]
+  } else if(numer === Math.floor(numer)) {
+    a = num2bn(numer)
+  } else {
+    while(numer !== Math.floor(numer)) {
+      numer = numer * Math.pow(2, 256)
+      shift -= 256
+    }
+    a = num2bn(numer)
+  }
+  if(isRat(denom)) {
+    a.mul(denom[1])
+    b = denom[0].clone()
+  } else if(isBN(denom)) {
+    b = denom.clone()
+  } else if(typeof denom === 'string') {
+    b = str2bn(denom)
+  } else if(!denom) {
+    b = num2bn(1)
+  } else if(denom === Math.floor(denom)) {
+    b = num2bn(denom)
+  } else {
+    while(denom !== Math.floor(denom)) {
+      denom = denom * Math.pow(2, 256)
+      shift += 256
+    }
+    b = num2bn(denom)
+  }
+  if(shift > 0) {
+    a = a.shln(shift)
+  } else if(shift < 0) {
+    b = b.shln(-shift)
+  }
+  return rationalize(a, b)
+}
+
+},{"./div":15,"./is-rat":17,"./lib/is-bn":21,"./lib/num-to-bn":22,"./lib/rationalize":23,"./lib/str-to-bn":24}],17:[function(require,module,exports){
+'use strict'
+
+var isBN = require('./lib/is-bn')
+
+module.exports = isRat
+
+function isRat(x) {
+  return Array.isArray(x) && x.length === 2 && isBN(x[0]) && isBN(x[1])
+}
+
+},{"./lib/is-bn":21}],18:[function(require,module,exports){
+'use strict'
+
+var bn = require('bn.js')
+
+module.exports = sign
+
+function sign(x) {
+  return x.cmp(new bn(0))
+}
+
+},{"bn.js":31}],19:[function(require,module,exports){
+'use strict'
+
+module.exports = bn2num
+
+//TODO: Make this better
+function bn2num(b) {
+  var l = b.length
+  var words = b.words
+  var out = 0
+  if (l === 1) {
+    out = words[0]
+  } else if (l === 2) {
+    out = words[0] + (words[1] * 0x4000000)
+  } else {
+    var out = 0
+    for (var i = 0; i < l; i++) {
+      var w = words[i]
+      out += w * Math.pow(0x4000000, i)
+    }
+  }
+  return b.sign ? -out : out
+}
+
+},{}],20:[function(require,module,exports){
+'use strict'
+
+var db = require('double-bits')
+var ctz = require('bit-twiddle').countTrailingZeros
+
+module.exports = ctzNumber
+
+//Counts the number of trailing zeros
+function ctzNumber(x) {
+  var l = ctz(db.lo(x))
+  if(l < 32) {
+    return l
+  }
+  var h = ctz(db.hi(x))
+  if(h > 20) {
+    return 52
+  }
+  return h + 32
+}
+
+},{"bit-twiddle":30,"double-bits":56}],21:[function(require,module,exports){
+'use strict'
+
+var BN = require('bn.js')
+
+module.exports = isBN
+
+//Test if x is a bignumber
+//FIXME: obviously this is the wrong way to do it
+function isBN(x) {
+  return x && typeof x === 'object' && Boolean(x.words)
+}
+
+},{"bn.js":31}],22:[function(require,module,exports){
+'use strict'
+
+var BN = require('bn.js')
+var db = require('double-bits')
+
+module.exports = num2bn
+
+function num2bn(x) {
+  var e = db.exponent(x)
+  if(e < 52) {
+    return new BN(x)
+  } else {
+    return (new BN(x * Math.pow(2, 52-e))).shln(e-52)
+  }
+}
+
+},{"bn.js":31,"double-bits":56}],23:[function(require,module,exports){
+'use strict'
+
+var num2bn = require('./num-to-bn')
+var sign = require('./bn-sign')
+
+module.exports = rationalize
+
+function rationalize(numer, denom) {
+  var snumer = sign(numer)
+  var sdenom = sign(denom)
+  if(snumer === 0) {
+    return [num2bn(0), num2bn(1)]
+  }
+  if(sdenom === 0) {
+    return [num2bn(0), num2bn(0)]
+  }
+  if(sdenom < 0) {
+    numer = numer.neg()
+    denom = denom.neg()
+  }
+  var d = numer.gcd(denom)
+  if(d.cmpn(1)) {
+    return [ numer.div(d), denom.div(d) ]
+  }
+  return [ numer, denom ]
+}
+
+},{"./bn-sign":18,"./num-to-bn":22}],24:[function(require,module,exports){
+'use strict'
+
+var BN = require('bn.js')
+
+module.exports = str2BN
+
+function str2BN(x) {
+  return new BN(x)
+}
+
+},{"bn.js":31}],25:[function(require,module,exports){
+'use strict'
+
+var rationalize = require('./lib/rationalize')
+
+module.exports = mul
+
+function mul(a, b) {
+  return rationalize(a[0].mul(b[0]), a[1].mul(b[1]))
+}
+
+},{"./lib/rationalize":23}],26:[function(require,module,exports){
+'use strict'
+
+var bnsign = require('./lib/bn-sign')
+
+module.exports = sign
+
+function sign(x) {
+  return bnsign(x[0]) * bnsign(x[1])
+}
+
+},{"./lib/bn-sign":18}],27:[function(require,module,exports){
+'use strict'
+
+var rationalize = require('./lib/rationalize')
+
+module.exports = sub
+
+function sub(a, b) {
+  return rationalize(a[0].mul(b[1]).sub(a[1].mul(b[0])), a[1].mul(b[1]))
+}
+
+},{"./lib/rationalize":23}],28:[function(require,module,exports){
+'use strict'
+
+var bn2num = require('./lib/bn-to-num')
+var ctz = require('./lib/ctz')
+
+module.exports = roundRat
+
+//Round a rational to the closest float
+function roundRat(f) {
+  var a = f[0]
+  var b = f[1]
+  if(a.cmpn(0) === 0) {
+    return 0
+  }
+  var h = a.divmod(b)
+  var iv = h.div
+  var x = bn2num(iv)
+  var ir = h.mod
+  if(ir.cmpn(0) === 0) {
+    return x
+  }
+  if(x) {
+    var s = ctz(x) + 4
+    var y = bn2num(ir.shln(s).divRound(b))
+
+    // flip the sign of y if x is negative
+    if (x<0) {
+      y = -y;
+    }
+
+    return x + y * Math.pow(2, -s)
+  } else {
+    var ybits = b.bitLength() - ir.bitLength() + 53
+    var y = bn2num(ir.shln(ybits).divRound(b))
+    if(ybits < 1023) {
+      return y * Math.pow(2, -ybits)
+    }
+    y *= Math.pow(2, -1023)
+    return y * Math.pow(2, 1023-ybits)
+  }
+}
+
+},{"./lib/bn-to-num":19,"./lib/ctz":20}],29:[function(require,module,exports){
+"use strict"
+
+function compileSearch(funcName, predicate, reversed, extraArgs, useNdarray, earlyOut) {
+  var code = [
+    "function ", funcName, "(a,l,h,", extraArgs.join(","),  "){",
+earlyOut ? "" : "var i=", (reversed ? "l-1" : "h+1"),
+";while(l<=h){\
+var m=(l+h)>>>1,x=a", useNdarray ? ".get(m)" : "[m]"]
+  if(earlyOut) {
+    if(predicate.indexOf("c") < 0) {
+      code.push(";if(x===y){return m}else if(x<=y){")
+    } else {
+      code.push(";var p=c(x,y);if(p===0){return m}else if(p<=0){")
+    }
+  } else {
+    code.push(";if(", predicate, "){i=m;")
+  }
+  if(reversed) {
+    code.push("l=m+1}else{h=m-1}")
+  } else {
+    code.push("h=m-1}else{l=m+1}")
+  }
+  code.push("}")
+  if(earlyOut) {
+    code.push("return -1};")
+  } else {
+    code.push("return i};")
+  }
+  return code.join("")
+}
+
+function compileBoundsSearch(predicate, reversed, suffix, earlyOut) {
+  var result = new Function([
+  compileSearch("A", "x" + predicate + "y", reversed, ["y"], false, earlyOut),
+  compileSearch("B", "x" + predicate + "y", reversed, ["y"], true, earlyOut),
+  compileSearch("P", "c(x,y)" + predicate + "0", reversed, ["y", "c"], false, earlyOut),
+  compileSearch("Q", "c(x,y)" + predicate + "0", reversed, ["y", "c"], true, earlyOut),
+"function dispatchBsearch", suffix, "(a,y,c,l,h){\
+if(a.shape){\
+if(typeof(c)==='function'){\
+return Q(a,(l===undefined)?0:l|0,(h===undefined)?a.shape[0]-1:h|0,y,c)\
+}else{\
+return B(a,(c===undefined)?0:c|0,(l===undefined)?a.shape[0]-1:l|0,y)\
+}}else{\
+if(typeof(c)==='function'){\
+return P(a,(l===undefined)?0:l|0,(h===undefined)?a.length-1:h|0,y,c)\
+}else{\
+return A(a,(c===undefined)?0:c|0,(l===undefined)?a.length-1:l|0,y)\
+}}}\
+return dispatchBsearch", suffix].join(""))
+  return result()
+}
+
+module.exports = {
+  ge: compileBoundsSearch(">=", false, "GE"),
+  gt: compileBoundsSearch(">", false, "GT"),
+  lt: compileBoundsSearch("<", true, "LT"),
+  le: compileBoundsSearch("<=", true, "LE"),
+  eq: compileBoundsSearch("-", true, "EQ", true)
+}
+
+},{}],30:[function(require,module,exports){
 /**
  * Bit twiddling hacks for JavaScript.
  *
@@ -670,3625 +1195,7 @@ exports.nextCombination = function(v) {
 }
 
 
-},{}],11:[function(require,module,exports){
-(function (global){
-/*!
- * The buffer module from node.js, for the browser.
- *
- * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
- * @license  MIT
- */
-/* eslint-disable no-proto */
-
-'use strict'
-
-var base64 = require('base64-js')
-var ieee754 = require('ieee754')
-var isArray = require('isarray')
-
-exports.Buffer = Buffer
-exports.SlowBuffer = SlowBuffer
-exports.INSPECT_MAX_BYTES = 50
-Buffer.poolSize = 8192 // not used by this implementation
-
-var rootParent = {}
-
-/**
- * If `Buffer.TYPED_ARRAY_SUPPORT`:
- *   === true    Use Uint8Array implementation (fastest)
- *   === false   Use Object implementation (most compatible, even IE6)
- *
- * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
- * Opera 11.6+, iOS 4.2+.
- *
- * Due to various browser bugs, sometimes the Object implementation will be used even
- * when the browser supports typed arrays.
- *
- * Note:
- *
- *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
- *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
- *
- *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
- *
- *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
- *     incorrect length in some situations.
-
- * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
- * get the Object implementation, which is slower but behaves correctly.
- */
-Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
-  ? global.TYPED_ARRAY_SUPPORT
-  : typedArraySupport()
-
-function typedArraySupport () {
-  try {
-    var arr = new Uint8Array(1)
-    arr.foo = function () { return 42 }
-    return arr.foo() === 42 && // typed array instances can be augmented
-        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
-        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
-  } catch (e) {
-    return false
-  }
-}
-
-function kMaxLength () {
-  return Buffer.TYPED_ARRAY_SUPPORT
-    ? 0x7fffffff
-    : 0x3fffffff
-}
-
-/**
- * The Buffer constructor returns instances of `Uint8Array` that have their
- * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
- * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
- * and the `Uint8Array` methods. Square bracket notation works as expected -- it
- * returns a single octet.
- *
- * The `Uint8Array` prototype remains unmodified.
- */
-function Buffer (arg) {
-  if (!(this instanceof Buffer)) {
-    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
-    if (arguments.length > 1) return new Buffer(arg, arguments[1])
-    return new Buffer(arg)
-  }
-
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    this.length = 0
-    this.parent = undefined
-  }
-
-  // Common case.
-  if (typeof arg === 'number') {
-    return fromNumber(this, arg)
-  }
-
-  // Slightly less common case.
-  if (typeof arg === 'string') {
-    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
-  }
-
-  // Unusual.
-  return fromObject(this, arg)
-}
-
-// TODO: Legacy, not needed anymore. Remove in next major version.
-Buffer._augment = function (arr) {
-  arr.__proto__ = Buffer.prototype
-  return arr
-}
-
-function fromNumber (that, length) {
-  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-    for (var i = 0; i < length; i++) {
-      that[i] = 0
-    }
-  }
-  return that
-}
-
-function fromString (that, string, encoding) {
-  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
-
-  // Assumption: byteLength() return value is always < kMaxLength.
-  var length = byteLength(string, encoding) | 0
-  that = allocate(that, length)
-
-  that.write(string, encoding)
-  return that
-}
-
-function fromObject (that, object) {
-  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
-
-  if (isArray(object)) return fromArray(that, object)
-
-  if (object == null) {
-    throw new TypeError('must start with number, buffer, array or string')
-  }
-
-  if (typeof ArrayBuffer !== 'undefined') {
-    if (object.buffer instanceof ArrayBuffer) {
-      return fromTypedArray(that, object)
-    }
-    if (object instanceof ArrayBuffer) {
-      return fromArrayBuffer(that, object)
-    }
-  }
-
-  if (object.length) return fromArrayLike(that, object)
-
-  return fromJsonObject(that, object)
-}
-
-function fromBuffer (that, buffer) {
-  var length = checked(buffer.length) | 0
-  that = allocate(that, length)
-  buffer.copy(that, 0, 0, length)
-  return that
-}
-
-function fromArray (that, array) {
-  var length = checked(array.length) | 0
-  that = allocate(that, length)
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-// Duplicate of fromArray() to keep fromArray() monomorphic.
-function fromTypedArray (that, array) {
-  var length = checked(array.length) | 0
-  that = allocate(that, length)
-  // Truncating the elements is probably not what people expect from typed
-  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
-  // of the old Buffer constructor.
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-function fromArrayBuffer (that, array) {
-  array.byteLength // this throws if `array` is not a valid ArrayBuffer
-
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = new Uint8Array(array)
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    that = fromTypedArray(that, new Uint8Array(array))
-  }
-  return that
-}
-
-function fromArrayLike (that, array) {
-  var length = checked(array.length) | 0
-  that = allocate(that, length)
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
-// Returns a zero-length buffer for inputs that don't conform to the spec.
-function fromJsonObject (that, object) {
-  var array
-  var length = 0
-
-  if (object.type === 'Buffer' && isArray(object.data)) {
-    array = object.data
-    length = checked(array.length) | 0
-  }
-  that = allocate(that, length)
-
-  for (var i = 0; i < length; i += 1) {
-    that[i] = array[i] & 255
-  }
-  return that
-}
-
-if (Buffer.TYPED_ARRAY_SUPPORT) {
-  Buffer.prototype.__proto__ = Uint8Array.prototype
-  Buffer.__proto__ = Uint8Array
-  if (typeof Symbol !== 'undefined' && Symbol.species &&
-      Buffer[Symbol.species] === Buffer) {
-    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
-    Object.defineProperty(Buffer, Symbol.species, {
-      value: null,
-      configurable: true
-    })
-  }
-} else {
-  // pre-set for values that may exist in the future
-  Buffer.prototype.length = undefined
-  Buffer.prototype.parent = undefined
-}
-
-function allocate (that, length) {
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    // Return an augmented `Uint8Array` instance, for best performance
-    that = new Uint8Array(length)
-    that.__proto__ = Buffer.prototype
-  } else {
-    // Fallback: Return an object instance of the Buffer class
-    that.length = length
-  }
-
-  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
-  if (fromPool) that.parent = rootParent
-
-  return that
-}
-
-function checked (length) {
-  // Note: cannot use `length < kMaxLength` here because that fails when
-  // length is NaN (which is otherwise coerced to zero.)
-  if (length >= kMaxLength()) {
-    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
-                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
-  }
-  return length | 0
-}
-
-function SlowBuffer (subject, encoding) {
-  if (!(this instanceof SlowBuffer)) return new SlowBuffer(subject, encoding)
-
-  var buf = new Buffer(subject, encoding)
-  delete buf.parent
-  return buf
-}
-
-Buffer.isBuffer = function isBuffer (b) {
-  return !!(b != null && b._isBuffer)
-}
-
-Buffer.compare = function compare (a, b) {
-  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
-    throw new TypeError('Arguments must be Buffers')
-  }
-
-  if (a === b) return 0
-
-  var x = a.length
-  var y = b.length
-
-  var i = 0
-  var len = Math.min(x, y)
-  while (i < len) {
-    if (a[i] !== b[i]) break
-
-    ++i
-  }
-
-  if (i !== len) {
-    x = a[i]
-    y = b[i]
-  }
-
-  if (x < y) return -1
-  if (y < x) return 1
-  return 0
-}
-
-Buffer.isEncoding = function isEncoding (encoding) {
-  switch (String(encoding).toLowerCase()) {
-    case 'hex':
-    case 'utf8':
-    case 'utf-8':
-    case 'ascii':
-    case 'binary':
-    case 'base64':
-    case 'raw':
-    case 'ucs2':
-    case 'ucs-2':
-    case 'utf16le':
-    case 'utf-16le':
-      return true
-    default:
-      return false
-  }
-}
-
-Buffer.concat = function concat (list, length) {
-  if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
-
-  if (list.length === 0) {
-    return new Buffer(0)
-  }
-
-  var i
-  if (length === undefined) {
-    length = 0
-    for (i = 0; i < list.length; i++) {
-      length += list[i].length
-    }
-  }
-
-  var buf = new Buffer(length)
-  var pos = 0
-  for (i = 0; i < list.length; i++) {
-    var item = list[i]
-    item.copy(buf, pos)
-    pos += item.length
-  }
-  return buf
-}
-
-function byteLength (string, encoding) {
-  if (typeof string !== 'string') string = '' + string
-
-  var len = string.length
-  if (len === 0) return 0
-
-  // Use a for loop to avoid recursion
-  var loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'ascii':
-      case 'binary':
-      // Deprecated
-      case 'raw':
-      case 'raws':
-        return len
-      case 'utf8':
-      case 'utf-8':
-        return utf8ToBytes(string).length
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return len * 2
-      case 'hex':
-        return len >>> 1
-      case 'base64':
-        return base64ToBytes(string).length
-      default:
-        if (loweredCase) return utf8ToBytes(string).length // assume utf8
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-Buffer.byteLength = byteLength
-
-function slowToString (encoding, start, end) {
-  var loweredCase = false
-
-  start = start | 0
-  end = end === undefined || end === Infinity ? this.length : end | 0
-
-  if (!encoding) encoding = 'utf8'
-  if (start < 0) start = 0
-  if (end > this.length) end = this.length
-  if (end <= start) return ''
-
-  while (true) {
-    switch (encoding) {
-      case 'hex':
-        return hexSlice(this, start, end)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Slice(this, start, end)
-
-      case 'ascii':
-        return asciiSlice(this, start, end)
-
-      case 'binary':
-        return binarySlice(this, start, end)
-
-      case 'base64':
-        return base64Slice(this, start, end)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return utf16leSlice(this, start, end)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = (encoding + '').toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-
-// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
-// Buffer instances.
-Buffer.prototype._isBuffer = true
-
-Buffer.prototype.toString = function toString () {
-  var length = this.length | 0
-  if (length === 0) return ''
-  if (arguments.length === 0) return utf8Slice(this, 0, length)
-  return slowToString.apply(this, arguments)
-}
-
-Buffer.prototype.equals = function equals (b) {
-  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
-  if (this === b) return true
-  return Buffer.compare(this, b) === 0
-}
-
-Buffer.prototype.inspect = function inspect () {
-  var str = ''
-  var max = exports.INSPECT_MAX_BYTES
-  if (this.length > 0) {
-    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
-    if (this.length > max) str += ' ... '
-  }
-  return '<Buffer ' + str + '>'
-}
-
-Buffer.prototype.compare = function compare (b) {
-  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
-  if (this === b) return 0
-  return Buffer.compare(this, b)
-}
-
-Buffer.prototype.indexOf = function indexOf (val, byteOffset) {
-  if (byteOffset > 0x7fffffff) byteOffset = 0x7fffffff
-  else if (byteOffset < -0x80000000) byteOffset = -0x80000000
-  byteOffset >>= 0
-
-  if (this.length === 0) return -1
-  if (byteOffset >= this.length) return -1
-
-  // Negative offsets start from the end of the buffer
-  if (byteOffset < 0) byteOffset = Math.max(this.length + byteOffset, 0)
-
-  if (typeof val === 'string') {
-    if (val.length === 0) return -1 // special case: looking for empty string always fails
-    return String.prototype.indexOf.call(this, val, byteOffset)
-  }
-  if (Buffer.isBuffer(val)) {
-    return arrayIndexOf(this, val, byteOffset)
-  }
-  if (typeof val === 'number') {
-    if (Buffer.TYPED_ARRAY_SUPPORT && Uint8Array.prototype.indexOf === 'function') {
-      return Uint8Array.prototype.indexOf.call(this, val, byteOffset)
-    }
-    return arrayIndexOf(this, [ val ], byteOffset)
-  }
-
-  function arrayIndexOf (arr, val, byteOffset) {
-    var foundIndex = -1
-    for (var i = 0; byteOffset + i < arr.length; i++) {
-      if (arr[byteOffset + i] === val[foundIndex === -1 ? 0 : i - foundIndex]) {
-        if (foundIndex === -1) foundIndex = i
-        if (i - foundIndex + 1 === val.length) return byteOffset + foundIndex
-      } else {
-        foundIndex = -1
-      }
-    }
-    return -1
-  }
-
-  throw new TypeError('val must be string, number or Buffer')
-}
-
-function hexWrite (buf, string, offset, length) {
-  offset = Number(offset) || 0
-  var remaining = buf.length - offset
-  if (!length) {
-    length = remaining
-  } else {
-    length = Number(length)
-    if (length > remaining) {
-      length = remaining
-    }
-  }
-
-  // must be an even number of digits
-  var strLen = string.length
-  if (strLen % 2 !== 0) throw new Error('Invalid hex string')
-
-  if (length > strLen / 2) {
-    length = strLen / 2
-  }
-  for (var i = 0; i < length; i++) {
-    var parsed = parseInt(string.substr(i * 2, 2), 16)
-    if (isNaN(parsed)) throw new Error('Invalid hex string')
-    buf[offset + i] = parsed
-  }
-  return i
-}
-
-function utf8Write (buf, string, offset, length) {
-  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
-}
-
-function asciiWrite (buf, string, offset, length) {
-  return blitBuffer(asciiToBytes(string), buf, offset, length)
-}
-
-function binaryWrite (buf, string, offset, length) {
-  return asciiWrite(buf, string, offset, length)
-}
-
-function base64Write (buf, string, offset, length) {
-  return blitBuffer(base64ToBytes(string), buf, offset, length)
-}
-
-function ucs2Write (buf, string, offset, length) {
-  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
-}
-
-Buffer.prototype.write = function write (string, offset, length, encoding) {
-  // Buffer#write(string)
-  if (offset === undefined) {
-    encoding = 'utf8'
-    length = this.length
-    offset = 0
-  // Buffer#write(string, encoding)
-  } else if (length === undefined && typeof offset === 'string') {
-    encoding = offset
-    length = this.length
-    offset = 0
-  // Buffer#write(string, offset[, length][, encoding])
-  } else if (isFinite(offset)) {
-    offset = offset | 0
-    if (isFinite(length)) {
-      length = length | 0
-      if (encoding === undefined) encoding = 'utf8'
-    } else {
-      encoding = length
-      length = undefined
-    }
-  // legacy write(string, encoding, offset, length) - remove in v0.13
-  } else {
-    var swap = encoding
-    encoding = offset
-    offset = length | 0
-    length = swap
-  }
-
-  var remaining = this.length - offset
-  if (length === undefined || length > remaining) length = remaining
-
-  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
-    throw new RangeError('attempt to write outside buffer bounds')
-  }
-
-  if (!encoding) encoding = 'utf8'
-
-  var loweredCase = false
-  for (;;) {
-    switch (encoding) {
-      case 'hex':
-        return hexWrite(this, string, offset, length)
-
-      case 'utf8':
-      case 'utf-8':
-        return utf8Write(this, string, offset, length)
-
-      case 'ascii':
-        return asciiWrite(this, string, offset, length)
-
-      case 'binary':
-        return binaryWrite(this, string, offset, length)
-
-      case 'base64':
-        // Warning: maxLength not taken into account in base64Write
-        return base64Write(this, string, offset, length)
-
-      case 'ucs2':
-      case 'ucs-2':
-      case 'utf16le':
-      case 'utf-16le':
-        return ucs2Write(this, string, offset, length)
-
-      default:
-        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
-        encoding = ('' + encoding).toLowerCase()
-        loweredCase = true
-    }
-  }
-}
-
-Buffer.prototype.toJSON = function toJSON () {
-  return {
-    type: 'Buffer',
-    data: Array.prototype.slice.call(this._arr || this, 0)
-  }
-}
-
-function base64Slice (buf, start, end) {
-  if (start === 0 && end === buf.length) {
-    return base64.fromByteArray(buf)
-  } else {
-    return base64.fromByteArray(buf.slice(start, end))
-  }
-}
-
-function utf8Slice (buf, start, end) {
-  end = Math.min(buf.length, end)
-  var res = []
-
-  var i = start
-  while (i < end) {
-    var firstByte = buf[i]
-    var codePoint = null
-    var bytesPerSequence = (firstByte > 0xEF) ? 4
-      : (firstByte > 0xDF) ? 3
-      : (firstByte > 0xBF) ? 2
-      : 1
-
-    if (i + bytesPerSequence <= end) {
-      var secondByte, thirdByte, fourthByte, tempCodePoint
-
-      switch (bytesPerSequence) {
-        case 1:
-          if (firstByte < 0x80) {
-            codePoint = firstByte
-          }
-          break
-        case 2:
-          secondByte = buf[i + 1]
-          if ((secondByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
-            if (tempCodePoint > 0x7F) {
-              codePoint = tempCodePoint
-            }
-          }
-          break
-        case 3:
-          secondByte = buf[i + 1]
-          thirdByte = buf[i + 2]
-          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
-            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
-              codePoint = tempCodePoint
-            }
-          }
-          break
-        case 4:
-          secondByte = buf[i + 1]
-          thirdByte = buf[i + 2]
-          fourthByte = buf[i + 3]
-          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
-            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
-            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
-              codePoint = tempCodePoint
-            }
-          }
-      }
-    }
-
-    if (codePoint === null) {
-      // we did not generate a valid codePoint so insert a
-      // replacement char (U+FFFD) and advance only 1 byte
-      codePoint = 0xFFFD
-      bytesPerSequence = 1
-    } else if (codePoint > 0xFFFF) {
-      // encode to utf16 (surrogate pair dance)
-      codePoint -= 0x10000
-      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
-      codePoint = 0xDC00 | codePoint & 0x3FF
-    }
-
-    res.push(codePoint)
-    i += bytesPerSequence
-  }
-
-  return decodeCodePointsArray(res)
-}
-
-// Based on http://stackoverflow.com/a/22747272/680742, the browser with
-// the lowest limit is Chrome, with 0x10000 args.
-// We go 1 magnitude less, for safety
-var MAX_ARGUMENTS_LENGTH = 0x1000
-
-function decodeCodePointsArray (codePoints) {
-  var len = codePoints.length
-  if (len <= MAX_ARGUMENTS_LENGTH) {
-    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
-  }
-
-  // Decode in chunks to avoid "call stack size exceeded".
-  var res = ''
-  var i = 0
-  while (i < len) {
-    res += String.fromCharCode.apply(
-      String,
-      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
-    )
-  }
-  return res
-}
-
-function asciiSlice (buf, start, end) {
-  var ret = ''
-  end = Math.min(buf.length, end)
-
-  for (var i = start; i < end; i++) {
-    ret += String.fromCharCode(buf[i] & 0x7F)
-  }
-  return ret
-}
-
-function binarySlice (buf, start, end) {
-  var ret = ''
-  end = Math.min(buf.length, end)
-
-  for (var i = start; i < end; i++) {
-    ret += String.fromCharCode(buf[i])
-  }
-  return ret
-}
-
-function hexSlice (buf, start, end) {
-  var len = buf.length
-
-  if (!start || start < 0) start = 0
-  if (!end || end < 0 || end > len) end = len
-
-  var out = ''
-  for (var i = start; i < end; i++) {
-    out += toHex(buf[i])
-  }
-  return out
-}
-
-function utf16leSlice (buf, start, end) {
-  var bytes = buf.slice(start, end)
-  var res = ''
-  for (var i = 0; i < bytes.length; i += 2) {
-    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
-  }
-  return res
-}
-
-Buffer.prototype.slice = function slice (start, end) {
-  var len = this.length
-  start = ~~start
-  end = end === undefined ? len : ~~end
-
-  if (start < 0) {
-    start += len
-    if (start < 0) start = 0
-  } else if (start > len) {
-    start = len
-  }
-
-  if (end < 0) {
-    end += len
-    if (end < 0) end = 0
-  } else if (end > len) {
-    end = len
-  }
-
-  if (end < start) end = start
-
-  var newBuf
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    newBuf = this.subarray(start, end)
-    newBuf.__proto__ = Buffer.prototype
-  } else {
-    var sliceLen = end - start
-    newBuf = new Buffer(sliceLen, undefined)
-    for (var i = 0; i < sliceLen; i++) {
-      newBuf[i] = this[i + start]
-    }
-  }
-
-  if (newBuf.length) newBuf.parent = this.parent || this
-
-  return newBuf
-}
-
-/*
- * Need to make sure that buffer isn't trying to write out of bounds.
- */
-function checkOffset (offset, ext, length) {
-  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
-  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
-}
-
-Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  var val = this[offset]
-  var mul = 1
-  var i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
-    val += this[offset + i] * mul
-  }
-
-  return val
-}
-
-Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) {
-    checkOffset(offset, byteLength, this.length)
-  }
-
-  var val = this[offset + --byteLength]
-  var mul = 1
-  while (byteLength > 0 && (mul *= 0x100)) {
-    val += this[offset + --byteLength] * mul
-  }
-
-  return val
-}
-
-Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  return this[offset]
-}
-
-Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  return this[offset] | (this[offset + 1] << 8)
-}
-
-Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  return (this[offset] << 8) | this[offset + 1]
-}
-
-Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return ((this[offset]) |
-      (this[offset + 1] << 8) |
-      (this[offset + 2] << 16)) +
-      (this[offset + 3] * 0x1000000)
-}
-
-Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset] * 0x1000000) +
-    ((this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    this[offset + 3])
-}
-
-Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  var val = this[offset]
-  var mul = 1
-  var i = 0
-  while (++i < byteLength && (mul *= 0x100)) {
-    val += this[offset + i] * mul
-  }
-  mul *= 0x80
-
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
-
-  return val
-}
-
-Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkOffset(offset, byteLength, this.length)
-
-  var i = byteLength
-  var mul = 1
-  var val = this[offset + --i]
-  while (i > 0 && (mul *= 0x100)) {
-    val += this[offset + --i] * mul
-  }
-  mul *= 0x80
-
-  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
-
-  return val
-}
-
-Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 1, this.length)
-  if (!(this[offset] & 0x80)) return (this[offset])
-  return ((0xff - this[offset] + 1) * -1)
-}
-
-Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  var val = this[offset] | (this[offset + 1] << 8)
-  return (val & 0x8000) ? val | 0xFFFF0000 : val
-}
-
-Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 2, this.length)
-  var val = this[offset + 1] | (this[offset] << 8)
-  return (val & 0x8000) ? val | 0xFFFF0000 : val
-}
-
-Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset]) |
-    (this[offset + 1] << 8) |
-    (this[offset + 2] << 16) |
-    (this[offset + 3] << 24)
-}
-
-Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-
-  return (this[offset] << 24) |
-    (this[offset + 1] << 16) |
-    (this[offset + 2] << 8) |
-    (this[offset + 3])
-}
-
-Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-  return ieee754.read(this, offset, true, 23, 4)
-}
-
-Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 4, this.length)
-  return ieee754.read(this, offset, false, 23, 4)
-}
-
-Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 8, this.length)
-  return ieee754.read(this, offset, true, 52, 8)
-}
-
-Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
-  if (!noAssert) checkOffset(offset, 8, this.length)
-  return ieee754.read(this, offset, false, 52, 8)
-}
-
-function checkInt (buf, value, offset, ext, max, min) {
-  if (!Buffer.isBuffer(buf)) throw new TypeError('buffer must be a Buffer instance')
-  if (value > max || value < min) throw new RangeError('value is out of bounds')
-  if (offset + ext > buf.length) throw new RangeError('index out of range')
-}
-
-Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
-
-  var mul = 1
-  var i = 0
-  this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  byteLength = byteLength | 0
-  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
-
-  var i = byteLength - 1
-  var mul = 1
-  this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
-    this[offset + i] = (value / mul) & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-  this[offset] = (value & 0xff)
-  return offset + 1
-}
-
-function objectWriteUInt16 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; i++) {
-    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
-      (littleEndian ? i : 1 - i) * 8
-  }
-}
-
-Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
-  return offset + 2
-}
-
-Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
-  return offset + 2
-}
-
-function objectWriteUInt32 (buf, value, offset, littleEndian) {
-  if (value < 0) value = 0xffffffff + value + 1
-  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; i++) {
-    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
-  }
-}
-
-Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset + 3] = (value >>> 24)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 1] = (value >>> 8)
-    this[offset] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
-  return offset + 4
-}
-
-Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
-  return offset + 4
-}
-
-Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
-  }
-
-  var i = 0
-  var mul = 1
-  var sub = value < 0 ? 1 : 0
-  this[offset] = value & 0xFF
-  while (++i < byteLength && (mul *= 0x100)) {
-    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) {
-    var limit = Math.pow(2, 8 * byteLength - 1)
-
-    checkInt(this, value, offset, byteLength, limit - 1, -limit)
-  }
-
-  var i = byteLength - 1
-  var mul = 1
-  var sub = value < 0 ? 1 : 0
-  this[offset + i] = value & 0xFF
-  while (--i >= 0 && (mul *= 0x100)) {
-    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
-  }
-
-  return offset + byteLength
-}
-
-Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
-  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
-  if (value < 0) value = 0xff + value + 1
-  this[offset] = (value & 0xff)
-  return offset + 1
-}
-
-Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-  } else {
-    objectWriteUInt16(this, value, offset, true)
-  }
-  return offset + 2
-}
-
-Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 8)
-    this[offset + 1] = (value & 0xff)
-  } else {
-    objectWriteUInt16(this, value, offset, false)
-  }
-  return offset + 2
-}
-
-Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value & 0xff)
-    this[offset + 1] = (value >>> 8)
-    this[offset + 2] = (value >>> 16)
-    this[offset + 3] = (value >>> 24)
-  } else {
-    objectWriteUInt32(this, value, offset, true)
-  }
-  return offset + 4
-}
-
-Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
-  value = +value
-  offset = offset | 0
-  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
-  if (value < 0) value = 0xffffffff + value + 1
-  if (Buffer.TYPED_ARRAY_SUPPORT) {
-    this[offset] = (value >>> 24)
-    this[offset + 1] = (value >>> 16)
-    this[offset + 2] = (value >>> 8)
-    this[offset + 3] = (value & 0xff)
-  } else {
-    objectWriteUInt32(this, value, offset, false)
-  }
-  return offset + 4
-}
-
-function checkIEEE754 (buf, value, offset, ext, max, min) {
-  if (offset + ext > buf.length) throw new RangeError('index out of range')
-  if (offset < 0) throw new RangeError('index out of range')
-}
-
-function writeFloat (buf, value, offset, littleEndian, noAssert) {
-  if (!noAssert) {
-    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
-  }
-  ieee754.write(buf, value, offset, littleEndian, 23, 4)
-  return offset + 4
-}
-
-Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
-  return writeFloat(this, value, offset, true, noAssert)
-}
-
-Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
-  return writeFloat(this, value, offset, false, noAssert)
-}
-
-function writeDouble (buf, value, offset, littleEndian, noAssert) {
-  if (!noAssert) {
-    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
-  }
-  ieee754.write(buf, value, offset, littleEndian, 52, 8)
-  return offset + 8
-}
-
-Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
-  return writeDouble(this, value, offset, true, noAssert)
-}
-
-Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
-  return writeDouble(this, value, offset, false, noAssert)
-}
-
-// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
-Buffer.prototype.copy = function copy (target, targetStart, start, end) {
-  if (!start) start = 0
-  if (!end && end !== 0) end = this.length
-  if (targetStart >= target.length) targetStart = target.length
-  if (!targetStart) targetStart = 0
-  if (end > 0 && end < start) end = start
-
-  // Copy 0 bytes; we're done
-  if (end === start) return 0
-  if (target.length === 0 || this.length === 0) return 0
-
-  // Fatal error conditions
-  if (targetStart < 0) {
-    throw new RangeError('targetStart out of bounds')
-  }
-  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
-  if (end < 0) throw new RangeError('sourceEnd out of bounds')
-
-  // Are we oob?
-  if (end > this.length) end = this.length
-  if (target.length - targetStart < end - start) {
-    end = target.length - targetStart + start
-  }
-
-  var len = end - start
-  var i
-
-  if (this === target && start < targetStart && targetStart < end) {
-    // descending copy from end
-    for (i = len - 1; i >= 0; i--) {
-      target[i + targetStart] = this[i + start]
-    }
-  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
-    // ascending copy from start
-    for (i = 0; i < len; i++) {
-      target[i + targetStart] = this[i + start]
-    }
-  } else {
-    Uint8Array.prototype.set.call(
-      target,
-      this.subarray(start, start + len),
-      targetStart
-    )
-  }
-
-  return len
-}
-
-// fill(value, start=0, end=buffer.length)
-Buffer.prototype.fill = function fill (value, start, end) {
-  if (!value) value = 0
-  if (!start) start = 0
-  if (!end) end = this.length
-
-  if (end < start) throw new RangeError('end < start')
-
-  // Fill 0 bytes; we're done
-  if (end === start) return
-  if (this.length === 0) return
-
-  if (start < 0 || start >= this.length) throw new RangeError('start out of bounds')
-  if (end < 0 || end > this.length) throw new RangeError('end out of bounds')
-
-  var i
-  if (typeof value === 'number') {
-    for (i = start; i < end; i++) {
-      this[i] = value
-    }
-  } else {
-    var bytes = utf8ToBytes(value.toString())
-    var len = bytes.length
-    for (i = start; i < end; i++) {
-      this[i] = bytes[i % len]
-    }
-  }
-
-  return this
-}
-
-// HELPER FUNCTIONS
-// ================
-
-var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
-
-function base64clean (str) {
-  // Node strips out invalid characters like \n and \t from the string, base64-js does not
-  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
-  // Node converts strings with length < 2 to ''
-  if (str.length < 2) return ''
-  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
-  while (str.length % 4 !== 0) {
-    str = str + '='
-  }
-  return str
-}
-
-function stringtrim (str) {
-  if (str.trim) return str.trim()
-  return str.replace(/^\s+|\s+$/g, '')
-}
-
-function toHex (n) {
-  if (n < 16) return '0' + n.toString(16)
-  return n.toString(16)
-}
-
-function utf8ToBytes (string, units) {
-  units = units || Infinity
-  var codePoint
-  var length = string.length
-  var leadSurrogate = null
-  var bytes = []
-
-  for (var i = 0; i < length; i++) {
-    codePoint = string.charCodeAt(i)
-
-    // is surrogate component
-    if (codePoint > 0xD7FF && codePoint < 0xE000) {
-      // last char was a lead
-      if (!leadSurrogate) {
-        // no lead yet
-        if (codePoint > 0xDBFF) {
-          // unexpected trail
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          continue
-        } else if (i + 1 === length) {
-          // unpaired lead
-          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-          continue
-        }
-
-        // valid lead
-        leadSurrogate = codePoint
-
-        continue
-      }
-
-      // 2 leads in a row
-      if (codePoint < 0xDC00) {
-        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-        leadSurrogate = codePoint
-        continue
-      }
-
-      // valid surrogate pair
-      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
-    } else if (leadSurrogate) {
-      // valid bmp char, but last char was a lead
-      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
-    }
-
-    leadSurrogate = null
-
-    // encode utf8
-    if (codePoint < 0x80) {
-      if ((units -= 1) < 0) break
-      bytes.push(codePoint)
-    } else if (codePoint < 0x800) {
-      if ((units -= 2) < 0) break
-      bytes.push(
-        codePoint >> 0x6 | 0xC0,
-        codePoint & 0x3F | 0x80
-      )
-    } else if (codePoint < 0x10000) {
-      if ((units -= 3) < 0) break
-      bytes.push(
-        codePoint >> 0xC | 0xE0,
-        codePoint >> 0x6 & 0x3F | 0x80,
-        codePoint & 0x3F | 0x80
-      )
-    } else if (codePoint < 0x110000) {
-      if ((units -= 4) < 0) break
-      bytes.push(
-        codePoint >> 0x12 | 0xF0,
-        codePoint >> 0xC & 0x3F | 0x80,
-        codePoint >> 0x6 & 0x3F | 0x80,
-        codePoint & 0x3F | 0x80
-      )
-    } else {
-      throw new Error('Invalid code point')
-    }
-  }
-
-  return bytes
-}
-
-function asciiToBytes (str) {
-  var byteArray = []
-  for (var i = 0; i < str.length; i++) {
-    // Node's code seems to be doing this and not & 0x7F..
-    byteArray.push(str.charCodeAt(i) & 0xFF)
-  }
-  return byteArray
-}
-
-function utf16leToBytes (str, units) {
-  var c, hi, lo
-  var byteArray = []
-  for (var i = 0; i < str.length; i++) {
-    if ((units -= 2) < 0) break
-
-    c = str.charCodeAt(i)
-    hi = c >> 8
-    lo = c % 256
-    byteArray.push(lo)
-    byteArray.push(hi)
-  }
-
-  return byteArray
-}
-
-function base64ToBytes (str) {
-  return base64.toByteArray(base64clean(str))
-}
-
-function blitBuffer (src, dst, offset, length) {
-  for (var i = 0; i < length; i++) {
-    if ((i + offset >= dst.length) || (i >= src.length)) break
-    dst[i + offset] = src[i]
-  }
-  return i
-}
-
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":12,"ieee754":13,"isarray":14}],12:[function(require,module,exports){
-'use strict'
-
-exports.toByteArray = toByteArray
-exports.fromByteArray = fromByteArray
-
-var lookup = []
-var revLookup = []
-var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
-
-function init () {
-  var i
-  var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
-  var len = code.length
-
-  for (i = 0; i < len; i++) {
-    lookup[i] = code[i]
-  }
-
-  for (i = 0; i < len; ++i) {
-    revLookup[code.charCodeAt(i)] = i
-  }
-  revLookup['-'.charCodeAt(0)] = 62
-  revLookup['_'.charCodeAt(0)] = 63
-}
-
-init()
-
-function toByteArray (b64) {
-  var i, j, l, tmp, placeHolders, arr
-  var len = b64.length
-
-  if (len % 4 > 0) {
-    throw new Error('Invalid string. Length must be a multiple of 4')
-  }
-
-  // the number of equal signs (place holders)
-  // if there are two placeholders, than the two characters before it
-  // represent one byte
-  // if there is only one, then the three characters before it represent 2 bytes
-  // this is just a cheap hack to not do indexOf twice
-  placeHolders = b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
-
-  // base64 is 4/3 + up to two characters of the original data
-  arr = new Arr(len * 3 / 4 - placeHolders)
-
-  // if there are placeholders, only get up to the last complete 4 chars
-  l = placeHolders > 0 ? len - 4 : len
-
-  var L = 0
-
-  for (i = 0, j = 0; i < l; i += 4, j += 3) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-    arr[L++] = (tmp & 0xFF0000) >> 16
-    arr[L++] = (tmp & 0xFF00) >> 8
-    arr[L++] = tmp & 0xFF
-  }
-
-  if (placeHolders === 2) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-    arr[L++] = tmp & 0xFF
-  } else if (placeHolders === 1) {
-    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-    arr[L++] = (tmp >> 8) & 0xFF
-    arr[L++] = tmp & 0xFF
-  }
-
-  return arr
-}
-
-function tripletToBase64 (num) {
-  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
-}
-
-function encodeChunk (uint8, start, end) {
-  var tmp
-  var output = []
-  for (var i = start; i < end; i += 3) {
-    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-    output.push(tripletToBase64(tmp))
-  }
-  return output.join('')
-}
-
-function fromByteArray (uint8) {
-  var tmp
-  var len = uint8.length
-  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-  var output = ''
-  var parts = []
-  var maxChunkLength = 16383 // must be multiple of 3
-
-  // go through the array every three bytes, we'll deal with trailing stuff later
-  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
-  }
-
-  // pad the end with zeros, but make sure to not forget the extra bytes
-  if (extraBytes === 1) {
-    tmp = uint8[len - 1]
-    output += lookup[tmp >> 2]
-    output += lookup[(tmp << 4) & 0x3F]
-    output += '=='
-  } else if (extraBytes === 2) {
-    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-    output += lookup[tmp >> 10]
-    output += lookup[(tmp >> 4) & 0x3F]
-    output += lookup[(tmp << 2) & 0x3F]
-    output += '='
-  }
-
-  parts.push(output)
-
-  return parts.join('')
-}
-
-},{}],13:[function(require,module,exports){
-exports.read = function (buffer, offset, isLE, mLen, nBytes) {
-  var e, m
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var nBits = -7
-  var i = isLE ? (nBytes - 1) : 0
-  var d = isLE ? -1 : 1
-  var s = buffer[offset + i]
-
-  i += d
-
-  e = s & ((1 << (-nBits)) - 1)
-  s >>= (-nBits)
-  nBits += eLen
-  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  m = e & ((1 << (-nBits)) - 1)
-  e >>= (-nBits)
-  nBits += mLen
-  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
-
-  if (e === 0) {
-    e = 1 - eBias
-  } else if (e === eMax) {
-    return m ? NaN : ((s ? -1 : 1) * Infinity)
-  } else {
-    m = m + Math.pow(2, mLen)
-    e = e - eBias
-  }
-  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
-}
-
-exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
-  var e, m, c
-  var eLen = nBytes * 8 - mLen - 1
-  var eMax = (1 << eLen) - 1
-  var eBias = eMax >> 1
-  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
-  var i = isLE ? 0 : (nBytes - 1)
-  var d = isLE ? 1 : -1
-  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
-
-  value = Math.abs(value)
-
-  if (isNaN(value) || value === Infinity) {
-    m = isNaN(value) ? 1 : 0
-    e = eMax
-  } else {
-    e = Math.floor(Math.log(value) / Math.LN2)
-    if (value * (c = Math.pow(2, -e)) < 1) {
-      e--
-      c *= 2
-    }
-    if (e + eBias >= 1) {
-      value += rt / c
-    } else {
-      value += rt * Math.pow(2, 1 - eBias)
-    }
-    if (value * c >= 2) {
-      e++
-      c /= 2
-    }
-
-    if (e + eBias >= eMax) {
-      m = 0
-      e = eMax
-    } else if (e + eBias >= 1) {
-      m = (value * c - 1) * Math.pow(2, mLen)
-      e = e + eBias
-    } else {
-      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
-      e = 0
-    }
-  }
-
-  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
-
-  e = (e << mLen) | m
-  eLen += mLen
-  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
-
-  buffer[offset + i - d] |= s * 128
-}
-
-},{}],14:[function(require,module,exports){
-var toString = {}.toString;
-
-module.exports = Array.isArray || function (arr) {
-  return toString.call(arr) == '[object Array]';
-};
-
-},{}],15:[function(require,module,exports){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-function EventEmitter() {
-  this._events = this._events || {};
-  this._maxListeners = this._maxListeners || undefined;
-}
-module.exports = EventEmitter;
-
-// Backwards-compat with node 0.10.x
-EventEmitter.EventEmitter = EventEmitter;
-
-EventEmitter.prototype._events = undefined;
-EventEmitter.prototype._maxListeners = undefined;
-
-// By default EventEmitters will print a warning if more than 10 listeners are
-// added to it. This is a useful default which helps finding memory leaks.
-EventEmitter.defaultMaxListeners = 10;
-
-// Obviously not all Emitters should be limited to 10. This function allows
-// that to be increased. Set to zero for unlimited.
-EventEmitter.prototype.setMaxListeners = function(n) {
-  if (!isNumber(n) || n < 0 || isNaN(n))
-    throw TypeError('n must be a positive number');
-  this._maxListeners = n;
-  return this;
-};
-
-EventEmitter.prototype.emit = function(type) {
-  var er, handler, len, args, i, listeners;
-
-  if (!this._events)
-    this._events = {};
-
-  // If there is no 'error' event listener then throw.
-  if (type === 'error') {
-    if (!this._events.error ||
-        (isObject(this._events.error) && !this._events.error.length)) {
-      er = arguments[1];
-      if (er instanceof Error) {
-        throw er; // Unhandled 'error' event
-      }
-      throw TypeError('Uncaught, unspecified "error" event.');
-    }
-  }
-
-  handler = this._events[type];
-
-  if (isUndefined(handler))
-    return false;
-
-  if (isFunction(handler)) {
-    switch (arguments.length) {
-      // fast cases
-      case 1:
-        handler.call(this);
-        break;
-      case 2:
-        handler.call(this, arguments[1]);
-        break;
-      case 3:
-        handler.call(this, arguments[1], arguments[2]);
-        break;
-      // slower
-      default:
-        args = Array.prototype.slice.call(arguments, 1);
-        handler.apply(this, args);
-    }
-  } else if (isObject(handler)) {
-    args = Array.prototype.slice.call(arguments, 1);
-    listeners = handler.slice();
-    len = listeners.length;
-    for (i = 0; i < len; i++)
-      listeners[i].apply(this, args);
-  }
-
-  return true;
-};
-
-EventEmitter.prototype.addListener = function(type, listener) {
-  var m;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events)
-    this._events = {};
-
-  // To avoid recursion in the case that type === "newListener"! Before
-  // adding it to the listeners, first emit "newListener".
-  if (this._events.newListener)
-    this.emit('newListener', type,
-              isFunction(listener.listener) ?
-              listener.listener : listener);
-
-  if (!this._events[type])
-    // Optimize the case of one listener. Don't need the extra array object.
-    this._events[type] = listener;
-  else if (isObject(this._events[type]))
-    // If we've already got an array, just append.
-    this._events[type].push(listener);
-  else
-    // Adding the second element, need to change to array.
-    this._events[type] = [this._events[type], listener];
-
-  // Check for listener leak
-  if (isObject(this._events[type]) && !this._events[type].warned) {
-    if (!isUndefined(this._maxListeners)) {
-      m = this._maxListeners;
-    } else {
-      m = EventEmitter.defaultMaxListeners;
-    }
-
-    if (m && m > 0 && this._events[type].length > m) {
-      this._events[type].warned = true;
-      console.error('(node) warning: possible EventEmitter memory ' +
-                    'leak detected. %d listeners added. ' +
-                    'Use emitter.setMaxListeners() to increase limit.',
-                    this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
-    }
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.on = EventEmitter.prototype.addListener;
-
-EventEmitter.prototype.once = function(type, listener) {
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  var fired = false;
-
-  function g() {
-    this.removeListener(type, g);
-
-    if (!fired) {
-      fired = true;
-      listener.apply(this, arguments);
-    }
-  }
-
-  g.listener = listener;
-  this.on(type, g);
-
-  return this;
-};
-
-// emits a 'removeListener' event iff the listener was removed
-EventEmitter.prototype.removeListener = function(type, listener) {
-  var list, position, length, i;
-
-  if (!isFunction(listener))
-    throw TypeError('listener must be a function');
-
-  if (!this._events || !this._events[type])
-    return this;
-
-  list = this._events[type];
-  length = list.length;
-  position = -1;
-
-  if (list === listener ||
-      (isFunction(list.listener) && list.listener === listener)) {
-    delete this._events[type];
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-
-  } else if (isObject(list)) {
-    for (i = length; i-- > 0;) {
-      if (list[i] === listener ||
-          (list[i].listener && list[i].listener === listener)) {
-        position = i;
-        break;
-      }
-    }
-
-    if (position < 0)
-      return this;
-
-    if (list.length === 1) {
-      list.length = 0;
-      delete this._events[type];
-    } else {
-      list.splice(position, 1);
-    }
-
-    if (this._events.removeListener)
-      this.emit('removeListener', type, listener);
-  }
-
-  return this;
-};
-
-EventEmitter.prototype.removeAllListeners = function(type) {
-  var key, listeners;
-
-  if (!this._events)
-    return this;
-
-  // not listening for removeListener, no need to emit
-  if (!this._events.removeListener) {
-    if (arguments.length === 0)
-      this._events = {};
-    else if (this._events[type])
-      delete this._events[type];
-    return this;
-  }
-
-  // emit removeListener for all listeners on all events
-  if (arguments.length === 0) {
-    for (key in this._events) {
-      if (key === 'removeListener') continue;
-      this.removeAllListeners(key);
-    }
-    this.removeAllListeners('removeListener');
-    this._events = {};
-    return this;
-  }
-
-  listeners = this._events[type];
-
-  if (isFunction(listeners)) {
-    this.removeListener(type, listeners);
-  } else if (listeners) {
-    // LIFO order
-    while (listeners.length)
-      this.removeListener(type, listeners[listeners.length - 1]);
-  }
-  delete this._events[type];
-
-  return this;
-};
-
-EventEmitter.prototype.listeners = function(type) {
-  var ret;
-  if (!this._events || !this._events[type])
-    ret = [];
-  else if (isFunction(this._events[type]))
-    ret = [this._events[type]];
-  else
-    ret = this._events[type].slice();
-  return ret;
-};
-
-EventEmitter.prototype.listenerCount = function(type) {
-  if (this._events) {
-    var evlistener = this._events[type];
-
-    if (isFunction(evlistener))
-      return 1;
-    else if (evlistener)
-      return evlistener.length;
-  }
-  return 0;
-};
-
-EventEmitter.listenerCount = function(emitter, type) {
-  return emitter.listenerCount(type);
-};
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-
-},{}],16:[function(require,module,exports){
-// shim for using process in browser
-
-var process = module.exports = {};
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = setTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    clearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],17:[function(require,module,exports){
-'use strict'
-
-var monotoneTriangulate = require('./lib/monotone')
-var makeIndex = require('./lib/triangulation')
-var delaunayFlip = require('./lib/delaunay')
-var filterTriangulation = require('./lib/filter')
-
-module.exports = cdt2d
-
-function canonicalizeEdge(e) {
-  return [Math.min(e[0], e[1]), Math.max(e[0], e[1])]
-}
-
-function compareEdge(a, b) {
-  return a[0]-b[0] || a[1]-b[1]
-}
-
-function canonicalizeEdges(edges) {
-  return edges.map(canonicalizeEdge).sort(compareEdge)
-}
-
-function getDefault(options, property, dflt) {
-  if(property in options) {
-    return options[property]
-  }
-  return dflt
-}
-
-function cdt2d(points, edges, options) {
-
-  if(!Array.isArray(edges)) {
-    options = edges || {}
-    edges = []
-  } else {
-    options = options || {}
-    edges = edges || []
-  }
-
-  //Parse out options
-  var delaunay = !!getDefault(options, 'delaunay', true)
-  var interior = !!getDefault(options, 'interior', true)
-  var exterior = !!getDefault(options, 'exterior', true)
-  var infinity = !!getDefault(options, 'infinity', false)
-
-  //Handle trivial case
-  if((!interior && !exterior) || points.length === 0) {
-    return []
-  }
-
-  //Construct initial triangulation
-  var cells = monotoneTriangulate(points, edges)
-
-  //If delaunay refinement needed, then improve quality by edge flipping
-  if(delaunay || interior !== exterior || infinity) {
-
-    //Index all of the cells to support fast neighborhood queries
-    var triangulation = makeIndex(points.length, canonicalizeEdges(edges))
-    for(var i=0; i<cells.length; ++i) {
-      var f = cells[i]
-      triangulation.addTriangle(f[0], f[1], f[2])
-    }
-
-    //Run edge flipping
-    if(delaunay) {
-      delaunayFlip(points, triangulation)
-    }
-
-    //Filter points
-    if(!exterior) {
-      return filterTriangulation(triangulation, -1)
-    } else if(!interior) {
-      return filterTriangulation(triangulation,  1, infinity)
-    } else if(infinity) {
-      return filterTriangulation(triangulation, 0, infinity)
-    } else {
-      return triangulation.cells()
-    }
-    
-  } else {
-    return cells
-  }
-}
-
-},{"./lib/delaunay":18,"./lib/filter":19,"./lib/monotone":20,"./lib/triangulation":21}],18:[function(require,module,exports){
-'use strict'
-
-var inCircle = require('robust-in-sphere')[4]
-var bsearch = require('binary-search-bounds')
-
-module.exports = delaunayRefine
-
-function testFlip(points, triangulation, stack, a, b, x) {
-  var y = triangulation.opposite(a, b)
-
-  //Test boundary edge
-  if(y < 0) {
-    return
-  }
-
-  //Swap edge if order flipped
-  if(b < a) {
-    var tmp = a
-    a = b
-    b = tmp
-    tmp = x
-    x = y
-    y = tmp
-  }
-
-  //Test if edge is constrained
-  if(triangulation.isConstraint(a, b)) {
-    return
-  }
-
-  //Test if edge is delaunay
-  if(inCircle(points[a], points[b], points[x], points[y]) < 0) {
-    stack.push(a, b)
-  }
-}
-
-//Assume edges are sorted lexicographically
-function delaunayRefine(points, triangulation) {
-  var stack = []
-
-  var numPoints = points.length
-  var stars = triangulation.stars
-  for(var a=0; a<numPoints; ++a) {
-    var star = stars[a]
-    for(var j=1; j<star.length; j+=2) {
-      var b = star[j]
-
-      //If order is not consistent, then skip edge
-      if(b < a) {
-        continue
-      }
-
-      //Check if edge is constrained
-      if(triangulation.isConstraint(a, b)) {
-        continue
-      }
-
-      //Find opposite edge
-      var x = star[j-1], y = -1
-      for(var k=1; k<star.length; k+=2) {
-        if(star[k-1] === b) {
-          y = star[k]
-          break
-        }
-      }
-
-      //If this is a boundary edge, don't flip it
-      if(y < 0) {
-        continue
-      }
-
-      //If edge is in circle, flip it
-      if(inCircle(points[a], points[b], points[x], points[y]) < 0) {
-        stack.push(a, b)
-      }
-    }
-  }
-
-  while(stack.length > 0) {
-    var b = stack.pop()
-    var a = stack.pop()
-
-    //Find opposite pairs
-    var x = -1, y = -1
-    var star = stars[a]
-    for(var i=1; i<star.length; i+=2) {
-      var s = star[i-1]
-      var t = star[i]
-      if(s === b) {
-        y = t
-      } else if(t === b) {
-        x = s
-      }
-    }
-
-    //If x/y are both valid then skip edge
-    if(x < 0 || y < 0) {
-      continue
-    }
-
-    //If edge is now delaunay, then don't flip it
-    if(inCircle(points[a], points[b], points[x], points[y]) >= 0) {
-      continue
-    }
-
-    //Flip the edge
-    triangulation.flip(a, b)
-
-    //Test flipping neighboring edges
-    testFlip(points, triangulation, stack, x, a, y)
-    testFlip(points, triangulation, stack, a, y, x)
-    testFlip(points, triangulation, stack, y, b, x)
-    testFlip(points, triangulation, stack, b, x, y)
-  }
-}
-
-},{"binary-search-bounds":22,"robust-in-sphere":23}],19:[function(require,module,exports){
-'use strict'
-
-var bsearch = require('binary-search-bounds')
-
-module.exports = classifyFaces
-
-function FaceIndex(cells, neighbor, constraint, flags, active, next, boundary) {
-  this.cells       = cells
-  this.neighbor    = neighbor
-  this.flags       = flags
-  this.constraint  = constraint
-  this.active      = active
-  this.next        = next
-  this.boundary    = boundary
-}
-
-var proto = FaceIndex.prototype
-
-function compareCell(a, b) {
-  return a[0] - b[0] ||
-         a[1] - b[1] ||
-         a[2] - b[2]
-}
-
-proto.locate = (function() {
-  var key = [0,0,0]
-  return function(a, b, c) {
-    var x = a, y = b, z = c
-    if(b < c) {
-      if(b < a) {
-        x = b
-        y = c
-        z = a
-      }
-    } else if(c < a) {
-      x = c
-      y = a
-      z = b
-    }
-    if(x < 0) {
-      return -1
-    }
-    key[0] = x
-    key[1] = y
-    key[2] = z
-    return bsearch.eq(this.cells, key, compareCell)
-  }
-})()
-
-function indexCells(triangulation, infinity) {
-  //First get cells and canonicalize
-  var cells = triangulation.cells()
-  var nc = cells.length
-  for(var i=0; i<nc; ++i) {
-    var c = cells[i]
-    var x = c[0], y = c[1], z = c[2]
-    if(y < z) {
-      if(y < x) {
-        c[0] = y
-        c[1] = z
-        c[2] = x
-      }
-    } else if(z < x) {
-      c[0] = z
-      c[1] = x
-      c[2] = y
-    }
-  }
-  cells.sort(compareCell)
-
-  //Initialize flag array
-  var flags = new Array(nc)
-  for(var i=0; i<flags.length; ++i) {
-    flags[i] = 0
-  }
-
-  //Build neighbor index, initialize queues
-  var active = []
-  var next   = []
-  var neighbor = new Array(3*nc)
-  var constraint = new Array(3*nc)
-  var boundary = null
-  if(infinity) {
-    boundary = []
-  }
-  var index = new FaceIndex(
-    cells,
-    neighbor,
-    constraint,
-    flags,
-    active,
-    next,
-    boundary)
-  for(var i=0; i<nc; ++i) {
-    var c = cells[i]
-    for(var j=0; j<3; ++j) {
-      var x = c[j], y = c[(j+1)%3]
-      var a = neighbor[3*i+j] = index.locate(y, x, triangulation.opposite(y, x))
-      var b = constraint[3*i+j] = triangulation.isConstraint(x, y)
-      if(a < 0) {
-        if(b) {
-          next.push(i)
-        } else {
-          active.push(i)
-          flags[i] = 1
-        }
-        if(infinity) {
-          boundary.push([y, x, -1])
-        }
-      }
-    }
-  }
-  return index
-}
-
-function filterCells(cells, flags, target) {
-  var ptr = 0
-  for(var i=0; i<cells.length; ++i) {
-    if(flags[i] === target) {
-      cells[ptr++] = cells[i]
-    }
-  }
-  cells.length = ptr
-  return cells
-}
-
-function classifyFaces(triangulation, target, infinity) {
-  var index = indexCells(triangulation, infinity)
-
-  if(target === 0) {
-    if(infinity) {
-      return index.cells.concat(index.boundary)
-    } else {
-      return index.cells
-    }
-  }
-
-  var side = 1
-  var active = index.active
-  var next = index.next
-  var flags = index.flags
-  var cells = index.cells
-  var constraint = index.constraint
-  var neighbor = index.neighbor
-
-  while(active.length > 0 || next.length > 0) {
-    while(active.length > 0) {
-      var t = active.pop()
-      if(flags[t] === -side) {
-        continue
-      }
-      flags[t] = side
-      var c = cells[t]
-      for(var j=0; j<3; ++j) {
-        var f = neighbor[3*t+j]
-        if(f >= 0 && flags[f] === 0) {
-          if(constraint[3*t+j]) {
-            next.push(f)
-          } else {
-            active.push(f)
-            flags[f] = side
-          }
-        }
-      }
-    }
-
-    //Swap arrays and loop
-    var tmp = next
-    next = active
-    active = tmp
-    next.length = 0
-    side = -side
-  }
-
-  var result = filterCells(cells, flags, target)
-  if(infinity) {
-    return result.concat(index.boundary)
-  }
-  return result
-}
-
-},{"binary-search-bounds":22}],20:[function(require,module,exports){
-'use strict'
-
-var bsearch = require('binary-search-bounds')
-var orient = require('robust-orientation')[3]
-
-var EVENT_POINT = 0
-var EVENT_END   = 1
-var EVENT_START = 2
-
-module.exports = monotoneTriangulate
-
-//A partial convex hull fragment, made of two unimonotone polygons
-function PartialHull(a, b, idx, lowerIds, upperIds) {
-  this.a = a
-  this.b = b
-  this.idx = idx
-  this.lowerIds = lowerIds
-  this.upperIds = upperIds
-}
-
-//An event in the sweep line procedure
-function Event(a, b, type, idx) {
-  this.a    = a
-  this.b    = b
-  this.type = type
-  this.idx  = idx
-}
-
-//This is used to compare events for the sweep line procedure
-// Points are:
-//  1. sorted lexicographically
-//  2. sorted by type  (point < end < start)
-//  3. segments sorted by winding order
-//  4. sorted by index
-function compareEvent(a, b) {
-  var d =
-    (a.a[0] - b.a[0]) ||
-    (a.a[1] - b.a[1]) ||
-    (a.type - b.type)
-  if(d) { return d }
-  if(a.type !== EVENT_POINT) {
-    d = orient(a.a, a.b, b.b)
-    if(d) { return d }
-  }
-  return a.idx - b.idx
-}
-
-function testPoint(hull, p) {
-  return orient(hull.a, hull.b, p)
-}
-
-function addPoint(cells, hulls, points, p, idx) {
-  var lo = bsearch.lt(hulls, p, testPoint)
-  var hi = bsearch.gt(hulls, p, testPoint)
-  for(var i=lo; i<hi; ++i) {
-    var hull = hulls[i]
-
-    //Insert p into lower hull
-    var lowerIds = hull.lowerIds
-    var m = lowerIds.length
-    while(m > 1 && orient(
-        points[lowerIds[m-2]],
-        points[lowerIds[m-1]],
-        p) > 0) {
-      cells.push(
-        [lowerIds[m-1],
-         lowerIds[m-2],
-         idx])
-      m -= 1
-    }
-    lowerIds.length = m
-    lowerIds.push(idx)
-
-    //Insert p into upper hull
-    var upperIds = hull.upperIds
-    var m = upperIds.length
-    while(m > 1 && orient(
-        points[upperIds[m-2]],
-        points[upperIds[m-1]],
-        p) < 0) {
-      cells.push(
-        [upperIds[m-2],
-         upperIds[m-1],
-         idx])
-      m -= 1
-    }
-    upperIds.length = m
-    upperIds.push(idx)
-  }
-}
-
-function findSplit(hull, edge) {
-  var d
-  if(hull.a[0] < edge.a[0]) {
-    d = orient(hull.a, hull.b, edge.a)
-  } else {
-    d = orient(edge.b, edge.a, hull.a)
-  }
-  if(d) { return d }
-  if(edge.b[0] < hull.b[0]) {
-    d = orient(hull.a, hull.b, edge.b)
-  } else {
-    d = orient(edge.b, edge.a, hull.b)
-  }
-  return d || hull.idx - edge.idx
-}
-
-function splitHulls(hulls, points, event) {
-  var splitIdx = bsearch.le(hulls, event, findSplit)
-  var hull = hulls[splitIdx]
-  var upperIds = hull.upperIds
-  var x = upperIds[upperIds.length-1]
-  hull.upperIds = [x]
-  hulls.splice(splitIdx+1, 0,
-    new PartialHull(event.a, event.b, event.idx, [x], upperIds))
-}
-
-
-function mergeHulls(hulls, points, event) {
-  //Swap pointers for merge search
-  var tmp = event.a
-  event.a = event.b
-  event.b = tmp
-  var mergeIdx = bsearch.eq(hulls, event, findSplit)
-  var upper = hulls[mergeIdx]
-  var lower = hulls[mergeIdx-1]
-  lower.upperIds = upper.upperIds
-  hulls.splice(mergeIdx, 1)
-}
-
-
-function monotoneTriangulate(points, edges) {
-
-  var numPoints = points.length
-  var numEdges = edges.length
-
-  var events = []
-
-  //Create point events
-  for(var i=0; i<numPoints; ++i) {
-    events.push(new Event(
-      points[i],
-      null,
-      EVENT_POINT,
-      i))
-  }
-
-  //Create edge events
-  for(var i=0; i<numEdges; ++i) {
-    var e = edges[i]
-    var a = points[e[0]]
-    var b = points[e[1]]
-    if(a[0] < b[0]) {
-      events.push(
-        new Event(a, b, EVENT_START, i),
-        new Event(b, a, EVENT_END, i))
-    } else if(a[0] > b[0]) {
-      events.push(
-        new Event(b, a, EVENT_START, i),
-        new Event(a, b, EVENT_END, i))
-    }
-  }
-
-  //Sort events
-  events.sort(compareEvent)
-
-  //Initialize hull
-  var minX = events[0].a[0] - (1 + Math.abs(events[0].a[0])) * Math.pow(2, -52)
-  var hull = [ new PartialHull([minX, 1], [minX, 0], -1, [], [], [], []) ]
-
-  //Process events in order
-  var cells = []
-  for(var i=0, numEvents=events.length; i<numEvents; ++i) {
-    var event = events[i]
-    var type = event.type
-    if(type === EVENT_POINT) {
-      addPoint(cells, hull, points, event.a, event.idx)
-    } else if(type === EVENT_START) {
-      splitHulls(hull, points, event)
-    } else {
-      mergeHulls(hull, points, event)
-    }
-  }
-
-  //Return triangulation
-  return cells
-}
-
-},{"binary-search-bounds":22,"robust-orientation":162}],21:[function(require,module,exports){
-'use strict'
-
-var bsearch = require('binary-search-bounds')
-
-module.exports = createTriangulation
-
-function Triangulation(stars, edges) {
-  this.stars = stars
-  this.edges = edges
-}
-
-var proto = Triangulation.prototype
-
-function removePair(list, j, k) {
-  for(var i=1, n=list.length; i<n; i+=2) {
-    if(list[i-1] === j && list[i] === k) {
-      list[i-1] = list[n-2]
-      list[i] = list[n-1]
-      list.length = n - 2
-      return
-    }
-  }
-}
-
-proto.isConstraint = (function() {
-  var e = [0,0]
-  function compareLex(a, b) {
-    return a[0] - b[0] || a[1] - b[1]
-  }
-  return function(i, j) {
-    e[0] = Math.min(i,j)
-    e[1] = Math.max(i,j)
-    return bsearch.eq(this.edges, e, compareLex) >= 0
-  }
-})()
-
-proto.removeTriangle = function(i, j, k) {
-  var stars = this.stars
-  removePair(stars[i], j, k)
-  removePair(stars[j], k, i)
-  removePair(stars[k], i, j)
-}
-
-proto.addTriangle = function(i, j, k) {
-  var stars = this.stars
-  stars[i].push(j, k)
-  stars[j].push(k, i)
-  stars[k].push(i, j)
-}
-
-proto.opposite = function(j, i) {
-  var list = this.stars[i]
-  for(var k=1, n=list.length; k<n; k+=2) {
-    if(list[k] === j) {
-      return list[k-1]
-    }
-  }
-  return -1
-}
-
-proto.flip = function(i, j) {
-  var a = this.opposite(i, j)
-  var b = this.opposite(j, i)
-  this.removeTriangle(i, j, a)
-  this.removeTriangle(j, i, b)
-  this.addTriangle(i, b, a)
-  this.addTriangle(j, a, b)
-}
-
-proto.edges = function() {
-  var stars = this.stars
-  var result = []
-  for(var i=0, n=stars.length; i<n; ++i) {
-    var list = stars[i]
-    for(var j=0, m=list.length; j<m; j+=2) {
-      result.push([list[j], list[j+1]])
-    }
-  }
-  return result
-}
-
-proto.cells = function() {
-  var stars = this.stars
-  var result = []
-  for(var i=0, n=stars.length; i<n; ++i) {
-    var list = stars[i]
-    for(var j=0, m=list.length; j<m; j+=2) {
-      var s = list[j]
-      var t = list[j+1]
-      if(i < Math.min(s, t)) {
-        result.push([i, s, t])
-      }
-    }
-  }
-  return result
-}
-
-function createTriangulation(numVerts, edges) {
-  var stars = new Array(numVerts)
-  for(var i=0; i<numVerts; ++i) {
-    stars[i] = []
-  }
-  return new Triangulation(stars, edges)
-}
-
-},{"binary-search-bounds":22}],22:[function(require,module,exports){
-"use strict"
-
-function compileSearch(funcName, predicate, reversed, extraArgs, earlyOut) {
-  var code = [
-    "function ", funcName, "(a,l,h,", extraArgs.join(","),  "){",
-earlyOut ? "" : "var i=", (reversed ? "l-1" : "h+1"),
-";while(l<=h){\
-var m=(l+h)>>>1,x=a[m]"]
-  if(earlyOut) {
-    if(predicate.indexOf("c") < 0) {
-      code.push(";if(x===y){return m}else if(x<=y){")
-    } else {
-      code.push(";var p=c(x,y);if(p===0){return m}else if(p<=0){")
-    }
-  } else {
-    code.push(";if(", predicate, "){i=m;")
-  }
-  if(reversed) {
-    code.push("l=m+1}else{h=m-1}")
-  } else {
-    code.push("h=m-1}else{l=m+1}")
-  }
-  code.push("}")
-  if(earlyOut) {
-    code.push("return -1};")
-  } else {
-    code.push("return i};")
-  }
-  return code.join("")
-}
-
-function compileBoundsSearch(predicate, reversed, suffix, earlyOut) {
-  var result = new Function([
-  compileSearch("A", "x" + predicate + "y", reversed, ["y"], earlyOut),
-  compileSearch("P", "c(x,y)" + predicate + "0", reversed, ["y", "c"], earlyOut),
-"function dispatchBsearch", suffix, "(a,y,c,l,h){\
-if(typeof(c)==='function'){\
-return P(a,(l===void 0)?0:l|0,(h===void 0)?a.length-1:h|0,y,c)\
-}else{\
-return A(a,(c===void 0)?0:c|0,(l===void 0)?a.length-1:l|0,y)\
-}}\
-return dispatchBsearch", suffix].join(""))
-  return result()
-}
-
-module.exports = {
-  ge: compileBoundsSearch(">=", false, "GE"),
-  gt: compileBoundsSearch(">", false, "GT"),
-  lt: compileBoundsSearch("<", true, "LT"),
-  le: compileBoundsSearch("<=", true, "LE"),
-  eq: compileBoundsSearch("-", true, "EQ", true)
-}
-
-},{}],23:[function(require,module,exports){
-"use strict"
-
-var twoProduct = require("two-product")
-var robustSum = require("robust-sum")
-var robustDiff = require("robust-subtract")
-var robustScale = require("robust-scale")
-
-var NUM_EXPAND = 6
-
-function cofactor(m, c) {
-  var result = new Array(m.length-1)
-  for(var i=1; i<m.length; ++i) {
-    var r = result[i-1] = new Array(m.length-1)
-    for(var j=0,k=0; j<m.length; ++j) {
-      if(j === c) {
-        continue
-      }
-      r[k++] = m[i][j]
-    }
-  }
-  return result
-}
-
-function matrix(n) {
-  var result = new Array(n)
-  for(var i=0; i<n; ++i) {
-    result[i] = new Array(n)
-    for(var j=0; j<n; ++j) {
-      result[i][j] = ["m", j, "[", (n-i-2), "]"].join("")
-    }
-  }
-  return result
-}
-
-function generateSum(expr) {
-  if(expr.length === 1) {
-    return expr[0]
-  } else if(expr.length === 2) {
-    return ["sum(", expr[0], ",", expr[1], ")"].join("")
-  } else {
-    var m = expr.length>>1
-    return ["sum(", generateSum(expr.slice(0, m)), ",", generateSum(expr.slice(m)), ")"].join("")
-  }
-}
-
-function makeProduct(a, b) {
-  if(a.charAt(0) === "m") {
-    if(b.charAt(0) === "w") {
-      var toks = a.split("[")
-      return ["w", b.substr(1), "m", toks[0].substr(1)].join("")
-    } else {
-      return ["prod(", a, ",", b, ")"].join("")
-    }
-  } else {
-    return makeProduct(b, a)
-  }
-}
-
-function sign(s) {
-  if(s & 1 !== 0) {
-    return "-"
-  }
-  return ""
-}
-
-function determinant(m) {
-  if(m.length === 2) {
-    return [["diff(", makeProduct(m[0][0], m[1][1]), ",", makeProduct(m[1][0], m[0][1]), ")"].join("")]
-  } else {
-    var expr = []
-    for(var i=0; i<m.length; ++i) {
-      expr.push(["scale(", generateSum(determinant(cofactor(m, i))), ",", sign(i), m[0][i], ")"].join(""))
-    }
-    return expr
-  }
-}
-
-function makeSquare(d, n) {
-  var terms = []
-  for(var i=0; i<n-2; ++i) {
-    terms.push(["prod(m", d, "[", i, "],m", d, "[", i, "])"].join(""))
-  }
-  return generateSum(terms)
-}
-
-function orientation(n) {
-  var pos = []
-  var neg = []
-  var m = matrix(n)
-  for(var i=0; i<n; ++i) {
-    m[0][i] = "1"
-    m[n-1][i] = "w"+i
-  } 
-  for(var i=0; i<n; ++i) {
-    if((i&1)===0) {
-      pos.push.apply(pos,determinant(cofactor(m, i)))
-    } else {
-      neg.push.apply(neg,determinant(cofactor(m, i)))
-    }
-  }
-  var posExpr = generateSum(pos)
-  var negExpr = generateSum(neg)
-  var funcName = "exactInSphere" + n
-  var funcArgs = []
-  for(var i=0; i<n; ++i) {
-    funcArgs.push("m" + i)
-  }
-  var code = ["function ", funcName, "(", funcArgs.join(), "){"]
-  for(var i=0; i<n; ++i) {
-    code.push("var w",i,"=",makeSquare(i,n),";")
-    for(var j=0; j<n; ++j) {
-      if(j !== i) {
-        code.push("var w",i,"m",j,"=scale(w",i,",m",j,"[0]);")
-      }
-    }
-  }
-  code.push("var p=", posExpr, ",n=", negExpr, ",d=diff(p,n);return d[d.length-1];}return ", funcName)
-  var proc = new Function("sum", "diff", "prod", "scale", code.join(""))
-  return proc(robustSum, robustDiff, twoProduct, robustScale)
-}
-
-function inSphere0() { return 0 }
-function inSphere1() { return 0 }
-function inSphere2() { return 0 }
-
-var CACHED = [
-  inSphere0,
-  inSphere1,
-  inSphere2
-]
-
-function slowInSphere(args) {
-  var proc = CACHED[args.length]
-  if(!proc) {
-    proc = CACHED[args.length] = orientation(args.length)
-  }
-  return proc.apply(undefined, args)
-}
-
-function generateInSphereTest() {
-  while(CACHED.length <= NUM_EXPAND) {
-    CACHED.push(orientation(CACHED.length))
-  }
-  var args = []
-  var procArgs = ["slow"]
-  for(var i=0; i<=NUM_EXPAND; ++i) {
-    args.push("a" + i)
-    procArgs.push("o" + i)
-  }
-  var code = [
-    "function testInSphere(", args.join(), "){switch(arguments.length){case 0:case 1:return 0;"
-  ]
-  for(var i=2; i<=NUM_EXPAND; ++i) {
-    code.push("case ", i, ":return o", i, "(", args.slice(0, i).join(), ");")
-  }
-  code.push("}var s=new Array(arguments.length);for(var i=0;i<arguments.length;++i){s[i]=arguments[i]};return slow(s);}return testInSphere")
-  procArgs.push(code.join(""))
-
-  var proc = Function.apply(undefined, procArgs)
-
-  module.exports = proc.apply(undefined, [slowInSphere].concat(CACHED))
-  for(var i=0; i<=NUM_EXPAND; ++i) {
-    module.exports[i] = CACHED[i]
-  }
-}
-
-generateInSphereTest()
-},{"robust-scale":163,"robust-subtract":164,"robust-sum":165,"two-product":178}],24:[function(require,module,exports){
-'use strict'
-
-module.exports = cleanPSLG
-
-var UnionFind = require('union-find')
-var boxIntersect = require('box-intersect')
-var compareCell = require('compare-cell')
-var segseg = require('robust-segment-intersect')
-var rat = require('big-rat')
-var ratCmp = require('big-rat/cmp')
-var ratToFloat = require('big-rat/to-float')
-var ratVec = require('rat-vec')
-var nextafter = require('nextafter')
-
-var solveIntersection = require('./lib/rat-seg-intersect')
-
-//Bounds on a rational number when rounded to a float
-function boundRat(r) {
-  var f = ratToFloat(r)
-  var cmp = ratCmp(rat(f), r)
-  if(cmp < 0) {
-    return [f, nextafter(f, Infinity)]
-  } else if(cmp > 0) {
-    return [nextafter(f, -Infinity), f]
-  } else {
-    return [f, f]
-  }
-}
-
-//Convert a list of edges in a pslg to bounding boxes
-function boundEdges(points, edges) {
-  var bounds = new Array(edges.length)
-  for(var i=0; i<edges.length; ++i) {
-    var e = edges[i]
-    var a = points[e[0]]
-    var b = points[e[1]]
-    bounds[i] = [
-      Math.min(a[0], b[0]),
-      Math.min(a[1], b[1]),
-      Math.max(a[0], b[0]),
-      Math.max(a[1], b[1]) ]
-  }
-  return bounds
-}
-
-//Convert a list of points into bounding boxes by duplicating coords
-function boundPoints(points) {
-  var bounds = new Array(points.length)
-  for(var i=0; i<points.length; ++i) {
-    var p = points[i]
-    bounds[i] = [ p[0], p[1], p[0], p[1] ]
-  }
-  return bounds
-}
-
-//Find all pairs of crossing edges in a pslg (given edge bounds)
-function getCrossings(points, edges, edgeBounds) {
-  var result = []
-  boxIntersect(edgeBounds, function(i, j) {
-    var e = edges[i]
-    var f = edges[j]
-    if(e[0] === f[0] || e[0] === f[1] ||
-       e[1] === f[0] || e[1] === f[1]) {
-         return
-    }
-    var a = points[e[0]]
-    var b = points[e[1]]
-    var c = points[f[0]]
-    var d = points[f[1]]
-    if(segseg(a, b, c, d)) {
-      result.push([i, j])
-    }
-  })
-  return result
-}
-
-//Find all pairs of crossing vertices in a pslg (given edge/vert bounds)
-function getTJunctions(points, edges, edgeBounds, vertBounds) {
-  var result = []
-  boxIntersect(edgeBounds, vertBounds, function(i, v) {
-    var e = edges[i]
-    if(e[0] === v || e[1] === v) {
-      return
-    }
-    var p = points[v]
-    var a = points[e[0]]
-    var b = points[e[1]]
-    if(segseg(a, b, p, p)) {
-      result.push([i, v])
-    }
-  })
-  return result
-}
-
-
-//Cut edges along crossings/tjunctions
-function cutEdges(floatPoints, edges, crossings, junctions, useColor) {
-
-  //Convert crossings into tjunctions by constructing rational points
-  var ratPoints = []
-  for(var i=0; i<crossings.length; ++i) {
-    var crossing = crossings[i]
-    var e = crossing[0]
-    var f = crossing[1]
-    var ee = edges[e]
-    var ef = edges[f]
-    var x = solveIntersection(
-      ratVec(floatPoints[ee[0]]),
-      ratVec(floatPoints[ee[1]]),
-      ratVec(floatPoints[ef[0]]),
-      ratVec(floatPoints[ef[1]]))
-    if(!x) {
-      //Segments are parallel, should already be handled by t-junctions
-      continue
-    }
-    var idx = ratPoints.length + floatPoints.length
-    ratPoints.push(x)
-    junctions.push([e, idx], [f, idx])
-  }
-
-  //Sort tjunctions
-  function getPoint(idx) {
-    if(idx >= floatPoints.length) {
-      return ratPoints[idx-floatPoints.length]
-    }
-    var p = floatPoints[idx]
-    return [ rat(p[0]), rat(p[1]) ]
-  }
-  junctions.sort(function(a, b) {
-    if(a[0] !== b[0]) {
-      return a[0] - b[0]
-    }
-    var u = getPoint(a[1])
-    var v = getPoint(b[1])
-    return ratCmp(u[0], v[0]) || ratCmp(u[1], v[1])
-  })
-
-  //Split edges along junctions
-  for(var i=junctions.length-1; i>=0; --i) {
-    var junction = junctions[i]
-    var e = junction[0]
-
-    var edge = edges[e]
-    var s = edge[0]
-    var t = edge[1]
-
-    //Check if edge is not lexicographically sorted
-    var a = floatPoints[s]
-    var b = floatPoints[t]
-    if(((a[0] - b[0]) || (a[1] - b[1])) < 0) {
-      var tmp = s
-      s = t
-      t = tmp
-    }
-
-    //Split leading edge
-    edge[0] = s
-    var last = edge[1] = junction[1]
-
-    //If we are grouping edges by color, remember to track data
-    var color
-    if(useColor) {
-      color = edge[2]
-    }
-
-    //Split other edges
-    while(i > 0 && junctions[i-1][0] === e) {
-      var junction = junctions[--i]
-      var next = junction[1]
-      if(useColor) {
-        edges.push([last, next, color])
-      } else {
-        edges.push([last, next])
-      }
-      last = next
-    }
-
-    //Add final edge
-    if(useColor) {
-      edges.push([last, t, color])
-    } else {
-      edges.push([last, t])
-    }
-  }
-
-  //Return constructed rational points
-  return ratPoints
-}
-
-//Merge overlapping points
-function dedupPoints(floatPoints, ratPoints, floatBounds) {
-  var numPoints = floatPoints.length + ratPoints.length
-  var uf        = new UnionFind(numPoints)
-
-  //Compute rational bounds
-  var bounds = floatBounds
-  for(var i=0; i<ratPoints.length; ++i) {
-    var p = ratPoints[i]
-    var xb = boundRat(p[0])
-    var yb = boundRat(p[1])
-    bounds.push([ xb[0], yb[0], xb[1], yb[1] ])
-    floatPoints.push([ ratToFloat(p[0]), ratToFloat(p[1]) ])
-  }
-
-  //Link all points with over lapping boxes
-  boxIntersect(bounds, function(i, j) {
-    uf.link(i, j)
-  })
-
-  //Call find on each point to get a relabeling
-  var ptr = 0
-  var noDupes = true
-  var labels = new Array(numPoints)
-  for(var i=0; i<numPoints; ++i) {
-    var j = uf.find(i)
-    if(j === i) {
-      //If not a duplicate, then don't bother
-      labels[i] = ptr
-      floatPoints[ptr++] = floatPoints[i]
-    } else {
-      //Clear no-dupes flag, zero out label
-      noDupes = false
-      labels[i] = -1
-    }
-  }
-  floatPoints.length = ptr
-
-  //If no duplicates, return null to signal termination
-  if(noDupes) {
-    return null
-  }
-
-  //Do a second pass to fix up missing labels
-  for(var i=0; i<numPoints; ++i) {
-    if(labels[i] < 0) {
-      labels[i] = labels[uf.find(i)]
-    }
-  }
-
-  //Return resulting union-find data structure
-  return labels
-}
-
-function compareLex2(a,b) { return (a[0]-b[0]) || (a[1]-b[1]) }
-function compareLex3(a,b) {
-  var d = (a[0] - b[0]) || (a[1] - b[1])
-  if(d) {
-    return d
-  }
-  if(a[2] < b[2]) {
-    return -1
-  } else if(a[2] > b[2]) {
-    return 1
-  }
-  return 0
-}
-
-//Remove duplicate edge labels
-function dedupEdges(edges, labels, useColor) {
-  if(edges.length === 0) {
-    return
-  }
-  if(labels) {
-    for(var i=0; i<edges.length; ++i) {
-      var e = edges[i]
-      var a = labels[e[0]]
-      var b = labels[e[1]]
-      e[0] = Math.min(a, b)
-      e[1] = Math.max(a, b)
-    }
-  } else {
-    for(var i=0; i<edges.length; ++i) {
-      var e = edges[i]
-      var a = e[0]
-      var b = e[1]
-      e[0] = Math.min(a, b)
-      e[1] = Math.max(a, b)
-    }
-  }
-  if(useColor) {
-    edges.sort(compareLex3)
-  } else {
-    edges.sort(compareLex2)
-  }
-  var ptr = 1
-  for(var i=1; i<edges.length; ++i) {
-    var prev = edges[i-1]
-    var next = edges[i]
-    if(next[0] === prev[0] && next[1] === prev[1] &&
-      (!useColor || next[2] === prev[2])) {
-      continue
-    }
-    edges[ptr++] = next
-  }
-  edges.length = ptr
-}
-
-//Repeat until convergence
-function snapRound(points, edges, useColor) {
-
-  // 1. find edge crossings
-  var edgeBounds = boundEdges(points, edges)
-  var crossings  = getCrossings(points, edges, edgeBounds)
-
-  // 2. find t-junctions
-  var vertBounds = boundPoints(points)
-  var tjunctions = getTJunctions(points, edges, edgeBounds, vertBounds)
-
-  // 3. cut edges, construct rational points
-  var ratPoints  = cutEdges(points, edges, crossings, tjunctions, useColor)
-
-  // 4. dedupe verts
-  var labels     = dedupPoints(points, ratPoints, vertBounds)
-
-  // 6. dedupe edges
-  dedupEdges(edges, labels, useColor)
-
-  // 5. check termination
-  if(!labels) {
-    return (crossings.length > 0 || tjunctions.length > 0)
-  }
-
-  // More iterations necessary
-  return true
-}
-
-//Main loop, runs PSLG clean up until completion
-function cleanPSLG(points, edges, colors) {
-  var modified = false
-
-  //If using colors, augment edges with color data
-  var prevEdges
-  if(colors) {
-    prevEdges = edges
-    var augEdges = new Array(edges.length)
-    for(var i=0; i<edges.length; ++i) {
-      var e = edges[i]
-      augEdges[i] = [e[0], e[1], colors[i]]
-    }
-    edges = augEdges
-  }
-
-  //Run snap rounding until convergence
-  while(snapRound(points, edges, !!colors)) {
-    modified = true
-  }
-
-  //Strip color tags
-  if(!!colors && modified) {
-    prevEdges.length = 0
-    colors.length = 0
-    for(var i=0; i<edges.length; ++i) {
-      var e = edges[i]
-      prevEdges.push([e[0], e[1]])
-      colors.push(e[2])
-    }
-  }
-
-  return modified
-}
-
-},{"./lib/rat-seg-intersect":25,"big-rat":29,"big-rat/cmp":27,"big-rat/to-float":42,"box-intersect":43,"compare-cell":58,"nextafter":51,"rat-vec":53,"robust-segment-intersect":56,"union-find":57}],25:[function(require,module,exports){
-'use strict'
-
-//TODO: Move this to a separate module
-
-module.exports = solveIntersection
-
-var ratMul = require('big-rat/mul')
-var ratDiv = require('big-rat/div')
-var ratSub = require('big-rat/sub')
-var ratSign = require('big-rat/sign')
-var rvSub = require('rat-vec/sub')
-var rvAdd = require('rat-vec/add')
-var rvMuls = require('rat-vec/muls')
-
-var toFloat = require('big-rat/to-float')
-
-function ratPerp(a, b) {
-  return ratSub(ratMul(a[0], b[1]), ratMul(a[1], b[0]))
-}
-
-//Solve for intersection
-//  x = a + t (b-a)
-//  (x - c) ^ (d-c) = 0
-//  (t * (b-a) + (a-c) ) ^ (d-c) = 0
-//  t * (b-a)^(d-c) = (d-c)^(a-c)
-//  t = (d-c)^(a-c) / (b-a)^(d-c)
-
-function solveIntersection(a, b, c, d) {
-  var ba = rvSub(b, a)
-  var dc = rvSub(d, c)
-
-  var baXdc = ratPerp(ba, dc)
-
-  if(ratSign(baXdc) === 0) {
-    return null
-  }
-
-  var ac = rvSub(a, c)
-  var dcXac = ratPerp(dc, ac)
-
-  var t = ratDiv(dcXac, baXdc)
-
-  return rvAdd(a, rvMuls(ba, t))
-}
-
-},{"big-rat/div":28,"big-rat/mul":38,"big-rat/sign":40,"big-rat/sub":41,"big-rat/to-float":42,"rat-vec/add":52,"rat-vec/muls":54,"rat-vec/sub":55}],26:[function(require,module,exports){
-'use strict'
-
-var rationalize = require('./lib/rationalize')
-
-module.exports = add
-
-function add(a, b) {
-  return rationalize(
-    a[0].mul(b[1]).add(b[0].mul(a[1])),
-    a[1].mul(b[1]))
-}
-
-},{"./lib/rationalize":36}],27:[function(require,module,exports){
-'use strict'
-
-module.exports = cmp
-
-function cmp(a, b) {
-    return a[0].mul(b[1]).cmp(b[0].mul(a[1]))
-}
-
-},{}],28:[function(require,module,exports){
-'use strict'
-
-var rationalize = require('./lib/rationalize')
-
-module.exports = div
-
-function div(a, b) {
-  return rationalize(a[0].mul(b[1]), a[1].mul(b[0]))
-}
-
-},{"./lib/rationalize":36}],29:[function(require,module,exports){
-'use strict'
-
-var isRat = require('./is-rat')
-var isBN = require('./lib/is-bn')
-var num2bn = require('./lib/num-to-bn')
-var str2bn = require('./lib/str-to-bn')
-var rationalize = require('./lib/rationalize')
-var div = require('./div')
-
-module.exports = makeRational
-
-function makeRational(numer, denom) {
-  if(isRat(numer)) {
-    if(denom) {
-      return div(numer, makeRational(denom))
-    }
-    return [numer[0].clone(), numer[1].clone()]
-  }
-  var shift = 0
-  var a, b
-  if(isBN(numer)) {
-    a = numer.clone()
-  } else if(typeof numer === 'string') {
-    a = str2bn(numer)
-  } else if(numer === 0) {
-    return [num2bn(0), num2bn(1)]
-  } else if(numer === Math.floor(numer)) {
-    a = num2bn(numer)
-  } else {
-    while(numer !== Math.floor(numer)) {
-      numer = numer * Math.pow(2, 256)
-      shift -= 256
-    }
-    a = num2bn(numer)
-  }
-  if(isRat(denom)) {
-    a.mul(denom[1])
-    b = denom[0].clone()
-  } else if(isBN(denom)) {
-    b = denom.clone()
-  } else if(typeof denom === 'string') {
-    b = str2bn(denom)
-  } else if(!denom) {
-    b = num2bn(1)
-  } else if(denom === Math.floor(denom)) {
-    b = num2bn(denom)
-  } else {
-    while(denom !== Math.floor(denom)) {
-      denom = denom * Math.pow(2, 256)
-      shift += 256
-    }
-    b = num2bn(denom)
-  }
-  if(shift > 0) {
-    a = a.shln(shift)
-  } else if(shift < 0) {
-    b = b.shln(-shift)
-  }
-  return rationalize(a, b)
-}
-
-},{"./div":28,"./is-rat":30,"./lib/is-bn":34,"./lib/num-to-bn":35,"./lib/rationalize":36,"./lib/str-to-bn":37}],30:[function(require,module,exports){
-'use strict'
-
-var isBN = require('./lib/is-bn')
-
-module.exports = isRat
-
-function isRat(x) {
-  return Array.isArray(x) && x.length === 2 && isBN(x[0]) && isBN(x[1])
-}
-
-},{"./lib/is-bn":34}],31:[function(require,module,exports){
-'use strict'
-
-var bn = require('bn.js')
-
-module.exports = sign
-
-function sign(x) {
-  return x.cmp(new bn(0))
-}
-
-},{"bn.js":39}],32:[function(require,module,exports){
-'use strict'
-
-module.exports = bn2num
-
-//TODO: Make this better
-function bn2num(b) {
-  var l = b.length
-  var words = b.words
-  var out = 0
-  if (l === 1) {
-    out = words[0]
-  } else if (l === 2) {
-    out = words[0] + (words[1] * 0x4000000)
-  } else {
-    var out = 0
-    for (var i = 0; i < l; i++) {
-      var w = words[i]
-      out += w * Math.pow(0x4000000, i)
-    }
-  }
-  return b.sign ? -out : out
-}
-
-},{}],33:[function(require,module,exports){
-'use strict'
-
-var db = require('double-bits')
-var ctz = require('bit-twiddle').countTrailingZeros
-
-module.exports = ctzNumber
-
-//Counts the number of trailing zeros
-function ctzNumber(x) {
-  var l = ctz(db.lo(x))
-  if(l < 32) {
-    return l
-  }
-  var h = ctz(db.hi(x))
-  if(h > 20) {
-    return 52
-  }
-  return h + 32
-}
-
-},{"bit-twiddle":10,"double-bits":50}],34:[function(require,module,exports){
-'use strict'
-
-var BN = require('bn.js')
-
-module.exports = isBN
-
-//Test if x is a bignumber
-//FIXME: obviously this is the wrong way to do it
-function isBN(x) {
-  return x && typeof x === 'object' && Boolean(x.words)
-}
-
-},{"bn.js":39}],35:[function(require,module,exports){
-'use strict'
-
-var BN = require('bn.js')
-var db = require('double-bits')
-
-module.exports = num2bn
-
-function num2bn(x) {
-  var e = db.exponent(x)
-  if(e < 52) {
-    return new BN(x)
-  } else {
-    return (new BN(x * Math.pow(2, 52-e))).shln(e-52)
-  }
-}
-
-},{"bn.js":39,"double-bits":50}],36:[function(require,module,exports){
-'use strict'
-
-var num2bn = require('./num-to-bn')
-var sign = require('./bn-sign')
-
-module.exports = rationalize
-
-function rationalize(numer, denom) {
-  var snumer = sign(numer)
-  var sdenom = sign(denom)
-  if(snumer === 0) {
-    return [num2bn(0), num2bn(1)]
-  }
-  if(sdenom === 0) {
-    return [num2bn(0), num2bn(0)]
-  }
-  if(sdenom < 0) {
-    numer = numer.neg()
-    denom = denom.neg()
-  }
-  var d = numer.gcd(denom)
-  if(d.cmpn(1)) {
-    return [ numer.div(d), denom.div(d) ]
-  }
-  return [ numer, denom ]
-}
-
-},{"./bn-sign":31,"./num-to-bn":35}],37:[function(require,module,exports){
-'use strict'
-
-var BN = require('bn.js')
-
-module.exports = str2BN
-
-function str2BN(x) {
-  return new BN(x)
-}
-
-},{"bn.js":39}],38:[function(require,module,exports){
-'use strict'
-
-var rationalize = require('./lib/rationalize')
-
-module.exports = mul
-
-function mul(a, b) {
-  return rationalize(a[0].mul(b[0]), a[1].mul(b[1]))
-}
-
-},{"./lib/rationalize":36}],39:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 (function (module, exports) {
 
 'use strict';
@@ -6608,72 +3515,7 @@ Mont.prototype.invm = function invm(a) {
 
 })(typeof module === 'undefined' || module, this);
 
-},{}],40:[function(require,module,exports){
-'use strict'
-
-var bnsign = require('./lib/bn-sign')
-
-module.exports = sign
-
-function sign(x) {
-  return bnsign(x[0]) * bnsign(x[1])
-}
-
-},{"./lib/bn-sign":31}],41:[function(require,module,exports){
-'use strict'
-
-var rationalize = require('./lib/rationalize')
-
-module.exports = sub
-
-function sub(a, b) {
-  return rationalize(a[0].mul(b[1]).sub(a[1].mul(b[0])), a[1].mul(b[1]))
-}
-
-},{"./lib/rationalize":36}],42:[function(require,module,exports){
-'use strict'
-
-var bn2num = require('./lib/bn-to-num')
-var ctz = require('./lib/ctz')
-
-module.exports = roundRat
-
-//Round a rational to the closest float
-function roundRat(f) {
-  var a = f[0]
-  var b = f[1]
-  if(a.cmpn(0) === 0) {
-    return 0
-  }
-  var h = a.divmod(b)
-  var iv = h.div
-  var x = bn2num(iv)
-  var ir = h.mod
-  if(ir.cmpn(0) === 0) {
-    return x
-  }
-  if(x) {
-    var s = ctz(x) + 4
-    var y = bn2num(ir.shln(s).divRound(b))
-
-    // flip the sign of y if x is negative
-    if (x<0) {
-      y = -y;
-    }
-
-    return x + y * Math.pow(2, -s)
-  } else {
-    var ybits = b.bitLength() - ir.bitLength() + 53
-    var y = bn2num(ir.shln(ybits).divRound(b))
-    if(ybits < 1023) {
-      return y * Math.pow(2, -ybits)
-    }
-    y *= Math.pow(2, -1023)
-    return y * Math.pow(2, 1023-ybits)
-  }
-}
-
-},{"./lib/bn-to-num":32,"./lib/ctz":33}],43:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 'use strict'
 
 module.exports = boxIntersectWrapper
@@ -6812,7 +3654,7 @@ function boxIntersectWrapper(arg0, arg1, arg2) {
       throw new Error('box-intersect: Invalid arguments')
   }
 }
-},{"./lib/intersect":45,"./lib/sweep":49,"typedarray-pool":180}],44:[function(require,module,exports){
+},{"./lib/intersect":34,"./lib/sweep":38,"typedarray-pool":170}],33:[function(require,module,exports){
 'use strict'
 
 var DIMENSION   = 'd'
@@ -6957,7 +3799,7 @@ function bruteForcePlanner(full) {
 
 exports.partial = bruteForcePlanner(false)
 exports.full    = bruteForcePlanner(true)
-},{}],45:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 'use strict'
 
 module.exports = boxIntersectIter
@@ -7452,7 +4294,7 @@ function boxIntersectIter(
     }
   }
 }
-},{"./brute":44,"./median":46,"./partition":47,"./sweep":49,"bit-twiddle":10,"typedarray-pool":180}],46:[function(require,module,exports){
+},{"./brute":33,"./median":35,"./partition":36,"./sweep":38,"bit-twiddle":30,"typedarray-pool":170}],35:[function(require,module,exports){
 'use strict'
 
 module.exports = findMedian
@@ -7595,7 +4437,7 @@ function findMedian(d, axis, start, end, boxes, ids) {
     start, mid, boxes, ids,
     boxes[elemSize*mid+axis])
 }
-},{"./partition":47}],47:[function(require,module,exports){
+},{"./partition":36}],36:[function(require,module,exports){
 'use strict'
 
 module.exports = genPartition
@@ -7616,7 +4458,7 @@ function genPartition(predicate, args) {
         .replace('$', predicate))
   return Function.apply(void 0, fargs)
 }
-},{}],48:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 'use strict';
 
 //This code is extracted from ndarray-sort
@@ -7853,7 +4695,7 @@ function quickSort(left, right, data) {
     quickSort(less, great, data);
   }
 }
-},{}],49:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -8288,330 +5130,2706 @@ red_loop:
     }
   }
 }
-},{"./sort":48,"bit-twiddle":10,"typedarray-pool":180}],50:[function(require,module,exports){
-(function (Buffer){
-var hasTypedArrays = false
-if(typeof Float64Array !== "undefined") {
-  var DOUBLE_VIEW = new Float64Array(1)
-    , UINT_VIEW   = new Uint32Array(DOUBLE_VIEW.buffer)
-  DOUBLE_VIEW[0] = 1.0
-  hasTypedArrays = true
-  if(UINT_VIEW[1] === 0x3ff00000) {
-    //Use little endian
-    module.exports = function doubleBitsLE(n) {
-      DOUBLE_VIEW[0] = n
-      return [ UINT_VIEW[0], UINT_VIEW[1] ]
-    }
-    function toDoubleLE(lo, hi) {
-      UINT_VIEW[0] = lo
-      UINT_VIEW[1] = hi
-      return DOUBLE_VIEW[0]
-    }
-    module.exports.pack = toDoubleLE
-    function lowUintLE(n) {
-      DOUBLE_VIEW[0] = n
-      return UINT_VIEW[0]
-    }
-    module.exports.lo = lowUintLE
-    function highUintLE(n) {
-      DOUBLE_VIEW[0] = n
-      return UINT_VIEW[1]
-    }
-    module.exports.hi = highUintLE
-  } else if(UINT_VIEW[0] === 0x3ff00000) {
-    //Use big endian
-    module.exports = function doubleBitsBE(n) {
-      DOUBLE_VIEW[0] = n
-      return [ UINT_VIEW[1], UINT_VIEW[0] ]
-    }
-    function toDoubleBE(lo, hi) {
-      UINT_VIEW[1] = lo
-      UINT_VIEW[0] = hi
-      return DOUBLE_VIEW[0]
-    }
-    module.exports.pack = toDoubleBE
-    function lowUintBE(n) {
-      DOUBLE_VIEW[0] = n
-      return UINT_VIEW[1]
-    }
-    module.exports.lo = lowUintBE
-    function highUintBE(n) {
-      DOUBLE_VIEW[0] = n
-      return UINT_VIEW[0]
-    }
-    module.exports.hi = highUintBE
-  } else {
-    hasTypedArrays = false
-  }
-}
-if(!hasTypedArrays) {
-  var buffer = new Buffer(8)
-  module.exports = function doubleBits(n) {
-    buffer.writeDoubleLE(n, 0, true)
-    return [ buffer.readUInt32LE(0, true), buffer.readUInt32LE(4, true) ]
-  }
-  function toDouble(lo, hi) {
-    buffer.writeUInt32LE(lo, 0, true)
-    buffer.writeUInt32LE(hi, 4, true)
-    return buffer.readDoubleLE(0, true)
-  }
-  module.exports.pack = toDouble  
-  function lowUint(n) {
-    buffer.writeDoubleLE(n, 0, true)
-    return buffer.readUInt32LE(0, true)
-  }
-  module.exports.lo = lowUint
-  function highUint(n) {
-    buffer.writeDoubleLE(n, 0, true)
-    return buffer.readUInt32LE(4, true)
-  }
-  module.exports.hi = highUint
-}
+},{"./sort":37,"bit-twiddle":30,"typedarray-pool":170}],39:[function(require,module,exports){
+(function (global){
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+/* eslint-disable no-proto */
 
-module.exports.sign = function(n) {
-  return module.exports.hi(n) >>> 31
-}
-
-module.exports.exponent = function(n) {
-  var b = module.exports.hi(n)
-  return ((b<<1) >>> 21) - 1023
-}
-
-module.exports.fraction = function(n) {
-  var lo = module.exports.lo(n)
-  var hi = module.exports.hi(n)
-  var b = hi & ((1<<20) - 1)
-  if(hi & 0x7ff00000) {
-    b += (1<<20)
-  }
-  return [lo, b]
-}
-
-module.exports.denormalized = function(n) {
-  var hi = module.exports.hi(n)
-  return !(hi & 0x7ff00000)
-}
-}).call(this,require("buffer").Buffer)
-},{"buffer":11}],51:[function(require,module,exports){
-"use strict"
-
-var doubleBits = require("double-bits")
-
-var SMALLEST_DENORM = Math.pow(2, -1074)
-var UINT_MAX = (-1)>>>0
-
-module.exports = nextafter
-
-function nextafter(x, y) {
-  if(isNaN(x) || isNaN(y)) {
-    return NaN
-  }
-  if(x === y) {
-    return x
-  }
-  if(x === 0) {
-    if(y < 0) {
-      return -SMALLEST_DENORM
-    } else {
-      return SMALLEST_DENORM
-    }
-  }
-  var hi = doubleBits.hi(x)
-  var lo = doubleBits.lo(x)
-  if((y > x) === (x > 0)) {
-    if(lo === UINT_MAX) {
-      hi += 1
-      lo = 0
-    } else {
-      lo += 1
-    }
-  } else {
-    if(lo === 0) {
-      lo = UINT_MAX
-      hi -= 1
-    } else {
-      lo -= 1
-    }
-  }
-  return doubleBits.pack(lo, hi)
-}
-},{"double-bits":50}],52:[function(require,module,exports){
 'use strict'
 
-var bnadd = require('big-rat/add')
+var base64 = require('base64-js')
+var ieee754 = require('ieee754')
+var isArray = require('isarray')
 
-module.exports = add
+exports.Buffer = Buffer
+exports.SlowBuffer = SlowBuffer
+exports.INSPECT_MAX_BYTES = 50
+Buffer.poolSize = 8192 // not used by this implementation
 
-function add(a, b) {
-  var n = a.length
-  var r = new Array(n)
-    for(var i=0; i<n; ++i) {
-    r[i] = bnadd(a[i], b[i])
+var rootParent = {}
+
+/**
+ * If `Buffer.TYPED_ARRAY_SUPPORT`:
+ *   === true    Use Uint8Array implementation (fastest)
+ *   === false   Use Object implementation (most compatible, even IE6)
+ *
+ * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+ * Opera 11.6+, iOS 4.2+.
+ *
+ * Due to various browser bugs, sometimes the Object implementation will be used even
+ * when the browser supports typed arrays.
+ *
+ * Note:
+ *
+ *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+ *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+ *
+ *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+ *
+ *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+ *     incorrect length in some situations.
+
+ * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+ * get the Object implementation, which is slower but behaves correctly.
+ */
+Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+  ? global.TYPED_ARRAY_SUPPORT
+  : typedArraySupport()
+
+function typedArraySupport () {
+  try {
+    var arr = new Uint8Array(1)
+    arr.foo = function () { return 42 }
+    return arr.foo() === 42 && // typed array instances can be augmented
+        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+  } catch (e) {
+    return false
   }
-  return r
 }
 
-},{"big-rat/add":26}],53:[function(require,module,exports){
+function kMaxLength () {
+  return Buffer.TYPED_ARRAY_SUPPORT
+    ? 0x7fffffff
+    : 0x3fffffff
+}
+
+/**
+ * The Buffer constructor returns instances of `Uint8Array` that have their
+ * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+ * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+ * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+ * returns a single octet.
+ *
+ * The `Uint8Array` prototype remains unmodified.
+ */
+function Buffer (arg) {
+  if (!(this instanceof Buffer)) {
+    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
+    if (arguments.length > 1) return new Buffer(arg, arguments[1])
+    return new Buffer(arg)
+  }
+
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    this.length = 0
+    this.parent = undefined
+  }
+
+  // Common case.
+  if (typeof arg === 'number') {
+    return fromNumber(this, arg)
+  }
+
+  // Slightly less common case.
+  if (typeof arg === 'string') {
+    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
+  }
+
+  // Unusual.
+  return fromObject(this, arg)
+}
+
+// TODO: Legacy, not needed anymore. Remove in next major version.
+Buffer._augment = function (arr) {
+  arr.__proto__ = Buffer.prototype
+  return arr
+}
+
+function fromNumber (that, length) {
+  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+    for (var i = 0; i < length; i++) {
+      that[i] = 0
+    }
+  }
+  return that
+}
+
+function fromString (that, string, encoding) {
+  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
+
+  // Assumption: byteLength() return value is always < kMaxLength.
+  var length = byteLength(string, encoding) | 0
+  that = allocate(that, length)
+
+  that.write(string, encoding)
+  return that
+}
+
+function fromObject (that, object) {
+  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
+
+  if (isArray(object)) return fromArray(that, object)
+
+  if (object == null) {
+    throw new TypeError('must start with number, buffer, array or string')
+  }
+
+  if (typeof ArrayBuffer !== 'undefined') {
+    if (object.buffer instanceof ArrayBuffer) {
+      return fromTypedArray(that, object)
+    }
+    if (object instanceof ArrayBuffer) {
+      return fromArrayBuffer(that, object)
+    }
+  }
+
+  if (object.length) return fromArrayLike(that, object)
+
+  return fromJsonObject(that, object)
+}
+
+function fromBuffer (that, buffer) {
+  var length = checked(buffer.length) | 0
+  that = allocate(that, length)
+  buffer.copy(that, 0, 0, length)
+  return that
+}
+
+function fromArray (that, array) {
+  var length = checked(array.length) | 0
+  that = allocate(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+// Duplicate of fromArray() to keep fromArray() monomorphic.
+function fromTypedArray (that, array) {
+  var length = checked(array.length) | 0
+  that = allocate(that, length)
+  // Truncating the elements is probably not what people expect from typed
+  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
+  // of the old Buffer constructor.
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+function fromArrayBuffer (that, array) {
+  array.byteLength // this throws if `array` is not a valid ArrayBuffer
+
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(array)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that = fromTypedArray(that, new Uint8Array(array))
+  }
+  return that
+}
+
+function fromArrayLike (that, array) {
+  var length = checked(array.length) | 0
+  that = allocate(that, length)
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
+// Returns a zero-length buffer for inputs that don't conform to the spec.
+function fromJsonObject (that, object) {
+  var array
+  var length = 0
+
+  if (object.type === 'Buffer' && isArray(object.data)) {
+    array = object.data
+    length = checked(array.length) | 0
+  }
+  that = allocate(that, length)
+
+  for (var i = 0; i < length; i += 1) {
+    that[i] = array[i] & 255
+  }
+  return that
+}
+
+if (Buffer.TYPED_ARRAY_SUPPORT) {
+  Buffer.prototype.__proto__ = Uint8Array.prototype
+  Buffer.__proto__ = Uint8Array
+  if (typeof Symbol !== 'undefined' && Symbol.species &&
+      Buffer[Symbol.species] === Buffer) {
+    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+    Object.defineProperty(Buffer, Symbol.species, {
+      value: null,
+      configurable: true
+    })
+  }
+} else {
+  // pre-set for values that may exist in the future
+  Buffer.prototype.length = undefined
+  Buffer.prototype.parent = undefined
+}
+
+function allocate (that, length) {
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    // Return an augmented `Uint8Array` instance, for best performance
+    that = new Uint8Array(length)
+    that.__proto__ = Buffer.prototype
+  } else {
+    // Fallback: Return an object instance of the Buffer class
+    that.length = length
+  }
+
+  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
+  if (fromPool) that.parent = rootParent
+
+  return that
+}
+
+function checked (length) {
+  // Note: cannot use `length < kMaxLength` here because that fails when
+  // length is NaN (which is otherwise coerced to zero.)
+  if (length >= kMaxLength()) {
+    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+  }
+  return length | 0
+}
+
+function SlowBuffer (subject, encoding) {
+  if (!(this instanceof SlowBuffer)) return new SlowBuffer(subject, encoding)
+
+  var buf = new Buffer(subject, encoding)
+  delete buf.parent
+  return buf
+}
+
+Buffer.isBuffer = function isBuffer (b) {
+  return !!(b != null && b._isBuffer)
+}
+
+Buffer.compare = function compare (a, b) {
+  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+    throw new TypeError('Arguments must be Buffers')
+  }
+
+  if (a === b) return 0
+
+  var x = a.length
+  var y = b.length
+
+  var i = 0
+  var len = Math.min(x, y)
+  while (i < len) {
+    if (a[i] !== b[i]) break
+
+    ++i
+  }
+
+  if (i !== len) {
+    x = a[i]
+    y = b[i]
+  }
+
+  if (x < y) return -1
+  if (y < x) return 1
+  return 0
+}
+
+Buffer.isEncoding = function isEncoding (encoding) {
+  switch (String(encoding).toLowerCase()) {
+    case 'hex':
+    case 'utf8':
+    case 'utf-8':
+    case 'ascii':
+    case 'binary':
+    case 'base64':
+    case 'raw':
+    case 'ucs2':
+    case 'ucs-2':
+    case 'utf16le':
+    case 'utf-16le':
+      return true
+    default:
+      return false
+  }
+}
+
+Buffer.concat = function concat (list, length) {
+  if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
+
+  if (list.length === 0) {
+    return new Buffer(0)
+  }
+
+  var i
+  if (length === undefined) {
+    length = 0
+    for (i = 0; i < list.length; i++) {
+      length += list[i].length
+    }
+  }
+
+  var buf = new Buffer(length)
+  var pos = 0
+  for (i = 0; i < list.length; i++) {
+    var item = list[i]
+    item.copy(buf, pos)
+    pos += item.length
+  }
+  return buf
+}
+
+function byteLength (string, encoding) {
+  if (typeof string !== 'string') string = '' + string
+
+  var len = string.length
+  if (len === 0) return 0
+
+  // Use a for loop to avoid recursion
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'ascii':
+      case 'binary':
+      // Deprecated
+      case 'raw':
+      case 'raws':
+        return len
+      case 'utf8':
+      case 'utf-8':
+        return utf8ToBytes(string).length
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return len * 2
+      case 'hex':
+        return len >>> 1
+      case 'base64':
+        return base64ToBytes(string).length
+      default:
+        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+Buffer.byteLength = byteLength
+
+function slowToString (encoding, start, end) {
+  var loweredCase = false
+
+  start = start | 0
+  end = end === undefined || end === Infinity ? this.length : end | 0
+
+  if (!encoding) encoding = 'utf8'
+  if (start < 0) start = 0
+  if (end > this.length) end = this.length
+  if (end <= start) return ''
+
+  while (true) {
+    switch (encoding) {
+      case 'hex':
+        return hexSlice(this, start, end)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Slice(this, start, end)
+
+      case 'ascii':
+        return asciiSlice(this, start, end)
+
+      case 'binary':
+        return binarySlice(this, start, end)
+
+      case 'base64':
+        return base64Slice(this, start, end)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return utf16leSlice(this, start, end)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = (encoding + '').toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+// Buffer instances.
+Buffer.prototype._isBuffer = true
+
+Buffer.prototype.toString = function toString () {
+  var length = this.length | 0
+  if (length === 0) return ''
+  if (arguments.length === 0) return utf8Slice(this, 0, length)
+  return slowToString.apply(this, arguments)
+}
+
+Buffer.prototype.equals = function equals (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return true
+  return Buffer.compare(this, b) === 0
+}
+
+Buffer.prototype.inspect = function inspect () {
+  var str = ''
+  var max = exports.INSPECT_MAX_BYTES
+  if (this.length > 0) {
+    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+    if (this.length > max) str += ' ... '
+  }
+  return '<Buffer ' + str + '>'
+}
+
+Buffer.prototype.compare = function compare (b) {
+  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+  if (this === b) return 0
+  return Buffer.compare(this, b)
+}
+
+Buffer.prototype.indexOf = function indexOf (val, byteOffset) {
+  if (byteOffset > 0x7fffffff) byteOffset = 0x7fffffff
+  else if (byteOffset < -0x80000000) byteOffset = -0x80000000
+  byteOffset >>= 0
+
+  if (this.length === 0) return -1
+  if (byteOffset >= this.length) return -1
+
+  // Negative offsets start from the end of the buffer
+  if (byteOffset < 0) byteOffset = Math.max(this.length + byteOffset, 0)
+
+  if (typeof val === 'string') {
+    if (val.length === 0) return -1 // special case: looking for empty string always fails
+    return String.prototype.indexOf.call(this, val, byteOffset)
+  }
+  if (Buffer.isBuffer(val)) {
+    return arrayIndexOf(this, val, byteOffset)
+  }
+  if (typeof val === 'number') {
+    if (Buffer.TYPED_ARRAY_SUPPORT && Uint8Array.prototype.indexOf === 'function') {
+      return Uint8Array.prototype.indexOf.call(this, val, byteOffset)
+    }
+    return arrayIndexOf(this, [ val ], byteOffset)
+  }
+
+  function arrayIndexOf (arr, val, byteOffset) {
+    var foundIndex = -1
+    for (var i = 0; byteOffset + i < arr.length; i++) {
+      if (arr[byteOffset + i] === val[foundIndex === -1 ? 0 : i - foundIndex]) {
+        if (foundIndex === -1) foundIndex = i
+        if (i - foundIndex + 1 === val.length) return byteOffset + foundIndex
+      } else {
+        foundIndex = -1
+      }
+    }
+    return -1
+  }
+
+  throw new TypeError('val must be string, number or Buffer')
+}
+
+function hexWrite (buf, string, offset, length) {
+  offset = Number(offset) || 0
+  var remaining = buf.length - offset
+  if (!length) {
+    length = remaining
+  } else {
+    length = Number(length)
+    if (length > remaining) {
+      length = remaining
+    }
+  }
+
+  // must be an even number of digits
+  var strLen = string.length
+  if (strLen % 2 !== 0) throw new Error('Invalid hex string')
+
+  if (length > strLen / 2) {
+    length = strLen / 2
+  }
+  for (var i = 0; i < length; i++) {
+    var parsed = parseInt(string.substr(i * 2, 2), 16)
+    if (isNaN(parsed)) throw new Error('Invalid hex string')
+    buf[offset + i] = parsed
+  }
+  return i
+}
+
+function utf8Write (buf, string, offset, length) {
+  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+function asciiWrite (buf, string, offset, length) {
+  return blitBuffer(asciiToBytes(string), buf, offset, length)
+}
+
+function binaryWrite (buf, string, offset, length) {
+  return asciiWrite(buf, string, offset, length)
+}
+
+function base64Write (buf, string, offset, length) {
+  return blitBuffer(base64ToBytes(string), buf, offset, length)
+}
+
+function ucs2Write (buf, string, offset, length) {
+  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+}
+
+Buffer.prototype.write = function write (string, offset, length, encoding) {
+  // Buffer#write(string)
+  if (offset === undefined) {
+    encoding = 'utf8'
+    length = this.length
+    offset = 0
+  // Buffer#write(string, encoding)
+  } else if (length === undefined && typeof offset === 'string') {
+    encoding = offset
+    length = this.length
+    offset = 0
+  // Buffer#write(string, offset[, length][, encoding])
+  } else if (isFinite(offset)) {
+    offset = offset | 0
+    if (isFinite(length)) {
+      length = length | 0
+      if (encoding === undefined) encoding = 'utf8'
+    } else {
+      encoding = length
+      length = undefined
+    }
+  // legacy write(string, encoding, offset, length) - remove in v0.13
+  } else {
+    var swap = encoding
+    encoding = offset
+    offset = length | 0
+    length = swap
+  }
+
+  var remaining = this.length - offset
+  if (length === undefined || length > remaining) length = remaining
+
+  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+    throw new RangeError('attempt to write outside buffer bounds')
+  }
+
+  if (!encoding) encoding = 'utf8'
+
+  var loweredCase = false
+  for (;;) {
+    switch (encoding) {
+      case 'hex':
+        return hexWrite(this, string, offset, length)
+
+      case 'utf8':
+      case 'utf-8':
+        return utf8Write(this, string, offset, length)
+
+      case 'ascii':
+        return asciiWrite(this, string, offset, length)
+
+      case 'binary':
+        return binaryWrite(this, string, offset, length)
+
+      case 'base64':
+        // Warning: maxLength not taken into account in base64Write
+        return base64Write(this, string, offset, length)
+
+      case 'ucs2':
+      case 'ucs-2':
+      case 'utf16le':
+      case 'utf-16le':
+        return ucs2Write(this, string, offset, length)
+
+      default:
+        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+        encoding = ('' + encoding).toLowerCase()
+        loweredCase = true
+    }
+  }
+}
+
+Buffer.prototype.toJSON = function toJSON () {
+  return {
+    type: 'Buffer',
+    data: Array.prototype.slice.call(this._arr || this, 0)
+  }
+}
+
+function base64Slice (buf, start, end) {
+  if (start === 0 && end === buf.length) {
+    return base64.fromByteArray(buf)
+  } else {
+    return base64.fromByteArray(buf.slice(start, end))
+  }
+}
+
+function utf8Slice (buf, start, end) {
+  end = Math.min(buf.length, end)
+  var res = []
+
+  var i = start
+  while (i < end) {
+    var firstByte = buf[i]
+    var codePoint = null
+    var bytesPerSequence = (firstByte > 0xEF) ? 4
+      : (firstByte > 0xDF) ? 3
+      : (firstByte > 0xBF) ? 2
+      : 1
+
+    if (i + bytesPerSequence <= end) {
+      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+      switch (bytesPerSequence) {
+        case 1:
+          if (firstByte < 0x80) {
+            codePoint = firstByte
+          }
+          break
+        case 2:
+          secondByte = buf[i + 1]
+          if ((secondByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+            if (tempCodePoint > 0x7F) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 3:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+              codePoint = tempCodePoint
+            }
+          }
+          break
+        case 4:
+          secondByte = buf[i + 1]
+          thirdByte = buf[i + 2]
+          fourthByte = buf[i + 3]
+          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+              codePoint = tempCodePoint
+            }
+          }
+      }
+    }
+
+    if (codePoint === null) {
+      // we did not generate a valid codePoint so insert a
+      // replacement char (U+FFFD) and advance only 1 byte
+      codePoint = 0xFFFD
+      bytesPerSequence = 1
+    } else if (codePoint > 0xFFFF) {
+      // encode to utf16 (surrogate pair dance)
+      codePoint -= 0x10000
+      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+      codePoint = 0xDC00 | codePoint & 0x3FF
+    }
+
+    res.push(codePoint)
+    i += bytesPerSequence
+  }
+
+  return decodeCodePointsArray(res)
+}
+
+// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+// the lowest limit is Chrome, with 0x10000 args.
+// We go 1 magnitude less, for safety
+var MAX_ARGUMENTS_LENGTH = 0x1000
+
+function decodeCodePointsArray (codePoints) {
+  var len = codePoints.length
+  if (len <= MAX_ARGUMENTS_LENGTH) {
+    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+  }
+
+  // Decode in chunks to avoid "call stack size exceeded".
+  var res = ''
+  var i = 0
+  while (i < len) {
+    res += String.fromCharCode.apply(
+      String,
+      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+    )
+  }
+  return res
+}
+
+function asciiSlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; i++) {
+    ret += String.fromCharCode(buf[i] & 0x7F)
+  }
+  return ret
+}
+
+function binarySlice (buf, start, end) {
+  var ret = ''
+  end = Math.min(buf.length, end)
+
+  for (var i = start; i < end; i++) {
+    ret += String.fromCharCode(buf[i])
+  }
+  return ret
+}
+
+function hexSlice (buf, start, end) {
+  var len = buf.length
+
+  if (!start || start < 0) start = 0
+  if (!end || end < 0 || end > len) end = len
+
+  var out = ''
+  for (var i = start; i < end; i++) {
+    out += toHex(buf[i])
+  }
+  return out
+}
+
+function utf16leSlice (buf, start, end) {
+  var bytes = buf.slice(start, end)
+  var res = ''
+  for (var i = 0; i < bytes.length; i += 2) {
+    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+  }
+  return res
+}
+
+Buffer.prototype.slice = function slice (start, end) {
+  var len = this.length
+  start = ~~start
+  end = end === undefined ? len : ~~end
+
+  if (start < 0) {
+    start += len
+    if (start < 0) start = 0
+  } else if (start > len) {
+    start = len
+  }
+
+  if (end < 0) {
+    end += len
+    if (end < 0) end = 0
+  } else if (end > len) {
+    end = len
+  }
+
+  if (end < start) end = start
+
+  var newBuf
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    newBuf = this.subarray(start, end)
+    newBuf.__proto__ = Buffer.prototype
+  } else {
+    var sliceLen = end - start
+    newBuf = new Buffer(sliceLen, undefined)
+    for (var i = 0; i < sliceLen; i++) {
+      newBuf[i] = this[i + start]
+    }
+  }
+
+  if (newBuf.length) newBuf.parent = this.parent || this
+
+  return newBuf
+}
+
+/*
+ * Need to make sure that buffer isn't trying to write out of bounds.
+ */
+function checkOffset (offset, ext, length) {
+  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+}
+
+Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) {
+    checkOffset(offset, byteLength, this.length)
+  }
+
+  var val = this[offset + --byteLength]
+  var mul = 1
+  while (byteLength > 0 && (mul *= 0x100)) {
+    val += this[offset + --byteLength] * mul
+  }
+
+  return val
+}
+
+Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  return this[offset]
+}
+
+Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return this[offset] | (this[offset + 1] << 8)
+}
+
+Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  return (this[offset] << 8) | this[offset + 1]
+}
+
+Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return ((this[offset]) |
+      (this[offset + 1] << 8) |
+      (this[offset + 2] << 16)) +
+      (this[offset + 3] * 0x1000000)
+}
+
+Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] * 0x1000000) +
+    ((this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    this[offset + 3])
+}
+
+Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var val = this[offset]
+  var mul = 1
+  var i = 0
+  while (++i < byteLength && (mul *= 0x100)) {
+    val += this[offset + i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+  var i = byteLength
+  var mul = 1
+  var val = this[offset + --i]
+  while (i > 0 && (mul *= 0x100)) {
+    val += this[offset + --i] * mul
+  }
+  mul *= 0x80
+
+  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+  return val
+}
+
+Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 1, this.length)
+  if (!(this[offset] & 0x80)) return (this[offset])
+  return ((0xff - this[offset] + 1) * -1)
+}
+
+Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset] | (this[offset + 1] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 2, this.length)
+  var val = this[offset + 1] | (this[offset] << 8)
+  return (val & 0x8000) ? val | 0xFFFF0000 : val
+}
+
+Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset]) |
+    (this[offset + 1] << 8) |
+    (this[offset + 2] << 16) |
+    (this[offset + 3] << 24)
+}
+
+Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+
+  return (this[offset] << 24) |
+    (this[offset + 1] << 16) |
+    (this[offset + 2] << 8) |
+    (this[offset + 3])
+}
+
+Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, true, 23, 4)
+}
+
+Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 4, this.length)
+  return ieee754.read(this, offset, false, 23, 4)
+}
+
+Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, true, 52, 8)
+}
+
+Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+  if (!noAssert) checkOffset(offset, 8, this.length)
+  return ieee754.read(this, offset, false, 52, 8)
+}
+
+function checkInt (buf, value, offset, ext, max, min) {
+  if (!Buffer.isBuffer(buf)) throw new TypeError('buffer must be a Buffer instance')
+  if (value > max || value < min) throw new RangeError('value is out of bounds')
+  if (offset + ext > buf.length) throw new RangeError('index out of range')
+}
+
+Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+
+  var mul = 1
+  var i = 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  byteLength = byteLength | 0
+  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+
+  var i = byteLength - 1
+  var mul = 1
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = (value / mul) & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+function objectWriteUInt16 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; i++) {
+    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+      (littleEndian ? i : 1 - i) * 8
+  }
+}
+
+Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+function objectWriteUInt32 (buf, value, offset, littleEndian) {
+  if (value < 0) value = 0xffffffff + value + 1
+  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; i++) {
+    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+  }
+}
+
+Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset + 3] = (value >>> 24)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 1] = (value >>> 8)
+    this[offset] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = 0
+  var mul = 1
+  var sub = value < 0 ? 1 : 0
+  this[offset] = value & 0xFF
+  while (++i < byteLength && (mul *= 0x100)) {
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) {
+    var limit = Math.pow(2, 8 * byteLength - 1)
+
+    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+  }
+
+  var i = byteLength - 1
+  var mul = 1
+  var sub = value < 0 ? 1 : 0
+  this[offset + i] = value & 0xFF
+  while (--i >= 0 && (mul *= 0x100)) {
+    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+  }
+
+  return offset + byteLength
+}
+
+Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+  if (value < 0) value = 0xff + value + 1
+  this[offset] = (value & 0xff)
+  return offset + 1
+}
+
+Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+  } else {
+    objectWriteUInt16(this, value, offset, true)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 8)
+    this[offset + 1] = (value & 0xff)
+  } else {
+    objectWriteUInt16(this, value, offset, false)
+  }
+  return offset + 2
+}
+
+Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value & 0xff)
+    this[offset + 1] = (value >>> 8)
+    this[offset + 2] = (value >>> 16)
+    this[offset + 3] = (value >>> 24)
+  } else {
+    objectWriteUInt32(this, value, offset, true)
+  }
+  return offset + 4
+}
+
+Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+  value = +value
+  offset = offset | 0
+  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+  if (value < 0) value = 0xffffffff + value + 1
+  if (Buffer.TYPED_ARRAY_SUPPORT) {
+    this[offset] = (value >>> 24)
+    this[offset + 1] = (value >>> 16)
+    this[offset + 2] = (value >>> 8)
+    this[offset + 3] = (value & 0xff)
+  } else {
+    objectWriteUInt32(this, value, offset, false)
+  }
+  return offset + 4
+}
+
+function checkIEEE754 (buf, value, offset, ext, max, min) {
+  if (offset + ext > buf.length) throw new RangeError('index out of range')
+  if (offset < 0) throw new RangeError('index out of range')
+}
+
+function writeFloat (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+  return offset + 4
+}
+
+Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+  return writeFloat(this, value, offset, false, noAssert)
+}
+
+function writeDouble (buf, value, offset, littleEndian, noAssert) {
+  if (!noAssert) {
+    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+  }
+  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+  return offset + 8
+}
+
+Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, true, noAssert)
+}
+
+Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+  return writeDouble(this, value, offset, false, noAssert)
+}
+
+// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+  if (!start) start = 0
+  if (!end && end !== 0) end = this.length
+  if (targetStart >= target.length) targetStart = target.length
+  if (!targetStart) targetStart = 0
+  if (end > 0 && end < start) end = start
+
+  // Copy 0 bytes; we're done
+  if (end === start) return 0
+  if (target.length === 0 || this.length === 0) return 0
+
+  // Fatal error conditions
+  if (targetStart < 0) {
+    throw new RangeError('targetStart out of bounds')
+  }
+  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+  // Are we oob?
+  if (end > this.length) end = this.length
+  if (target.length - targetStart < end - start) {
+    end = target.length - targetStart + start
+  }
+
+  var len = end - start
+  var i
+
+  if (this === target && start < targetStart && targetStart < end) {
+    // descending copy from end
+    for (i = len - 1; i >= 0; i--) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+    // ascending copy from start
+    for (i = 0; i < len; i++) {
+      target[i + targetStart] = this[i + start]
+    }
+  } else {
+    Uint8Array.prototype.set.call(
+      target,
+      this.subarray(start, start + len),
+      targetStart
+    )
+  }
+
+  return len
+}
+
+// fill(value, start=0, end=buffer.length)
+Buffer.prototype.fill = function fill (value, start, end) {
+  if (!value) value = 0
+  if (!start) start = 0
+  if (!end) end = this.length
+
+  if (end < start) throw new RangeError('end < start')
+
+  // Fill 0 bytes; we're done
+  if (end === start) return
+  if (this.length === 0) return
+
+  if (start < 0 || start >= this.length) throw new RangeError('start out of bounds')
+  if (end < 0 || end > this.length) throw new RangeError('end out of bounds')
+
+  var i
+  if (typeof value === 'number') {
+    for (i = start; i < end; i++) {
+      this[i] = value
+    }
+  } else {
+    var bytes = utf8ToBytes(value.toString())
+    var len = bytes.length
+    for (i = start; i < end; i++) {
+      this[i] = bytes[i % len]
+    }
+  }
+
+  return this
+}
+
+// HELPER FUNCTIONS
+// ================
+
+var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+function base64clean (str) {
+  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+  // Node converts strings with length < 2 to ''
+  if (str.length < 2) return ''
+  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+  while (str.length % 4 !== 0) {
+    str = str + '='
+  }
+  return str
+}
+
+function stringtrim (str) {
+  if (str.trim) return str.trim()
+  return str.replace(/^\s+|\s+$/g, '')
+}
+
+function toHex (n) {
+  if (n < 16) return '0' + n.toString(16)
+  return n.toString(16)
+}
+
+function utf8ToBytes (string, units) {
+  units = units || Infinity
+  var codePoint
+  var length = string.length
+  var leadSurrogate = null
+  var bytes = []
+
+  for (var i = 0; i < length; i++) {
+    codePoint = string.charCodeAt(i)
+
+    // is surrogate component
+    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+      // last char was a lead
+      if (!leadSurrogate) {
+        // no lead yet
+        if (codePoint > 0xDBFF) {
+          // unexpected trail
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        } else if (i + 1 === length) {
+          // unpaired lead
+          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+          continue
+        }
+
+        // valid lead
+        leadSurrogate = codePoint
+
+        continue
+      }
+
+      // 2 leads in a row
+      if (codePoint < 0xDC00) {
+        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+        leadSurrogate = codePoint
+        continue
+      }
+
+      // valid surrogate pair
+      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+    } else if (leadSurrogate) {
+      // valid bmp char, but last char was a lead
+      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+    }
+
+    leadSurrogate = null
+
+    // encode utf8
+    if (codePoint < 0x80) {
+      if ((units -= 1) < 0) break
+      bytes.push(codePoint)
+    } else if (codePoint < 0x800) {
+      if ((units -= 2) < 0) break
+      bytes.push(
+        codePoint >> 0x6 | 0xC0,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x10000) {
+      if ((units -= 3) < 0) break
+      bytes.push(
+        codePoint >> 0xC | 0xE0,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else if (codePoint < 0x110000) {
+      if ((units -= 4) < 0) break
+      bytes.push(
+        codePoint >> 0x12 | 0xF0,
+        codePoint >> 0xC & 0x3F | 0x80,
+        codePoint >> 0x6 & 0x3F | 0x80,
+        codePoint & 0x3F | 0x80
+      )
+    } else {
+      throw new Error('Invalid code point')
+    }
+  }
+
+  return bytes
+}
+
+function asciiToBytes (str) {
+  var byteArray = []
+  for (var i = 0; i < str.length; i++) {
+    // Node's code seems to be doing this and not & 0x7F..
+    byteArray.push(str.charCodeAt(i) & 0xFF)
+  }
+  return byteArray
+}
+
+function utf16leToBytes (str, units) {
+  var c, hi, lo
+  var byteArray = []
+  for (var i = 0; i < str.length; i++) {
+    if ((units -= 2) < 0) break
+
+    c = str.charCodeAt(i)
+    hi = c >> 8
+    lo = c % 256
+    byteArray.push(lo)
+    byteArray.push(hi)
+  }
+
+  return byteArray
+}
+
+function base64ToBytes (str) {
+  return base64.toByteArray(base64clean(str))
+}
+
+function blitBuffer (src, dst, offset, length) {
+  for (var i = 0; i < length; i++) {
+    if ((i + offset >= dst.length) || (i >= src.length)) break
+    dst[i + offset] = src[i]
+  }
+  return i
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"base64-js":12,"ieee754":121,"isarray":40}],40:[function(require,module,exports){
+var toString = {}.toString;
+
+module.exports = Array.isArray || function (arr) {
+  return toString.call(arr) == '[object Array]';
+};
+
+},{}],41:[function(require,module,exports){
 'use strict'
 
-module.exports = float2rat
+var monotoneTriangulate = require('./lib/monotone')
+var makeIndex = require('./lib/triangulation')
+var delaunayFlip = require('./lib/delaunay')
+var filterTriangulation = require('./lib/filter')
 
-var rat = require('big-rat')
+module.exports = cdt2d
 
-function float2rat(v) {
-  var result = new Array(v.length)
-  for(var i=0; i<v.length; ++i) {
-    result[i] = rat(v[i])
+function canonicalizeEdge(e) {
+  return [Math.min(e[0], e[1]), Math.max(e[0], e[1])]
+}
+
+function compareEdge(a, b) {
+  return a[0]-b[0] || a[1]-b[1]
+}
+
+function canonicalizeEdges(edges) {
+  return edges.map(canonicalizeEdge).sort(compareEdge)
+}
+
+function getDefault(options, property, dflt) {
+  if(property in options) {
+    return options[property]
+  }
+  return dflt
+}
+
+function cdt2d(points, edges, options) {
+
+  if(!Array.isArray(edges)) {
+    options = edges || {}
+    edges = []
+  } else {
+    options = options || {}
+    edges = edges || []
+  }
+
+  //Parse out options
+  var delaunay = !!getDefault(options, 'delaunay', true)
+  var interior = !!getDefault(options, 'interior', true)
+  var exterior = !!getDefault(options, 'exterior', true)
+  var infinity = !!getDefault(options, 'infinity', false)
+
+  //Handle trivial case
+  if((!interior && !exterior) || points.length === 0) {
+    return []
+  }
+
+  //Construct initial triangulation
+  var cells = monotoneTriangulate(points, edges)
+
+  //If delaunay refinement needed, then improve quality by edge flipping
+  if(delaunay || interior !== exterior || infinity) {
+
+    //Index all of the cells to support fast neighborhood queries
+    var triangulation = makeIndex(points.length, canonicalizeEdges(edges))
+    for(var i=0; i<cells.length; ++i) {
+      var f = cells[i]
+      triangulation.addTriangle(f[0], f[1], f[2])
+    }
+
+    //Run edge flipping
+    if(delaunay) {
+      delaunayFlip(points, triangulation)
+    }
+
+    //Filter points
+    if(!exterior) {
+      return filterTriangulation(triangulation, -1)
+    } else if(!interior) {
+      return filterTriangulation(triangulation,  1, infinity)
+    } else if(infinity) {
+      return filterTriangulation(triangulation, 0, infinity)
+    } else {
+      return triangulation.cells()
+    }
+    
+  } else {
+    return cells
+  }
+}
+
+},{"./lib/delaunay":42,"./lib/filter":43,"./lib/monotone":44,"./lib/triangulation":45}],42:[function(require,module,exports){
+'use strict'
+
+var inCircle = require('robust-in-sphere')[4]
+var bsearch = require('binary-search-bounds')
+
+module.exports = delaunayRefine
+
+function testFlip(points, triangulation, stack, a, b, x) {
+  var y = triangulation.opposite(a, b)
+
+  //Test boundary edge
+  if(y < 0) {
+    return
+  }
+
+  //Swap edge if order flipped
+  if(b < a) {
+    var tmp = a
+    a = b
+    b = tmp
+    tmp = x
+    x = y
+    y = tmp
+  }
+
+  //Test if edge is constrained
+  if(triangulation.isConstraint(a, b)) {
+    return
+  }
+
+  //Test if edge is delaunay
+  if(inCircle(points[a], points[b], points[x], points[y]) < 0) {
+    stack.push(a, b)
+  }
+}
+
+//Assume edges are sorted lexicographically
+function delaunayRefine(points, triangulation) {
+  var stack = []
+
+  var numPoints = points.length
+  var stars = triangulation.stars
+  for(var a=0; a<numPoints; ++a) {
+    var star = stars[a]
+    for(var j=1; j<star.length; j+=2) {
+      var b = star[j]
+
+      //If order is not consistent, then skip edge
+      if(b < a) {
+        continue
+      }
+
+      //Check if edge is constrained
+      if(triangulation.isConstraint(a, b)) {
+        continue
+      }
+
+      //Find opposite edge
+      var x = star[j-1], y = -1
+      for(var k=1; k<star.length; k+=2) {
+        if(star[k-1] === b) {
+          y = star[k]
+          break
+        }
+      }
+
+      //If this is a boundary edge, don't flip it
+      if(y < 0) {
+        continue
+      }
+
+      //If edge is in circle, flip it
+      if(inCircle(points[a], points[b], points[x], points[y]) < 0) {
+        stack.push(a, b)
+      }
+    }
+  }
+
+  while(stack.length > 0) {
+    var b = stack.pop()
+    var a = stack.pop()
+
+    //Find opposite pairs
+    var x = -1, y = -1
+    var star = stars[a]
+    for(var i=1; i<star.length; i+=2) {
+      var s = star[i-1]
+      var t = star[i]
+      if(s === b) {
+        y = t
+      } else if(t === b) {
+        x = s
+      }
+    }
+
+    //If x/y are both valid then skip edge
+    if(x < 0 || y < 0) {
+      continue
+    }
+
+    //If edge is now delaunay, then don't flip it
+    if(inCircle(points[a], points[b], points[x], points[y]) >= 0) {
+      continue
+    }
+
+    //Flip the edge
+    triangulation.flip(a, b)
+
+    //Test flipping neighboring edges
+    testFlip(points, triangulation, stack, x, a, y)
+    testFlip(points, triangulation, stack, a, y, x)
+    testFlip(points, triangulation, stack, y, b, x)
+    testFlip(points, triangulation, stack, b, x, y)
+  }
+}
+
+},{"binary-search-bounds":46,"robust-in-sphere":147}],43:[function(require,module,exports){
+'use strict'
+
+var bsearch = require('binary-search-bounds')
+
+module.exports = classifyFaces
+
+function FaceIndex(cells, neighbor, constraint, flags, active, next, boundary) {
+  this.cells       = cells
+  this.neighbor    = neighbor
+  this.flags       = flags
+  this.constraint  = constraint
+  this.active      = active
+  this.next        = next
+  this.boundary    = boundary
+}
+
+var proto = FaceIndex.prototype
+
+function compareCell(a, b) {
+  return a[0] - b[0] ||
+         a[1] - b[1] ||
+         a[2] - b[2]
+}
+
+proto.locate = (function() {
+  var key = [0,0,0]
+  return function(a, b, c) {
+    var x = a, y = b, z = c
+    if(b < c) {
+      if(b < a) {
+        x = b
+        y = c
+        z = a
+      }
+    } else if(c < a) {
+      x = c
+      y = a
+      z = b
+    }
+    if(x < 0) {
+      return -1
+    }
+    key[0] = x
+    key[1] = y
+    key[2] = z
+    return bsearch.eq(this.cells, key, compareCell)
+  }
+})()
+
+function indexCells(triangulation, infinity) {
+  //First get cells and canonicalize
+  var cells = triangulation.cells()
+  var nc = cells.length
+  for(var i=0; i<nc; ++i) {
+    var c = cells[i]
+    var x = c[0], y = c[1], z = c[2]
+    if(y < z) {
+      if(y < x) {
+        c[0] = y
+        c[1] = z
+        c[2] = x
+      }
+    } else if(z < x) {
+      c[0] = z
+      c[1] = x
+      c[2] = y
+    }
+  }
+  cells.sort(compareCell)
+
+  //Initialize flag array
+  var flags = new Array(nc)
+  for(var i=0; i<flags.length; ++i) {
+    flags[i] = 0
+  }
+
+  //Build neighbor index, initialize queues
+  var active = []
+  var next   = []
+  var neighbor = new Array(3*nc)
+  var constraint = new Array(3*nc)
+  var boundary = null
+  if(infinity) {
+    boundary = []
+  }
+  var index = new FaceIndex(
+    cells,
+    neighbor,
+    constraint,
+    flags,
+    active,
+    next,
+    boundary)
+  for(var i=0; i<nc; ++i) {
+    var c = cells[i]
+    for(var j=0; j<3; ++j) {
+      var x = c[j], y = c[(j+1)%3]
+      var a = neighbor[3*i+j] = index.locate(y, x, triangulation.opposite(y, x))
+      var b = constraint[3*i+j] = triangulation.isConstraint(x, y)
+      if(a < 0) {
+        if(b) {
+          next.push(i)
+        } else {
+          active.push(i)
+          flags[i] = 1
+        }
+        if(infinity) {
+          boundary.push([y, x, -1])
+        }
+      }
+    }
+  }
+  return index
+}
+
+function filterCells(cells, flags, target) {
+  var ptr = 0
+  for(var i=0; i<cells.length; ++i) {
+    if(flags[i] === target) {
+      cells[ptr++] = cells[i]
+    }
+  }
+  cells.length = ptr
+  return cells
+}
+
+function classifyFaces(triangulation, target, infinity) {
+  var index = indexCells(triangulation, infinity)
+
+  if(target === 0) {
+    if(infinity) {
+      return index.cells.concat(index.boundary)
+    } else {
+      return index.cells
+    }
+  }
+
+  var side = 1
+  var active = index.active
+  var next = index.next
+  var flags = index.flags
+  var cells = index.cells
+  var constraint = index.constraint
+  var neighbor = index.neighbor
+
+  while(active.length > 0 || next.length > 0) {
+    while(active.length > 0) {
+      var t = active.pop()
+      if(flags[t] === -side) {
+        continue
+      }
+      flags[t] = side
+      var c = cells[t]
+      for(var j=0; j<3; ++j) {
+        var f = neighbor[3*t+j]
+        if(f >= 0 && flags[f] === 0) {
+          if(constraint[3*t+j]) {
+            next.push(f)
+          } else {
+            active.push(f)
+            flags[f] = side
+          }
+        }
+      }
+    }
+
+    //Swap arrays and loop
+    var tmp = next
+    next = active
+    active = tmp
+    next.length = 0
+    side = -side
+  }
+
+  var result = filterCells(cells, flags, target)
+  if(infinity) {
+    return result.concat(index.boundary)
   }
   return result
 }
 
-},{"big-rat":29}],54:[function(require,module,exports){
+},{"binary-search-bounds":46}],44:[function(require,module,exports){
 'use strict'
 
-var rat = require('big-rat')
-var mul = require('big-rat/mul')
+var bsearch = require('binary-search-bounds')
+var orient = require('robust-orientation')[3]
 
-module.exports = muls
+var EVENT_POINT = 0
+var EVENT_END   = 1
+var EVENT_START = 2
 
-function muls(a, x) {
-  var s = rat(x)
-  var n = a.length
-  var r = new Array(n)
-  for(var i=0; i<n; ++i) {
-    r[i] = mul(a[i], s)
-  }
-  return r
+module.exports = monotoneTriangulate
+
+//A partial convex hull fragment, made of two unimonotone polygons
+function PartialHull(a, b, idx, lowerIds, upperIds) {
+  this.a = a
+  this.b = b
+  this.idx = idx
+  this.lowerIds = lowerIds
+  this.upperIds = upperIds
 }
 
-},{"big-rat":29,"big-rat/mul":38}],55:[function(require,module,exports){
-'use strict'
-
-var bnsub = require('big-rat/sub')
-
-module.exports = sub
-
-function sub(a, b) {
-  var n = a.length
-  var r = new Array(n)
-    for(var i=0; i<n; ++i) {
-    r[i] = bnsub(a[i], b[i])
-  }
-  return r
+//An event in the sweep line procedure
+function Event(a, b, type, idx) {
+  this.a    = a
+  this.b    = b
+  this.type = type
+  this.idx  = idx
 }
 
-},{"big-rat/sub":41}],56:[function(require,module,exports){
-"use strict"
+//This is used to compare events for the sweep line procedure
+// Points are:
+//  1. sorted lexicographically
+//  2. sorted by type  (point < end < start)
+//  3. segments sorted by winding order
+//  4. sorted by index
+function compareEvent(a, b) {
+  var d =
+    (a.a[0] - b.a[0]) ||
+    (a.a[1] - b.a[1]) ||
+    (a.type - b.type)
+  if(d) { return d }
+  if(a.type !== EVENT_POINT) {
+    d = orient(a.a, a.b, b.b)
+    if(d) { return d }
+  }
+  return a.idx - b.idx
+}
 
-module.exports = segmentsIntersect
+function testPoint(hull, p) {
+  return orient(hull.a, hull.b, p)
+}
 
-var orient = require("robust-orientation")[3]
+function addPoint(cells, hulls, points, p, idx) {
+  var lo = bsearch.lt(hulls, p, testPoint)
+  var hi = bsearch.gt(hulls, p, testPoint)
+  for(var i=lo; i<hi; ++i) {
+    var hull = hulls[i]
 
-function checkCollinear(a0, a1, b0, b1) {
+    //Insert p into lower hull
+    var lowerIds = hull.lowerIds
+    var m = lowerIds.length
+    while(m > 1 && orient(
+        points[lowerIds[m-2]],
+        points[lowerIds[m-1]],
+        p) > 0) {
+      cells.push(
+        [lowerIds[m-1],
+         lowerIds[m-2],
+         idx])
+      m -= 1
+    }
+    lowerIds.length = m
+    lowerIds.push(idx)
 
-  for(var d=0; d<2; ++d) {
-    var x0 = a0[d]
-    var y0 = a1[d]
-    var l0 = Math.min(x0, y0)
-    var h0 = Math.max(x0, y0)    
+    //Insert p into upper hull
+    var upperIds = hull.upperIds
+    var m = upperIds.length
+    while(m > 1 && orient(
+        points[upperIds[m-2]],
+        points[upperIds[m-1]],
+        p) < 0) {
+      cells.push(
+        [upperIds[m-2],
+         upperIds[m-1],
+         idx])
+      m -= 1
+    }
+    upperIds.length = m
+    upperIds.push(idx)
+  }
+}
 
-    var x1 = b0[d]
-    var y1 = b1[d]
-    var l1 = Math.min(x1, y1)
-    var h1 = Math.max(x1, y1)    
+function findSplit(hull, edge) {
+  var d
+  if(hull.a[0] < edge.a[0]) {
+    d = orient(hull.a, hull.b, edge.a)
+  } else {
+    d = orient(edge.b, edge.a, hull.a)
+  }
+  if(d) { return d }
+  if(edge.b[0] < hull.b[0]) {
+    d = orient(hull.a, hull.b, edge.b)
+  } else {
+    d = orient(edge.b, edge.a, hull.b)
+  }
+  return d || hull.idx - edge.idx
+}
 
-    if(h1 < l0 || h0 < l1) {
-      return false
+function splitHulls(hulls, points, event) {
+  var splitIdx = bsearch.le(hulls, event, findSplit)
+  var hull = hulls[splitIdx]
+  var upperIds = hull.upperIds
+  var x = upperIds[upperIds.length-1]
+  hull.upperIds = [x]
+  hulls.splice(splitIdx+1, 0,
+    new PartialHull(event.a, event.b, event.idx, [x], upperIds))
+}
+
+
+function mergeHulls(hulls, points, event) {
+  //Swap pointers for merge search
+  var tmp = event.a
+  event.a = event.b
+  event.b = tmp
+  var mergeIdx = bsearch.eq(hulls, event, findSplit)
+  var upper = hulls[mergeIdx]
+  var lower = hulls[mergeIdx-1]
+  lower.upperIds = upper.upperIds
+  hulls.splice(mergeIdx, 1)
+}
+
+
+function monotoneTriangulate(points, edges) {
+
+  var numPoints = points.length
+  var numEdges = edges.length
+
+  var events = []
+
+  //Create point events
+  for(var i=0; i<numPoints; ++i) {
+    events.push(new Event(
+      points[i],
+      null,
+      EVENT_POINT,
+      i))
+  }
+
+  //Create edge events
+  for(var i=0; i<numEdges; ++i) {
+    var e = edges[i]
+    var a = points[e[0]]
+    var b = points[e[1]]
+    if(a[0] < b[0]) {
+      events.push(
+        new Event(a, b, EVENT_START, i),
+        new Event(b, a, EVENT_END, i))
+    } else if(a[0] > b[0]) {
+      events.push(
+        new Event(b, a, EVENT_START, i),
+        new Event(a, b, EVENT_END, i))
     }
   }
 
-  return true
+  //Sort events
+  events.sort(compareEvent)
+
+  //Initialize hull
+  var minX = events[0].a[0] - (1 + Math.abs(events[0].a[0])) * Math.pow(2, -52)
+  var hull = [ new PartialHull([minX, 1], [minX, 0], -1, [], [], [], []) ]
+
+  //Process events in order
+  var cells = []
+  for(var i=0, numEvents=events.length; i<numEvents; ++i) {
+    var event = events[i]
+    var type = event.type
+    if(type === EVENT_POINT) {
+      addPoint(cells, hull, points, event.a, event.idx)
+    } else if(type === EVENT_START) {
+      splitHulls(hull, points, event)
+    } else {
+      mergeHulls(hull, points, event)
+    }
+  }
+
+  //Return triangulation
+  return cells
 }
 
-function segmentsIntersect(a0, a1, b0, b1) {
-  var x0 = orient(a0, b0, b1)
-  var y0 = orient(a1, b0, b1)
-  if((x0 > 0 && y0 > 0) || (x0 < 0 && y0 < 0)) {
-    return false
-  }
+},{"binary-search-bounds":46,"robust-orientation":148}],45:[function(require,module,exports){
+'use strict'
 
-  var x1 = orient(b0, a0, a1)
-  var y1 = orient(b1, a0, a1)
-  if((x1 > 0 && y1 > 0) || (x1 < 0 && y1 < 0)) {
-    return false
-  }
+var bsearch = require('binary-search-bounds')
 
-  //Check for degenerate collinear case
-  if(x0 === 0 && y0 === 0 && x1 === 0 && y1 === 0) {
-    return checkCollinear(a0, a1, b0, b1)
-  }
+module.exports = createTriangulation
 
-  return true
+function Triangulation(stars, edges) {
+  this.stars = stars
+  this.edges = edges
 }
-},{"robust-orientation":162}],57:[function(require,module,exports){
-"use strict"; "use restrict";
 
-module.exports = UnionFind;
+var proto = Triangulation.prototype
 
-function UnionFind(count) {
-  this.roots = new Array(count);
-  this.ranks = new Array(count);
-  
-  for(var i=0; i<count; ++i) {
-    this.roots[i] = i;
-    this.ranks[i] = 0;
+function removePair(list, j, k) {
+  for(var i=1, n=list.length; i<n; i+=2) {
+    if(list[i-1] === j && list[i] === k) {
+      list[i-1] = list[n-2]
+      list[i] = list[n-1]
+      list.length = n - 2
+      return
+    }
   }
 }
 
-var proto = UnionFind.prototype
-
-Object.defineProperty(proto, "length", {
-  "get": function() {
-    return this.roots.length
+proto.isConstraint = (function() {
+  var e = [0,0]
+  function compareLex(a, b) {
+    return a[0] - b[0] || a[1] - b[1]
   }
-})
+  return function(i, j) {
+    e[0] = Math.min(i,j)
+    e[1] = Math.max(i,j)
+    return bsearch.eq(this.edges, e, compareLex) >= 0
+  }
+})()
 
-proto.makeSet = function() {
-  var n = this.roots.length;
-  this.roots.push(n);
-  this.ranks.push(0);
-  return n;
+proto.removeTriangle = function(i, j, k) {
+  var stars = this.stars
+  removePair(stars[i], j, k)
+  removePair(stars[j], k, i)
+  removePair(stars[k], i, j)
 }
 
-proto.find = function(x) {
-  var x0 = x
-  var roots = this.roots;
-  while(roots[x] !== x) {
-    x = roots[x]
-  }
-  while(roots[x0] !== x) {
-    var y = roots[x0]
-    roots[x0] = x
-    x0 = y
-  }
-  return x;
+proto.addTriangle = function(i, j, k) {
+  var stars = this.stars
+  stars[i].push(j, k)
+  stars[j].push(k, i)
+  stars[k].push(i, j)
 }
 
-proto.link = function(x, y) {
-  var xr = this.find(x)
-    , yr = this.find(y);
-  if(xr === yr) {
-    return;
+proto.opposite = function(j, i) {
+  var list = this.stars[i]
+  for(var k=1, n=list.length; k<n; k+=2) {
+    if(list[k] === j) {
+      return list[k-1]
+    }
   }
-  var ranks = this.ranks
-    , roots = this.roots
-    , xd    = ranks[xr]
-    , yd    = ranks[yr];
-  if(xd < yd) {
-    roots[xr] = yr;
-  } else if(yd < xd) {
-    roots[yr] = xr;
+  return -1
+}
+
+proto.flip = function(i, j) {
+  var a = this.opposite(i, j)
+  var b = this.opposite(j, i)
+  this.removeTriangle(i, j, a)
+  this.removeTriangle(j, i, b)
+  this.addTriangle(i, b, a)
+  this.addTriangle(j, a, b)
+}
+
+proto.edges = function() {
+  var stars = this.stars
+  var result = []
+  for(var i=0, n=stars.length; i<n; ++i) {
+    var list = stars[i]
+    for(var j=0, m=list.length; j<m; j+=2) {
+      result.push([list[j], list[j+1]])
+    }
+  }
+  return result
+}
+
+proto.cells = function() {
+  var stars = this.stars
+  var result = []
+  for(var i=0, n=stars.length; i<n; ++i) {
+    var list = stars[i]
+    for(var j=0, m=list.length; j<m; j+=2) {
+      var s = list[j]
+      var t = list[j+1]
+      if(i < Math.min(s, t)) {
+        result.push([i, s, t])
+      }
+    }
+  }
+  return result
+}
+
+function createTriangulation(numVerts, edges) {
+  var stars = new Array(numVerts)
+  for(var i=0; i<numVerts; ++i) {
+    stars[i] = []
+  }
+  return new Triangulation(stars, edges)
+}
+
+},{"binary-search-bounds":46}],46:[function(require,module,exports){
+"use strict"
+
+function compileSearch(funcName, predicate, reversed, extraArgs, earlyOut) {
+  var code = [
+    "function ", funcName, "(a,l,h,", extraArgs.join(","),  "){",
+earlyOut ? "" : "var i=", (reversed ? "l-1" : "h+1"),
+";while(l<=h){\
+var m=(l+h)>>>1,x=a[m]"]
+  if(earlyOut) {
+    if(predicate.indexOf("c") < 0) {
+      code.push(";if(x===y){return m}else if(x<=y){")
+    } else {
+      code.push(";var p=c(x,y);if(p===0){return m}else if(p<=0){")
+    }
   } else {
-    roots[yr] = xr;
-    ++ranks[xr];
+    code.push(";if(", predicate, "){i=m;")
+  }
+  if(reversed) {
+    code.push("l=m+1}else{h=m-1}")
+  } else {
+    code.push("h=m-1}else{l=m+1}")
+  }
+  code.push("}")
+  if(earlyOut) {
+    code.push("return -1};")
+  } else {
+    code.push("return i};")
+  }
+  return code.join("")
+}
+
+function compileBoundsSearch(predicate, reversed, suffix, earlyOut) {
+  var result = new Function([
+  compileSearch("A", "x" + predicate + "y", reversed, ["y"], earlyOut),
+  compileSearch("P", "c(x,y)" + predicate + "0", reversed, ["y", "c"], earlyOut),
+"function dispatchBsearch", suffix, "(a,y,c,l,h){\
+if(typeof(c)==='function'){\
+return P(a,(l===void 0)?0:l|0,(h===void 0)?a.length-1:h|0,y,c)\
+}else{\
+return A(a,(c===void 0)?0:c|0,(l===void 0)?a.length-1:l|0,y)\
+}}\
+return dispatchBsearch", suffix].join(""))
+  return result()
+}
+
+module.exports = {
+  ge: compileBoundsSearch(">=", false, "GE"),
+  gt: compileBoundsSearch(">", false, "GT"),
+  lt: compileBoundsSearch("<", true, "LT"),
+  le: compileBoundsSearch("<=", true, "LE"),
+  eq: compileBoundsSearch("-", true, "EQ", true)
+}
+
+},{}],47:[function(require,module,exports){
+'use strict'
+
+module.exports = cleanPSLG
+
+var UnionFind = require('union-find')
+var boxIntersect = require('box-intersect')
+var compareCell = require('compare-cell')
+var segseg = require('robust-segment-intersect')
+var rat = require('big-rat')
+var ratCmp = require('big-rat/cmp')
+var ratToFloat = require('big-rat/to-float')
+var ratVec = require('rat-vec')
+var nextafter = require('nextafter')
+
+var solveIntersection = require('./lib/rat-seg-intersect')
+
+//Bounds on a rational number when rounded to a float
+function boundRat(r) {
+  var f = ratToFloat(r)
+  var cmp = ratCmp(rat(f), r)
+  if(cmp < 0) {
+    return [f, nextafter(f, Infinity)]
+  } else if(cmp > 0) {
+    return [nextafter(f, -Infinity), f]
+  } else {
+    return [f, f]
   }
 }
-},{}],58:[function(require,module,exports){
+
+//Convert a list of edges in a pslg to bounding boxes
+function boundEdges(points, edges) {
+  var bounds = new Array(edges.length)
+  for(var i=0; i<edges.length; ++i) {
+    var e = edges[i]
+    var a = points[e[0]]
+    var b = points[e[1]]
+    bounds[i] = [
+      Math.min(a[0], b[0]),
+      Math.min(a[1], b[1]),
+      Math.max(a[0], b[0]),
+      Math.max(a[1], b[1]) ]
+  }
+  return bounds
+}
+
+//Convert a list of points into bounding boxes by duplicating coords
+function boundPoints(points) {
+  var bounds = new Array(points.length)
+  for(var i=0; i<points.length; ++i) {
+    var p = points[i]
+    bounds[i] = [ p[0], p[1], p[0], p[1] ]
+  }
+  return bounds
+}
+
+//Find all pairs of crossing edges in a pslg (given edge bounds)
+function getCrossings(points, edges, edgeBounds) {
+  var result = []
+  boxIntersect(edgeBounds, function(i, j) {
+    var e = edges[i]
+    var f = edges[j]
+    if(e[0] === f[0] || e[0] === f[1] ||
+       e[1] === f[0] || e[1] === f[1]) {
+         return
+    }
+    var a = points[e[0]]
+    var b = points[e[1]]
+    var c = points[f[0]]
+    var d = points[f[1]]
+    if(segseg(a, b, c, d)) {
+      result.push([i, j])
+    }
+  })
+  return result
+}
+
+//Find all pairs of crossing vertices in a pslg (given edge/vert bounds)
+function getTJunctions(points, edges, edgeBounds, vertBounds) {
+  var result = []
+  boxIntersect(edgeBounds, vertBounds, function(i, v) {
+    var e = edges[i]
+    if(e[0] === v || e[1] === v) {
+      return
+    }
+    var p = points[v]
+    var a = points[e[0]]
+    var b = points[e[1]]
+    if(segseg(a, b, p, p)) {
+      result.push([i, v])
+    }
+  })
+  return result
+}
+
+
+//Cut edges along crossings/tjunctions
+function cutEdges(floatPoints, edges, crossings, junctions, useColor) {
+
+  //Convert crossings into tjunctions by constructing rational points
+  var ratPoints = []
+  for(var i=0; i<crossings.length; ++i) {
+    var crossing = crossings[i]
+    var e = crossing[0]
+    var f = crossing[1]
+    var ee = edges[e]
+    var ef = edges[f]
+    var x = solveIntersection(
+      ratVec(floatPoints[ee[0]]),
+      ratVec(floatPoints[ee[1]]),
+      ratVec(floatPoints[ef[0]]),
+      ratVec(floatPoints[ef[1]]))
+    if(!x) {
+      //Segments are parallel, should already be handled by t-junctions
+      continue
+    }
+    var idx = ratPoints.length + floatPoints.length
+    ratPoints.push(x)
+    junctions.push([e, idx], [f, idx])
+  }
+
+  //Sort tjunctions
+  function getPoint(idx) {
+    if(idx >= floatPoints.length) {
+      return ratPoints[idx-floatPoints.length]
+    }
+    var p = floatPoints[idx]
+    return [ rat(p[0]), rat(p[1]) ]
+  }
+  junctions.sort(function(a, b) {
+    if(a[0] !== b[0]) {
+      return a[0] - b[0]
+    }
+    var u = getPoint(a[1])
+    var v = getPoint(b[1])
+    return ratCmp(u[0], v[0]) || ratCmp(u[1], v[1])
+  })
+
+  //Split edges along junctions
+  for(var i=junctions.length-1; i>=0; --i) {
+    var junction = junctions[i]
+    var e = junction[0]
+
+    var edge = edges[e]
+    var s = edge[0]
+    var t = edge[1]
+
+    //Check if edge is not lexicographically sorted
+    var a = floatPoints[s]
+    var b = floatPoints[t]
+    if(((a[0] - b[0]) || (a[1] - b[1])) < 0) {
+      var tmp = s
+      s = t
+      t = tmp
+    }
+
+    //Split leading edge
+    edge[0] = s
+    var last = edge[1] = junction[1]
+
+    //If we are grouping edges by color, remember to track data
+    var color
+    if(useColor) {
+      color = edge[2]
+    }
+
+    //Split other edges
+    while(i > 0 && junctions[i-1][0] === e) {
+      var junction = junctions[--i]
+      var next = junction[1]
+      if(useColor) {
+        edges.push([last, next, color])
+      } else {
+        edges.push([last, next])
+      }
+      last = next
+    }
+
+    //Add final edge
+    if(useColor) {
+      edges.push([last, t, color])
+    } else {
+      edges.push([last, t])
+    }
+  }
+
+  //Return constructed rational points
+  return ratPoints
+}
+
+//Merge overlapping points
+function dedupPoints(floatPoints, ratPoints, floatBounds) {
+  var numPoints = floatPoints.length + ratPoints.length
+  var uf        = new UnionFind(numPoints)
+
+  //Compute rational bounds
+  var bounds = floatBounds
+  for(var i=0; i<ratPoints.length; ++i) {
+    var p = ratPoints[i]
+    var xb = boundRat(p[0])
+    var yb = boundRat(p[1])
+    bounds.push([ xb[0], yb[0], xb[1], yb[1] ])
+    floatPoints.push([ ratToFloat(p[0]), ratToFloat(p[1]) ])
+  }
+
+  //Link all points with over lapping boxes
+  boxIntersect(bounds, function(i, j) {
+    uf.link(i, j)
+  })
+
+  //Call find on each point to get a relabeling
+  var ptr = 0
+  var noDupes = true
+  var labels = new Array(numPoints)
+  for(var i=0; i<numPoints; ++i) {
+    var j = uf.find(i)
+    if(j === i) {
+      //If not a duplicate, then don't bother
+      labels[i] = ptr
+      floatPoints[ptr++] = floatPoints[i]
+    } else {
+      //Clear no-dupes flag, zero out label
+      noDupes = false
+      labels[i] = -1
+    }
+  }
+  floatPoints.length = ptr
+
+  //If no duplicates, return null to signal termination
+  if(noDupes) {
+    return null
+  }
+
+  //Do a second pass to fix up missing labels
+  for(var i=0; i<numPoints; ++i) {
+    if(labels[i] < 0) {
+      labels[i] = labels[uf.find(i)]
+    }
+  }
+
+  //Return resulting union-find data structure
+  return labels
+}
+
+function compareLex2(a,b) { return (a[0]-b[0]) || (a[1]-b[1]) }
+function compareLex3(a,b) {
+  var d = (a[0] - b[0]) || (a[1] - b[1])
+  if(d) {
+    return d
+  }
+  if(a[2] < b[2]) {
+    return -1
+  } else if(a[2] > b[2]) {
+    return 1
+  }
+  return 0
+}
+
+//Remove duplicate edge labels
+function dedupEdges(edges, labels, useColor) {
+  if(edges.length === 0) {
+    return
+  }
+  if(labels) {
+    for(var i=0; i<edges.length; ++i) {
+      var e = edges[i]
+      var a = labels[e[0]]
+      var b = labels[e[1]]
+      e[0] = Math.min(a, b)
+      e[1] = Math.max(a, b)
+    }
+  } else {
+    for(var i=0; i<edges.length; ++i) {
+      var e = edges[i]
+      var a = e[0]
+      var b = e[1]
+      e[0] = Math.min(a, b)
+      e[1] = Math.max(a, b)
+    }
+  }
+  if(useColor) {
+    edges.sort(compareLex3)
+  } else {
+    edges.sort(compareLex2)
+  }
+  var ptr = 1
+  for(var i=1; i<edges.length; ++i) {
+    var prev = edges[i-1]
+    var next = edges[i]
+    if(next[0] === prev[0] && next[1] === prev[1] &&
+      (!useColor || next[2] === prev[2])) {
+      continue
+    }
+    edges[ptr++] = next
+  }
+  edges.length = ptr
+}
+
+//Repeat until convergence
+function snapRound(points, edges, useColor) {
+
+  // 1. find edge crossings
+  var edgeBounds = boundEdges(points, edges)
+  var crossings  = getCrossings(points, edges, edgeBounds)
+
+  // 2. find t-junctions
+  var vertBounds = boundPoints(points)
+  var tjunctions = getTJunctions(points, edges, edgeBounds, vertBounds)
+
+  // 3. cut edges, construct rational points
+  var ratPoints  = cutEdges(points, edges, crossings, tjunctions, useColor)
+
+  // 4. dedupe verts
+  var labels     = dedupPoints(points, ratPoints, vertBounds)
+
+  // 6. dedupe edges
+  dedupEdges(edges, labels, useColor)
+
+  // 5. check termination
+  if(!labels) {
+    return (crossings.length > 0 || tjunctions.length > 0)
+  }
+
+  // More iterations necessary
+  return true
+}
+
+//Main loop, runs PSLG clean up until completion
+function cleanPSLG(points, edges, colors) {
+  var modified = false
+
+  //If using colors, augment edges with color data
+  var prevEdges
+  if(colors) {
+    prevEdges = edges
+    var augEdges = new Array(edges.length)
+    for(var i=0; i<edges.length; ++i) {
+      var e = edges[i]
+      augEdges[i] = [e[0], e[1], colors[i]]
+    }
+    edges = augEdges
+  }
+
+  //Run snap rounding until convergence
+  while(snapRound(points, edges, !!colors)) {
+    modified = true
+  }
+
+  //Strip color tags
+  if(!!colors && modified) {
+    prevEdges.length = 0
+    colors.length = 0
+    for(var i=0; i<edges.length; ++i) {
+      var e = edges[i]
+      prevEdges.push([e[0], e[1]])
+      colors.push(e[2])
+    }
+  }
+
+  return modified
+}
+
+},{"./lib/rat-seg-intersect":48,"big-rat":16,"big-rat/cmp":14,"big-rat/to-float":28,"box-intersect":32,"compare-cell":50,"nextafter":132,"rat-vec":143,"robust-segment-intersect":151,"union-find":171}],48:[function(require,module,exports){
+'use strict'
+
+//TODO: Move this to a separate module
+
+module.exports = solveIntersection
+
+var ratMul = require('big-rat/mul')
+var ratDiv = require('big-rat/div')
+var ratSub = require('big-rat/sub')
+var ratSign = require('big-rat/sign')
+var rvSub = require('rat-vec/sub')
+var rvAdd = require('rat-vec/add')
+var rvMuls = require('rat-vec/muls')
+
+var toFloat = require('big-rat/to-float')
+
+function ratPerp(a, b) {
+  return ratSub(ratMul(a[0], b[1]), ratMul(a[1], b[0]))
+}
+
+//Solve for intersection
+//  x = a + t (b-a)
+//  (x - c) ^ (d-c) = 0
+//  (t * (b-a) + (a-c) ) ^ (d-c) = 0
+//  t * (b-a)^(d-c) = (d-c)^(a-c)
+//  t = (d-c)^(a-c) / (b-a)^(d-c)
+
+function solveIntersection(a, b, c, d) {
+  var ba = rvSub(b, a)
+  var dc = rvSub(d, c)
+
+  var baXdc = ratPerp(ba, dc)
+
+  if(ratSign(baXdc) === 0) {
+    return null
+  }
+
+  var ac = rvSub(a, c)
+  var dcXac = ratPerp(dc, ac)
+
+  var t = ratDiv(dcXac, baXdc)
+
+  return rvAdd(a, rvMuls(ba, t))
+}
+
+},{"big-rat/div":15,"big-rat/mul":25,"big-rat/sign":26,"big-rat/sub":27,"big-rat/to-float":28,"rat-vec/add":142,"rat-vec/muls":144,"rat-vec/sub":145}],49:[function(require,module,exports){
+"use strict"
+
+module.exports = compareAngle
+
+var orient = require("robust-orientation")
+var sgn = require("signum")
+var twoSum = require("two-sum")
+var robustProduct = require("robust-product")
+var robustSum = require("robust-sum")
+
+function testInterior(a, b, c) {
+  var x0 = twoSum(a[0], -b[0])
+  var y0 = twoSum(a[1], -b[1])
+  var x1 = twoSum(c[0], -b[0])
+  var y1 = twoSum(c[1], -b[1])
+
+  var d = robustSum(
+    robustProduct(x0, x1),
+    robustProduct(y0, y1))
+
+  return d[d.length-1] >= 0
+}
+
+function compareAngle(a, b, c, d) {
+  var bcd = orient(b, c, d)
+  if(bcd === 0) {
+    //Handle degenerate cases
+    var sabc = sgn(orient(a, b, c))
+    var sabd = sgn(orient(a, b, d))
+    if(sabc === sabd) {
+      if(sabc === 0) {
+        var ic = testInterior(a, b, c)
+        var id = testInterior(a, b, d)
+        if(ic === id) {
+          return 0
+        } else if(ic) {
+          return 1
+        } else {
+          return -1
+        }
+      }
+      return 0
+    } else if(sabd === 0) {
+      if(sabc > 0) {
+        return -1
+      } else if(testInterior(a, b, d)) {
+        return -1
+      } else {
+        return 1
+      }
+    } else if(sabc === 0) {
+      if(sabd > 0) {
+        return 1
+      } else if(testInterior(a, b, c)) {
+        return 1
+      } else {
+        return -1
+      }
+    }
+    return sgn(sabd - sabc)
+  }
+  var abc = orient(a, b, c)
+  if(abc > 0) {
+    if(bcd > 0 && orient(a, b, d) > 0) {
+      return 1
+    }
+    return -1
+  } else if(abc < 0) {
+    if(bcd > 0 || orient(a, b, d) > 0) {
+      return 1
+    }
+    return -1
+  } else {
+    var abd = orient(a, b, d)
+    if(abd > 0) {
+      return 1
+    } else {
+      if(testInterior(a, b, c)) {
+        return 1
+      } else {
+        return -1
+      }
+    }
+  }
+}
+},{"robust-orientation":148,"robust-product":149,"robust-sum":153,"signum":154,"two-sum":169}],50:[function(require,module,exports){
 module.exports = compareCells
 
 var min = Math.min
@@ -8667,7 +7885,7 @@ function compareCells(a, b) {
   }
 }
 
-},{}],59:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 "use strict"
 
 var createThunk = require("./lib/thunk.js")
@@ -8778,7 +7996,7 @@ function compileCwise(user_args) {
 
 module.exports = compileCwise
 
-},{"./lib/thunk.js":61}],60:[function(require,module,exports){
+},{"./lib/thunk.js":53}],52:[function(require,module,exports){
 "use strict"
 
 var uniq = require("uniq")
@@ -9134,7 +8352,7 @@ function generateCWiseOp(proc, typesig) {
 }
 module.exports = generateCWiseOp
 
-},{"uniq":181}],61:[function(require,module,exports){
+},{"uniq":172}],53:[function(require,module,exports){
 "use strict"
 
 // The function below is called when constructing a cwise function object, and does the following:
@@ -9222,9 +8440,9 @@ function createThunk(proc) {
 
 module.exports = createThunk
 
-},{"./compile.js":60}],62:[function(require,module,exports){
+},{"./compile.js":52}],54:[function(require,module,exports){
 module.exports = require("cwise-compiler")
-},{"cwise-compiler":59}],63:[function(require,module,exports){
+},{"cwise-compiler":51}],55:[function(require,module,exports){
 !function() {
   var d3 = {
     version: "3.5.16"
@@ -18779,7 +17997,111 @@ module.exports = require("cwise-compiler")
   });
   if (typeof define === "function" && define.amd) this.d3 = d3, define(d3); else if (typeof module === "object" && module.exports) module.exports = d3; else this.d3 = d3;
 }();
-},{}],64:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
+(function (Buffer){
+var hasTypedArrays = false
+if(typeof Float64Array !== "undefined") {
+  var DOUBLE_VIEW = new Float64Array(1)
+    , UINT_VIEW   = new Uint32Array(DOUBLE_VIEW.buffer)
+  DOUBLE_VIEW[0] = 1.0
+  hasTypedArrays = true
+  if(UINT_VIEW[1] === 0x3ff00000) {
+    //Use little endian
+    module.exports = function doubleBitsLE(n) {
+      DOUBLE_VIEW[0] = n
+      return [ UINT_VIEW[0], UINT_VIEW[1] ]
+    }
+    function toDoubleLE(lo, hi) {
+      UINT_VIEW[0] = lo
+      UINT_VIEW[1] = hi
+      return DOUBLE_VIEW[0]
+    }
+    module.exports.pack = toDoubleLE
+    function lowUintLE(n) {
+      DOUBLE_VIEW[0] = n
+      return UINT_VIEW[0]
+    }
+    module.exports.lo = lowUintLE
+    function highUintLE(n) {
+      DOUBLE_VIEW[0] = n
+      return UINT_VIEW[1]
+    }
+    module.exports.hi = highUintLE
+  } else if(UINT_VIEW[0] === 0x3ff00000) {
+    //Use big endian
+    module.exports = function doubleBitsBE(n) {
+      DOUBLE_VIEW[0] = n
+      return [ UINT_VIEW[1], UINT_VIEW[0] ]
+    }
+    function toDoubleBE(lo, hi) {
+      UINT_VIEW[1] = lo
+      UINT_VIEW[0] = hi
+      return DOUBLE_VIEW[0]
+    }
+    module.exports.pack = toDoubleBE
+    function lowUintBE(n) {
+      DOUBLE_VIEW[0] = n
+      return UINT_VIEW[1]
+    }
+    module.exports.lo = lowUintBE
+    function highUintBE(n) {
+      DOUBLE_VIEW[0] = n
+      return UINT_VIEW[0]
+    }
+    module.exports.hi = highUintBE
+  } else {
+    hasTypedArrays = false
+  }
+}
+if(!hasTypedArrays) {
+  var buffer = new Buffer(8)
+  module.exports = function doubleBits(n) {
+    buffer.writeDoubleLE(n, 0, true)
+    return [ buffer.readUInt32LE(0, true), buffer.readUInt32LE(4, true) ]
+  }
+  function toDouble(lo, hi) {
+    buffer.writeUInt32LE(lo, 0, true)
+    buffer.writeUInt32LE(hi, 4, true)
+    return buffer.readDoubleLE(0, true)
+  }
+  module.exports.pack = toDouble  
+  function lowUint(n) {
+    buffer.writeDoubleLE(n, 0, true)
+    return buffer.readUInt32LE(0, true)
+  }
+  module.exports.lo = lowUint
+  function highUint(n) {
+    buffer.writeDoubleLE(n, 0, true)
+    return buffer.readUInt32LE(4, true)
+  }
+  module.exports.hi = highUint
+}
+
+module.exports.sign = function(n) {
+  return module.exports.hi(n) >>> 31
+}
+
+module.exports.exponent = function(n) {
+  var b = module.exports.hi(n)
+  return ((b<<1) >>> 21) - 1023
+}
+
+module.exports.fraction = function(n) {
+  var lo = module.exports.lo(n)
+  var hi = module.exports.hi(n)
+  var b = hi & ((1<<20) - 1)
+  if(hi & 0x7ff00000) {
+    b += (1<<20)
+  }
+  return [lo, b]
+}
+
+module.exports.denormalized = function(n) {
+  var hi = module.exports.hi(n)
+  return !(hi & 0x7ff00000)
+}
+}).call(this,require("buffer").Buffer)
+},{"buffer":39}],57:[function(require,module,exports){
 "use strict"
 
 function dupe_array(count, value, i) {
@@ -18829,7 +18151,41 @@ function dupe(count, value) {
 }
 
 module.exports = dupe
-},{}],65:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
+"use strict"
+
+module.exports = edgeToAdjacency
+
+var uniq = require("uniq")
+
+function edgeToAdjacency(edges, numVertices) {
+  var numEdges = edges.length
+  if(typeof numVertices !== "number") {
+    numVertices = 0
+    for(var i=0; i<numEdges; ++i) {
+      var e = edges[i]
+      numVertices = Math.max(numVertices, e[0], e[1])
+    }
+    numVertices = (numVertices|0) + 1
+  }
+  numVertices = numVertices|0
+  var adj = new Array(numVertices)
+  for(var i=0; i<numVertices; ++i) {
+    adj[i] = []
+  }
+  for(var i=0; i<numEdges; ++i) {
+    var e = edges[i]
+    adj[e[0]].push(e[1])
+    adj[e[1]].push(e[0])
+  }
+  for(var j=0; j<numVertices; ++j) {
+    uniq(adj[j], function(a, b) {
+      return a - b
+    })
+  }
+  return adj
+}
+},{"uniq":172}],59:[function(require,module,exports){
 (function (process,global){
 /*!
  * @overview es6-promise - a tiny implementation of Promises/A+.
@@ -19787,7 +19143,307 @@ module.exports = dupe
 
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"_process":16}],66:[function(require,module,exports){
+},{"_process":141}],60:[function(require,module,exports){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+function EventEmitter() {
+  this._events = this._events || {};
+  this._maxListeners = this._maxListeners || undefined;
+}
+module.exports = EventEmitter;
+
+// Backwards-compat with node 0.10.x
+EventEmitter.EventEmitter = EventEmitter;
+
+EventEmitter.prototype._events = undefined;
+EventEmitter.prototype._maxListeners = undefined;
+
+// By default EventEmitters will print a warning if more than 10 listeners are
+// added to it. This is a useful default which helps finding memory leaks.
+EventEmitter.defaultMaxListeners = 10;
+
+// Obviously not all Emitters should be limited to 10. This function allows
+// that to be increased. Set to zero for unlimited.
+EventEmitter.prototype.setMaxListeners = function(n) {
+  if (!isNumber(n) || n < 0 || isNaN(n))
+    throw TypeError('n must be a positive number');
+  this._maxListeners = n;
+  return this;
+};
+
+EventEmitter.prototype.emit = function(type) {
+  var er, handler, len, args, i, listeners;
+
+  if (!this._events)
+    this._events = {};
+
+  // If there is no 'error' event listener then throw.
+  if (type === 'error') {
+    if (!this._events.error ||
+        (isObject(this._events.error) && !this._events.error.length)) {
+      er = arguments[1];
+      if (er instanceof Error) {
+        throw er; // Unhandled 'error' event
+      }
+      throw TypeError('Uncaught, unspecified "error" event.');
+    }
+  }
+
+  handler = this._events[type];
+
+  if (isUndefined(handler))
+    return false;
+
+  if (isFunction(handler)) {
+    switch (arguments.length) {
+      // fast cases
+      case 1:
+        handler.call(this);
+        break;
+      case 2:
+        handler.call(this, arguments[1]);
+        break;
+      case 3:
+        handler.call(this, arguments[1], arguments[2]);
+        break;
+      // slower
+      default:
+        args = Array.prototype.slice.call(arguments, 1);
+        handler.apply(this, args);
+    }
+  } else if (isObject(handler)) {
+    args = Array.prototype.slice.call(arguments, 1);
+    listeners = handler.slice();
+    len = listeners.length;
+    for (i = 0; i < len; i++)
+      listeners[i].apply(this, args);
+  }
+
+  return true;
+};
+
+EventEmitter.prototype.addListener = function(type, listener) {
+  var m;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events)
+    this._events = {};
+
+  // To avoid recursion in the case that type === "newListener"! Before
+  // adding it to the listeners, first emit "newListener".
+  if (this._events.newListener)
+    this.emit('newListener', type,
+              isFunction(listener.listener) ?
+              listener.listener : listener);
+
+  if (!this._events[type])
+    // Optimize the case of one listener. Don't need the extra array object.
+    this._events[type] = listener;
+  else if (isObject(this._events[type]))
+    // If we've already got an array, just append.
+    this._events[type].push(listener);
+  else
+    // Adding the second element, need to change to array.
+    this._events[type] = [this._events[type], listener];
+
+  // Check for listener leak
+  if (isObject(this._events[type]) && !this._events[type].warned) {
+    if (!isUndefined(this._maxListeners)) {
+      m = this._maxListeners;
+    } else {
+      m = EventEmitter.defaultMaxListeners;
+    }
+
+    if (m && m > 0 && this._events[type].length > m) {
+      this._events[type].warned = true;
+      console.error('(node) warning: possible EventEmitter memory ' +
+                    'leak detected. %d listeners added. ' +
+                    'Use emitter.setMaxListeners() to increase limit.',
+                    this._events[type].length);
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
+    }
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.on = EventEmitter.prototype.addListener;
+
+EventEmitter.prototype.once = function(type, listener) {
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  var fired = false;
+
+  function g() {
+    this.removeListener(type, g);
+
+    if (!fired) {
+      fired = true;
+      listener.apply(this, arguments);
+    }
+  }
+
+  g.listener = listener;
+  this.on(type, g);
+
+  return this;
+};
+
+// emits a 'removeListener' event iff the listener was removed
+EventEmitter.prototype.removeListener = function(type, listener) {
+  var list, position, length, i;
+
+  if (!isFunction(listener))
+    throw TypeError('listener must be a function');
+
+  if (!this._events || !this._events[type])
+    return this;
+
+  list = this._events[type];
+  length = list.length;
+  position = -1;
+
+  if (list === listener ||
+      (isFunction(list.listener) && list.listener === listener)) {
+    delete this._events[type];
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+
+  } else if (isObject(list)) {
+    for (i = length; i-- > 0;) {
+      if (list[i] === listener ||
+          (list[i].listener && list[i].listener === listener)) {
+        position = i;
+        break;
+      }
+    }
+
+    if (position < 0)
+      return this;
+
+    if (list.length === 1) {
+      list.length = 0;
+      delete this._events[type];
+    } else {
+      list.splice(position, 1);
+    }
+
+    if (this._events.removeListener)
+      this.emit('removeListener', type, listener);
+  }
+
+  return this;
+};
+
+EventEmitter.prototype.removeAllListeners = function(type) {
+  var key, listeners;
+
+  if (!this._events)
+    return this;
+
+  // not listening for removeListener, no need to emit
+  if (!this._events.removeListener) {
+    if (arguments.length === 0)
+      this._events = {};
+    else if (this._events[type])
+      delete this._events[type];
+    return this;
+  }
+
+  // emit removeListener for all listeners on all events
+  if (arguments.length === 0) {
+    for (key in this._events) {
+      if (key === 'removeListener') continue;
+      this.removeAllListeners(key);
+    }
+    this.removeAllListeners('removeListener');
+    this._events = {};
+    return this;
+  }
+
+  listeners = this._events[type];
+
+  if (isFunction(listeners)) {
+    this.removeListener(type, listeners);
+  } else if (listeners) {
+    // LIFO order
+    while (listeners.length)
+      this.removeListener(type, listeners[listeners.length - 1]);
+  }
+  delete this._events[type];
+
+  return this;
+};
+
+EventEmitter.prototype.listeners = function(type) {
+  var ret;
+  if (!this._events || !this._events[type])
+    ret = [];
+  else if (isFunction(this._events[type]))
+    ret = [this._events[type]];
+  else
+    ret = this._events[type].slice();
+  return ret;
+};
+
+EventEmitter.prototype.listenerCount = function(type) {
+  if (this._events) {
+    var evlistener = this._events[type];
+
+    if (isFunction(evlistener))
+      return 1;
+    else if (evlistener)
+      return evlistener.length;
+  }
+  return 0;
+};
+
+EventEmitter.listenerCount = function(emitter, type) {
+  return emitter.listenerCount(type);
+};
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+
+},{}],61:[function(require,module,exports){
 /**
  * inspired by is-number <https://github.com/jonschlinkert/is-number>
  * but significantly simplified and sped up by ignoring number and string constructors
@@ -19844,7 +19500,1073 @@ module.exports = function(n) {
     return n - n < 1;
 };
 
-},{}],67:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
+"use strict"
+
+module.exports = createRBTree
+
+var RED   = 0
+var BLACK = 1
+
+function RBNode(color, key, value, left, right, count) {
+  this._color = color
+  this.key = key
+  this.value = value
+  this.left = left
+  this.right = right
+  this._count = count
+}
+
+function cloneNode(node) {
+  return new RBNode(node._color, node.key, node.value, node.left, node.right, node._count)
+}
+
+function repaint(color, node) {
+  return new RBNode(color, node.key, node.value, node.left, node.right, node._count)
+}
+
+function recount(node) {
+  node._count = 1 + (node.left ? node.left._count : 0) + (node.right ? node.right._count : 0)
+}
+
+function RedBlackTree(compare, root) {
+  this._compare = compare
+  this.root = root
+}
+
+var proto = RedBlackTree.prototype
+
+Object.defineProperty(proto, "keys", {
+  get: function() {
+    var result = []
+    this.forEach(function(k,v) {
+      result.push(k)
+    })
+    return result
+  }
+})
+
+Object.defineProperty(proto, "values", {
+  get: function() {
+    var result = []
+    this.forEach(function(k,v) {
+      result.push(v)
+    })
+    return result
+  }
+})
+
+//Returns the number of nodes in the tree
+Object.defineProperty(proto, "length", {
+  get: function() {
+    if(this.root) {
+      return this.root._count
+    }
+    return 0
+  }
+})
+
+//Insert a new item into the tree
+proto.insert = function(key, value) {
+  var cmp = this._compare
+  //Find point to insert new node at
+  var n = this.root
+  var n_stack = []
+  var d_stack = []
+  while(n) {
+    var d = cmp(key, n.key)
+    n_stack.push(n)
+    d_stack.push(d)
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  //Rebuild path to leaf node
+  n_stack.push(new RBNode(RED, key, value, null, null, 1))
+  for(var s=n_stack.length-2; s>=0; --s) {
+    var n = n_stack[s]
+    if(d_stack[s] <= 0) {
+      n_stack[s] = new RBNode(n._color, n.key, n.value, n_stack[s+1], n.right, n._count+1)
+    } else {
+      n_stack[s] = new RBNode(n._color, n.key, n.value, n.left, n_stack[s+1], n._count+1)
+    }
+  }
+  //Rebalance tree using rotations
+  //console.log("start insert", key, d_stack)
+  for(var s=n_stack.length-1; s>1; --s) {
+    var p = n_stack[s-1]
+    var n = n_stack[s]
+    if(p._color === BLACK || n._color === BLACK) {
+      break
+    }
+    var pp = n_stack[s-2]
+    if(pp.left === p) {
+      if(p.left === n) {
+        var y = pp.right
+        if(y && y._color === RED) {
+          //console.log("LLr")
+          p._color = BLACK
+          pp.right = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("LLb")
+          pp._color = RED
+          pp.left = p.right
+          p._color = BLACK
+          p.right = pp
+          n_stack[s-2] = p
+          n_stack[s-1] = n
+          recount(pp)
+          recount(p)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.left === pp) {
+              ppp.left = p
+            } else {
+              ppp.right = p
+            }
+          }
+          break
+        }
+      } else {
+        var y = pp.right
+        if(y && y._color === RED) {
+          //console.log("LRr")
+          p._color = BLACK
+          pp.right = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("LRb")
+          p.right = n.left
+          pp._color = RED
+          pp.left = n.right
+          n._color = BLACK
+          n.left = p
+          n.right = pp
+          n_stack[s-2] = n
+          n_stack[s-1] = p
+          recount(pp)
+          recount(p)
+          recount(n)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.left === pp) {
+              ppp.left = n
+            } else {
+              ppp.right = n
+            }
+          }
+          break
+        }
+      }
+    } else {
+      if(p.right === n) {
+        var y = pp.left
+        if(y && y._color === RED) {
+          //console.log("RRr", y.key)
+          p._color = BLACK
+          pp.left = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("RRb")
+          pp._color = RED
+          pp.right = p.left
+          p._color = BLACK
+          p.left = pp
+          n_stack[s-2] = p
+          n_stack[s-1] = n
+          recount(pp)
+          recount(p)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.right === pp) {
+              ppp.right = p
+            } else {
+              ppp.left = p
+            }
+          }
+          break
+        }
+      } else {
+        var y = pp.left
+        if(y && y._color === RED) {
+          //console.log("RLr")
+          p._color = BLACK
+          pp.left = repaint(BLACK, y)
+          pp._color = RED
+          s -= 1
+        } else {
+          //console.log("RLb")
+          p.left = n.right
+          pp._color = RED
+          pp.right = n.left
+          n._color = BLACK
+          n.right = p
+          n.left = pp
+          n_stack[s-2] = n
+          n_stack[s-1] = p
+          recount(pp)
+          recount(p)
+          recount(n)
+          if(s >= 3) {
+            var ppp = n_stack[s-3]
+            if(ppp.right === pp) {
+              ppp.right = n
+            } else {
+              ppp.left = n
+            }
+          }
+          break
+        }
+      }
+    }
+  }
+  //Return new tree
+  n_stack[0]._color = BLACK
+  return new RedBlackTree(cmp, n_stack[0])
+}
+
+
+//Visit all nodes inorder
+function doVisitFull(visit, node) {
+  if(node.left) {
+    var v = doVisitFull(visit, node.left)
+    if(v) { return v }
+  }
+  var v = visit(node.key, node.value)
+  if(v) { return v }
+  if(node.right) {
+    return doVisitFull(visit, node.right)
+  }
+}
+
+//Visit half nodes in order
+function doVisitHalf(lo, compare, visit, node) {
+  var l = compare(lo, node.key)
+  if(l <= 0) {
+    if(node.left) {
+      var v = doVisitHalf(lo, compare, visit, node.left)
+      if(v) { return v }
+    }
+    var v = visit(node.key, node.value)
+    if(v) { return v }
+  }
+  if(node.right) {
+    return doVisitHalf(lo, compare, visit, node.right)
+  }
+}
+
+//Visit all nodes within a range
+function doVisit(lo, hi, compare, visit, node) {
+  var l = compare(lo, node.key)
+  var h = compare(hi, node.key)
+  var v
+  if(l <= 0) {
+    if(node.left) {
+      v = doVisit(lo, hi, compare, visit, node.left)
+      if(v) { return v }
+    }
+    if(h > 0) {
+      v = visit(node.key, node.value)
+      if(v) { return v }
+    }
+  }
+  if(h > 0 && node.right) {
+    return doVisit(lo, hi, compare, visit, node.right)
+  }
+}
+
+
+proto.forEach = function rbTreeForEach(visit, lo, hi) {
+  if(!this.root) {
+    return
+  }
+  switch(arguments.length) {
+    case 1:
+      return doVisitFull(visit, this.root)
+    break
+
+    case 2:
+      return doVisitHalf(lo, this._compare, visit, this.root)
+    break
+
+    case 3:
+      if(this._compare(lo, hi) >= 0) {
+        return
+      }
+      return doVisit(lo, hi, this._compare, visit, this.root)
+    break
+  }
+}
+
+//First item in list
+Object.defineProperty(proto, "begin", {
+  get: function() {
+    var stack = []
+    var n = this.root
+    while(n) {
+      stack.push(n)
+      n = n.left
+    }
+    return new RedBlackTreeIterator(this, stack)
+  }
+})
+
+//Last item in list
+Object.defineProperty(proto, "end", {
+  get: function() {
+    var stack = []
+    var n = this.root
+    while(n) {
+      stack.push(n)
+      n = n.right
+    }
+    return new RedBlackTreeIterator(this, stack)
+  }
+})
+
+//Find the ith item in the tree
+proto.at = function(idx) {
+  if(idx < 0) {
+    return new RedBlackTreeIterator(this, [])
+  }
+  var n = this.root
+  var stack = []
+  while(true) {
+    stack.push(n)
+    if(n.left) {
+      if(idx < n.left._count) {
+        n = n.left
+        continue
+      }
+      idx -= n.left._count
+    }
+    if(!idx) {
+      return new RedBlackTreeIterator(this, stack)
+    }
+    idx -= 1
+    if(n.right) {
+      if(idx >= n.right._count) {
+        break
+      }
+      n = n.right
+    } else {
+      break
+    }
+  }
+  return new RedBlackTreeIterator(this, [])
+}
+
+proto.ge = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d <= 0) {
+      last_ptr = stack.length
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+proto.gt = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d < 0) {
+      last_ptr = stack.length
+    }
+    if(d < 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+proto.lt = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d > 0) {
+      last_ptr = stack.length
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+proto.le = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  var last_ptr = 0
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d >= 0) {
+      last_ptr = stack.length
+    }
+    if(d < 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  stack.length = last_ptr
+  return new RedBlackTreeIterator(this, stack)
+}
+
+//Finds the item with key if it exists
+proto.find = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  var stack = []
+  while(n) {
+    var d = cmp(key, n.key)
+    stack.push(n)
+    if(d === 0) {
+      return new RedBlackTreeIterator(this, stack)
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  return new RedBlackTreeIterator(this, [])
+}
+
+//Removes item with key from tree
+proto.remove = function(key) {
+  var iter = this.find(key)
+  if(iter) {
+    return iter.remove()
+  }
+  return this
+}
+
+//Returns the item at `key`
+proto.get = function(key) {
+  var cmp = this._compare
+  var n = this.root
+  while(n) {
+    var d = cmp(key, n.key)
+    if(d === 0) {
+      return n.value
+    }
+    if(d <= 0) {
+      n = n.left
+    } else {
+      n = n.right
+    }
+  }
+  return
+}
+
+//Iterator for red black tree
+function RedBlackTreeIterator(tree, stack) {
+  this.tree = tree
+  this._stack = stack
+}
+
+var iproto = RedBlackTreeIterator.prototype
+
+//Test if iterator is valid
+Object.defineProperty(iproto, "valid", {
+  get: function() {
+    return this._stack.length > 0
+  }
+})
+
+//Node of the iterator
+Object.defineProperty(iproto, "node", {
+  get: function() {
+    if(this._stack.length > 0) {
+      return this._stack[this._stack.length-1]
+    }
+    return null
+  },
+  enumerable: true
+})
+
+//Makes a copy of an iterator
+iproto.clone = function() {
+  return new RedBlackTreeIterator(this.tree, this._stack.slice())
+}
+
+//Swaps two nodes
+function swapNode(n, v) {
+  n.key = v.key
+  n.value = v.value
+  n.left = v.left
+  n.right = v.right
+  n._color = v._color
+  n._count = v._count
+}
+
+//Fix up a double black node in a tree
+function fixDoubleBlack(stack) {
+  var n, p, s, z
+  for(var i=stack.length-1; i>=0; --i) {
+    n = stack[i]
+    if(i === 0) {
+      n._color = BLACK
+      return
+    }
+    //console.log("visit node:", n.key, i, stack[i].key, stack[i-1].key)
+    p = stack[i-1]
+    if(p.left === n) {
+      //console.log("left child")
+      s = p.right
+      if(s.right && s.right._color === RED) {
+        //console.log("case 1: right sibling child red")
+        s = p.right = cloneNode(s)
+        z = s.right = cloneNode(s.right)
+        p.right = s.left
+        s.left = p
+        s.right = z
+        s._color = p._color
+        n._color = BLACK
+        p._color = BLACK
+        z._color = BLACK
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.left === p) {
+            pp.left = s
+          } else {
+            pp.right = s
+          }
+        }
+        stack[i-1] = s
+        return
+      } else if(s.left && s.left._color === RED) {
+        //console.log("case 1: left sibling child red")
+        s = p.right = cloneNode(s)
+        z = s.left = cloneNode(s.left)
+        p.right = z.left
+        s.left = z.right
+        z.left = p
+        z.right = s
+        z._color = p._color
+        p._color = BLACK
+        s._color = BLACK
+        n._color = BLACK
+        recount(p)
+        recount(s)
+        recount(z)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.left === p) {
+            pp.left = z
+          } else {
+            pp.right = z
+          }
+        }
+        stack[i-1] = z
+        return
+      }
+      if(s._color === BLACK) {
+        if(p._color === RED) {
+          //console.log("case 2: black sibling, red parent", p.right.value)
+          p._color = BLACK
+          p.right = repaint(RED, s)
+          return
+        } else {
+          //console.log("case 2: black sibling, black parent", p.right.value)
+          p.right = repaint(RED, s)
+          continue  
+        }
+      } else {
+        //console.log("case 3: red sibling")
+        s = cloneNode(s)
+        p.right = s.left
+        s.left = p
+        s._color = p._color
+        p._color = RED
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.left === p) {
+            pp.left = s
+          } else {
+            pp.right = s
+          }
+        }
+        stack[i-1] = s
+        stack[i] = p
+        if(i+1 < stack.length) {
+          stack[i+1] = n
+        } else {
+          stack.push(n)
+        }
+        i = i+2
+      }
+    } else {
+      //console.log("right child")
+      s = p.left
+      if(s.left && s.left._color === RED) {
+        //console.log("case 1: left sibling child red", p.value, p._color)
+        s = p.left = cloneNode(s)
+        z = s.left = cloneNode(s.left)
+        p.left = s.right
+        s.right = p
+        s.left = z
+        s._color = p._color
+        n._color = BLACK
+        p._color = BLACK
+        z._color = BLACK
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.right === p) {
+            pp.right = s
+          } else {
+            pp.left = s
+          }
+        }
+        stack[i-1] = s
+        return
+      } else if(s.right && s.right._color === RED) {
+        //console.log("case 1: right sibling child red")
+        s = p.left = cloneNode(s)
+        z = s.right = cloneNode(s.right)
+        p.left = z.right
+        s.right = z.left
+        z.right = p
+        z.left = s
+        z._color = p._color
+        p._color = BLACK
+        s._color = BLACK
+        n._color = BLACK
+        recount(p)
+        recount(s)
+        recount(z)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.right === p) {
+            pp.right = z
+          } else {
+            pp.left = z
+          }
+        }
+        stack[i-1] = z
+        return
+      }
+      if(s._color === BLACK) {
+        if(p._color === RED) {
+          //console.log("case 2: black sibling, red parent")
+          p._color = BLACK
+          p.left = repaint(RED, s)
+          return
+        } else {
+          //console.log("case 2: black sibling, black parent")
+          p.left = repaint(RED, s)
+          continue  
+        }
+      } else {
+        //console.log("case 3: red sibling")
+        s = cloneNode(s)
+        p.left = s.right
+        s.right = p
+        s._color = p._color
+        p._color = RED
+        recount(p)
+        recount(s)
+        if(i > 1) {
+          var pp = stack[i-2]
+          if(pp.right === p) {
+            pp.right = s
+          } else {
+            pp.left = s
+          }
+        }
+        stack[i-1] = s
+        stack[i] = p
+        if(i+1 < stack.length) {
+          stack[i+1] = n
+        } else {
+          stack.push(n)
+        }
+        i = i+2
+      }
+    }
+  }
+}
+
+//Removes item at iterator from tree
+iproto.remove = function() {
+  var stack = this._stack
+  if(stack.length === 0) {
+    return this.tree
+  }
+  //First copy path to node
+  var cstack = new Array(stack.length)
+  var n = stack[stack.length-1]
+  cstack[cstack.length-1] = new RBNode(n._color, n.key, n.value, n.left, n.right, n._count)
+  for(var i=stack.length-2; i>=0; --i) {
+    var n = stack[i]
+    if(n.left === stack[i+1]) {
+      cstack[i] = new RBNode(n._color, n.key, n.value, cstack[i+1], n.right, n._count)
+    } else {
+      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
+    }
+  }
+
+  //Get node
+  n = cstack[cstack.length-1]
+  //console.log("start remove: ", n.value)
+
+  //If not leaf, then swap with previous node
+  if(n.left && n.right) {
+    //console.log("moving to leaf")
+
+    //First walk to previous leaf
+    var split = cstack.length
+    n = n.left
+    while(n.right) {
+      cstack.push(n)
+      n = n.right
+    }
+    //Copy path to leaf
+    var v = cstack[split-1]
+    cstack.push(new RBNode(n._color, v.key, v.value, n.left, n.right, n._count))
+    cstack[split-1].key = n.key
+    cstack[split-1].value = n.value
+
+    //Fix up stack
+    for(var i=cstack.length-2; i>=split; --i) {
+      n = cstack[i]
+      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
+    }
+    cstack[split-1].left = cstack[split]
+  }
+  //console.log("stack=", cstack.map(function(v) { return v.value }))
+
+  //Remove leaf node
+  n = cstack[cstack.length-1]
+  if(n._color === RED) {
+    //Easy case: removing red leaf
+    //console.log("RED leaf")
+    var p = cstack[cstack.length-2]
+    if(p.left === n) {
+      p.left = null
+    } else if(p.right === n) {
+      p.right = null
+    }
+    cstack.pop()
+    for(var i=0; i<cstack.length; ++i) {
+      cstack[i]._count--
+    }
+    return new RedBlackTree(this.tree._compare, cstack[0])
+  } else {
+    if(n.left || n.right) {
+      //Second easy case:  Single child black parent
+      //console.log("BLACK single child")
+      if(n.left) {
+        swapNode(n, n.left)
+      } else if(n.right) {
+        swapNode(n, n.right)
+      }
+      //Child must be red, so repaint it black to balance color
+      n._color = BLACK
+      for(var i=0; i<cstack.length-1; ++i) {
+        cstack[i]._count--
+      }
+      return new RedBlackTree(this.tree._compare, cstack[0])
+    } else if(cstack.length === 1) {
+      //Third easy case: root
+      //console.log("ROOT")
+      return new RedBlackTree(this.tree._compare, null)
+    } else {
+      //Hard case: Repaint n, and then do some nasty stuff
+      //console.log("BLACK leaf no children")
+      for(var i=0; i<cstack.length; ++i) {
+        cstack[i]._count--
+      }
+      var parent = cstack[cstack.length-2]
+      fixDoubleBlack(cstack)
+      //Fix up links
+      if(parent.left === n) {
+        parent.left = null
+      } else {
+        parent.right = null
+      }
+    }
+  }
+  return new RedBlackTree(this.tree._compare, cstack[0])
+}
+
+//Returns key
+Object.defineProperty(iproto, "key", {
+  get: function() {
+    if(this._stack.length > 0) {
+      return this._stack[this._stack.length-1].key
+    }
+    return
+  },
+  enumerable: true
+})
+
+//Returns value
+Object.defineProperty(iproto, "value", {
+  get: function() {
+    if(this._stack.length > 0) {
+      return this._stack[this._stack.length-1].value
+    }
+    return
+  },
+  enumerable: true
+})
+
+
+//Returns the position of this iterator in the sorted list
+Object.defineProperty(iproto, "index", {
+  get: function() {
+    var idx = 0
+    var stack = this._stack
+    if(stack.length === 0) {
+      var r = this.tree.root
+      if(r) {
+        return r._count
+      }
+      return 0
+    } else if(stack[stack.length-1].left) {
+      idx = stack[stack.length-1].left._count
+    }
+    for(var s=stack.length-2; s>=0; --s) {
+      if(stack[s+1] === stack[s].right) {
+        ++idx
+        if(stack[s].left) {
+          idx += stack[s].left._count
+        }
+      }
+    }
+    return idx
+  },
+  enumerable: true
+})
+
+//Advances iterator to next element in list
+iproto.next = function() {
+  var stack = this._stack
+  if(stack.length === 0) {
+    return
+  }
+  var n = stack[stack.length-1]
+  if(n.right) {
+    n = n.right
+    while(n) {
+      stack.push(n)
+      n = n.left
+    }
+  } else {
+    stack.pop()
+    while(stack.length > 0 && stack[stack.length-1].right === n) {
+      n = stack[stack.length-1]
+      stack.pop()
+    }
+  }
+}
+
+//Checks if iterator is at end of tree
+Object.defineProperty(iproto, "hasNext", {
+  get: function() {
+    var stack = this._stack
+    if(stack.length === 0) {
+      return false
+    }
+    if(stack[stack.length-1].right) {
+      return true
+    }
+    for(var s=stack.length-1; s>0; --s) {
+      if(stack[s-1].left === stack[s]) {
+        return true
+      }
+    }
+    return false
+  }
+})
+
+//Update value
+iproto.update = function(value) {
+  var stack = this._stack
+  if(stack.length === 0) {
+    throw new Error("Can't update empty node!")
+  }
+  var cstack = new Array(stack.length)
+  var n = stack[stack.length-1]
+  cstack[cstack.length-1] = new RBNode(n._color, n.key, value, n.left, n.right, n._count)
+  for(var i=stack.length-2; i>=0; --i) {
+    n = stack[i]
+    if(n.left === stack[i+1]) {
+      cstack[i] = new RBNode(n._color, n.key, n.value, cstack[i+1], n.right, n._count)
+    } else {
+      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
+    }
+  }
+  return new RedBlackTree(this.tree._compare, cstack[0])
+}
+
+//Moves iterator backward one element
+iproto.prev = function() {
+  var stack = this._stack
+  if(stack.length === 0) {
+    return
+  }
+  var n = stack[stack.length-1]
+  if(n.left) {
+    n = n.left
+    while(n) {
+      stack.push(n)
+      n = n.right
+    }
+  } else {
+    stack.pop()
+    while(stack.length > 0 && stack[stack.length-1].left === n) {
+      n = stack[stack.length-1]
+      stack.pop()
+    }
+  }
+}
+
+//Checks if iterator is at start of tree
+Object.defineProperty(iproto, "hasPrev", {
+  get: function() {
+    var stack = this._stack
+    if(stack.length === 0) {
+      return false
+    }
+    if(stack[stack.length-1].left) {
+      return true
+    }
+    for(var s=stack.length-1; s>0; --s) {
+      if(stack[s-1].right === stack[s]) {
+        return true
+      }
+    }
+    return false
+  }
+})
+
+//Default comparison function
+function defaultCompare(a, b) {
+  if(a < b) {
+    return -1
+  }
+  if(a > b) {
+    return 1
+  }
+  return 0
+}
+
+//Build a tree
+function createRBTree(compare) {
+  return new RedBlackTree(compare || defaultCompare, null)
+}
+},{}],63:[function(require,module,exports){
+// transliterated from the python snippet here:
+// http://en.wikipedia.org/wiki/Lanczos_approximation
+
+var g = 7;
+var p = [
+    0.99999999999980993,
+    676.5203681218851,
+    -1259.1392167224028,
+    771.32342877765313,
+    -176.61502916214059,
+    12.507343278686905,
+    -0.13857109526572012,
+    9.9843695780195716e-6,
+    1.5056327351493116e-7
+];
+
+var g_ln = 607/128;
+var p_ln = [
+    0.99999999999999709182,
+    57.156235665862923517,
+    -59.597960355475491248,
+    14.136097974741747174,
+    -0.49191381609762019978,
+    0.33994649984811888699e-4,
+    0.46523628927048575665e-4,
+    -0.98374475304879564677e-4,
+    0.15808870322491248884e-3,
+    -0.21026444172410488319e-3,
+    0.21743961811521264320e-3,
+    -0.16431810653676389022e-3,
+    0.84418223983852743293e-4,
+    -0.26190838401581408670e-4,
+    0.36899182659531622704e-5
+];
+
+// Spouge approximation (suitable for large arguments)
+function lngamma(z) {
+
+    if(z < 0) return Number('0/0');
+    var x = p_ln[0];
+    for(var i = p_ln.length - 1; i > 0; --i) x += p_ln[i] / (z + i);
+    var t = z + g_ln + 0.5;
+    return .5*Math.log(2*Math.PI)+(z+.5)*Math.log(t)-t+Math.log(x)-Math.log(z);
+}
+
+module.exports = function gamma (z) {
+    if (z < 0.5) {
+        return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+    }
+    else if(z > 100) return Math.exp(lngamma(z));
+    else {
+        z -= 1;
+        var x = p[0];
+        for (var i = 1; i < g + 2; i++) {
+            x += p[i] / (z + i);
+        }
+        var t = z + g + 0.5;
+
+        return Math.sqrt(2 * Math.PI)
+            * Math.pow(t, z + 0.5)
+            * Math.exp(-t)
+            * x
+        ;
+    }
+};
+
+module.exports.log = lngamma;
+
+},{}],64:[function(require,module,exports){
 "use strict"
 
 var pool = require("typedarray-pool")
@@ -19998,7 +20720,314 @@ function createBuffer(gl, data, type, usage) {
 
 module.exports = createBuffer
 
-},{"ndarray":160,"ndarray-ops":159,"typedarray-pool":180}],68:[function(require,module,exports){
+},{"ndarray":131,"ndarray-ops":130,"typedarray-pool":170}],65:[function(require,module,exports){
+module.exports = {
+  0: 'NONE',
+  1: 'ONE',
+  2: 'LINE_LOOP',
+  3: 'LINE_STRIP',
+  4: 'TRIANGLES',
+  5: 'TRIANGLE_STRIP',
+  6: 'TRIANGLE_FAN',
+  256: 'DEPTH_BUFFER_BIT',
+  512: 'NEVER',
+  513: 'LESS',
+  514: 'EQUAL',
+  515: 'LEQUAL',
+  516: 'GREATER',
+  517: 'NOTEQUAL',
+  518: 'GEQUAL',
+  519: 'ALWAYS',
+  768: 'SRC_COLOR',
+  769: 'ONE_MINUS_SRC_COLOR',
+  770: 'SRC_ALPHA',
+  771: 'ONE_MINUS_SRC_ALPHA',
+  772: 'DST_ALPHA',
+  773: 'ONE_MINUS_DST_ALPHA',
+  774: 'DST_COLOR',
+  775: 'ONE_MINUS_DST_COLOR',
+  776: 'SRC_ALPHA_SATURATE',
+  1024: 'STENCIL_BUFFER_BIT',
+  1028: 'FRONT',
+  1029: 'BACK',
+  1032: 'FRONT_AND_BACK',
+  1280: 'INVALID_ENUM',
+  1281: 'INVALID_VALUE',
+  1282: 'INVALID_OPERATION',
+  1285: 'OUT_OF_MEMORY',
+  1286: 'INVALID_FRAMEBUFFER_OPERATION',
+  2304: 'CW',
+  2305: 'CCW',
+  2849: 'LINE_WIDTH',
+  2884: 'CULL_FACE',
+  2885: 'CULL_FACE_MODE',
+  2886: 'FRONT_FACE',
+  2928: 'DEPTH_RANGE',
+  2929: 'DEPTH_TEST',
+  2930: 'DEPTH_WRITEMASK',
+  2931: 'DEPTH_CLEAR_VALUE',
+  2932: 'DEPTH_FUNC',
+  2960: 'STENCIL_TEST',
+  2961: 'STENCIL_CLEAR_VALUE',
+  2962: 'STENCIL_FUNC',
+  2963: 'STENCIL_VALUE_MASK',
+  2964: 'STENCIL_FAIL',
+  2965: 'STENCIL_PASS_DEPTH_FAIL',
+  2966: 'STENCIL_PASS_DEPTH_PASS',
+  2967: 'STENCIL_REF',
+  2968: 'STENCIL_WRITEMASK',
+  2978: 'VIEWPORT',
+  3024: 'DITHER',
+  3042: 'BLEND',
+  3088: 'SCISSOR_BOX',
+  3089: 'SCISSOR_TEST',
+  3106: 'COLOR_CLEAR_VALUE',
+  3107: 'COLOR_WRITEMASK',
+  3317: 'UNPACK_ALIGNMENT',
+  3333: 'PACK_ALIGNMENT',
+  3379: 'MAX_TEXTURE_SIZE',
+  3386: 'MAX_VIEWPORT_DIMS',
+  3408: 'SUBPIXEL_BITS',
+  3410: 'RED_BITS',
+  3411: 'GREEN_BITS',
+  3412: 'BLUE_BITS',
+  3413: 'ALPHA_BITS',
+  3414: 'DEPTH_BITS',
+  3415: 'STENCIL_BITS',
+  3553: 'TEXTURE_2D',
+  4352: 'DONT_CARE',
+  4353: 'FASTEST',
+  4354: 'NICEST',
+  5120: 'BYTE',
+  5121: 'UNSIGNED_BYTE',
+  5122: 'SHORT',
+  5123: 'UNSIGNED_SHORT',
+  5124: 'INT',
+  5125: 'UNSIGNED_INT',
+  5126: 'FLOAT',
+  5386: 'INVERT',
+  5890: 'TEXTURE',
+  6401: 'STENCIL_INDEX',
+  6402: 'DEPTH_COMPONENT',
+  6406: 'ALPHA',
+  6407: 'RGB',
+  6408: 'RGBA',
+  6409: 'LUMINANCE',
+  6410: 'LUMINANCE_ALPHA',
+  7680: 'KEEP',
+  7681: 'REPLACE',
+  7682: 'INCR',
+  7683: 'DECR',
+  7936: 'VENDOR',
+  7937: 'RENDERER',
+  7938: 'VERSION',
+  9728: 'NEAREST',
+  9729: 'LINEAR',
+  9984: 'NEAREST_MIPMAP_NEAREST',
+  9985: 'LINEAR_MIPMAP_NEAREST',
+  9986: 'NEAREST_MIPMAP_LINEAR',
+  9987: 'LINEAR_MIPMAP_LINEAR',
+  10240: 'TEXTURE_MAG_FILTER',
+  10241: 'TEXTURE_MIN_FILTER',
+  10242: 'TEXTURE_WRAP_S',
+  10243: 'TEXTURE_WRAP_T',
+  10497: 'REPEAT',
+  10752: 'POLYGON_OFFSET_UNITS',
+  16384: 'COLOR_BUFFER_BIT',
+  32769: 'CONSTANT_COLOR',
+  32770: 'ONE_MINUS_CONSTANT_COLOR',
+  32771: 'CONSTANT_ALPHA',
+  32772: 'ONE_MINUS_CONSTANT_ALPHA',
+  32773: 'BLEND_COLOR',
+  32774: 'FUNC_ADD',
+  32777: 'BLEND_EQUATION_RGB',
+  32778: 'FUNC_SUBTRACT',
+  32779: 'FUNC_REVERSE_SUBTRACT',
+  32819: 'UNSIGNED_SHORT_4_4_4_4',
+  32820: 'UNSIGNED_SHORT_5_5_5_1',
+  32823: 'POLYGON_OFFSET_FILL',
+  32824: 'POLYGON_OFFSET_FACTOR',
+  32854: 'RGBA4',
+  32855: 'RGB5_A1',
+  32873: 'TEXTURE_BINDING_2D',
+  32926: 'SAMPLE_ALPHA_TO_COVERAGE',
+  32928: 'SAMPLE_COVERAGE',
+  32936: 'SAMPLE_BUFFERS',
+  32937: 'SAMPLES',
+  32938: 'SAMPLE_COVERAGE_VALUE',
+  32939: 'SAMPLE_COVERAGE_INVERT',
+  32968: 'BLEND_DST_RGB',
+  32969: 'BLEND_SRC_RGB',
+  32970: 'BLEND_DST_ALPHA',
+  32971: 'BLEND_SRC_ALPHA',
+  33071: 'CLAMP_TO_EDGE',
+  33170: 'GENERATE_MIPMAP_HINT',
+  33189: 'DEPTH_COMPONENT16',
+  33306: 'DEPTH_STENCIL_ATTACHMENT',
+  33635: 'UNSIGNED_SHORT_5_6_5',
+  33648: 'MIRRORED_REPEAT',
+  33901: 'ALIASED_POINT_SIZE_RANGE',
+  33902: 'ALIASED_LINE_WIDTH_RANGE',
+  33984: 'TEXTURE0',
+  33985: 'TEXTURE1',
+  33986: 'TEXTURE2',
+  33987: 'TEXTURE3',
+  33988: 'TEXTURE4',
+  33989: 'TEXTURE5',
+  33990: 'TEXTURE6',
+  33991: 'TEXTURE7',
+  33992: 'TEXTURE8',
+  33993: 'TEXTURE9',
+  33994: 'TEXTURE10',
+  33995: 'TEXTURE11',
+  33996: 'TEXTURE12',
+  33997: 'TEXTURE13',
+  33998: 'TEXTURE14',
+  33999: 'TEXTURE15',
+  34000: 'TEXTURE16',
+  34001: 'TEXTURE17',
+  34002: 'TEXTURE18',
+  34003: 'TEXTURE19',
+  34004: 'TEXTURE20',
+  34005: 'TEXTURE21',
+  34006: 'TEXTURE22',
+  34007: 'TEXTURE23',
+  34008: 'TEXTURE24',
+  34009: 'TEXTURE25',
+  34010: 'TEXTURE26',
+  34011: 'TEXTURE27',
+  34012: 'TEXTURE28',
+  34013: 'TEXTURE29',
+  34014: 'TEXTURE30',
+  34015: 'TEXTURE31',
+  34016: 'ACTIVE_TEXTURE',
+  34024: 'MAX_RENDERBUFFER_SIZE',
+  34041: 'DEPTH_STENCIL',
+  34055: 'INCR_WRAP',
+  34056: 'DECR_WRAP',
+  34067: 'TEXTURE_CUBE_MAP',
+  34068: 'TEXTURE_BINDING_CUBE_MAP',
+  34069: 'TEXTURE_CUBE_MAP_POSITIVE_X',
+  34070: 'TEXTURE_CUBE_MAP_NEGATIVE_X',
+  34071: 'TEXTURE_CUBE_MAP_POSITIVE_Y',
+  34072: 'TEXTURE_CUBE_MAP_NEGATIVE_Y',
+  34073: 'TEXTURE_CUBE_MAP_POSITIVE_Z',
+  34074: 'TEXTURE_CUBE_MAP_NEGATIVE_Z',
+  34076: 'MAX_CUBE_MAP_TEXTURE_SIZE',
+  34338: 'VERTEX_ATTRIB_ARRAY_ENABLED',
+  34339: 'VERTEX_ATTRIB_ARRAY_SIZE',
+  34340: 'VERTEX_ATTRIB_ARRAY_STRIDE',
+  34341: 'VERTEX_ATTRIB_ARRAY_TYPE',
+  34342: 'CURRENT_VERTEX_ATTRIB',
+  34373: 'VERTEX_ATTRIB_ARRAY_POINTER',
+  34466: 'NUM_COMPRESSED_TEXTURE_FORMATS',
+  34467: 'COMPRESSED_TEXTURE_FORMATS',
+  34660: 'BUFFER_SIZE',
+  34661: 'BUFFER_USAGE',
+  34816: 'STENCIL_BACK_FUNC',
+  34817: 'STENCIL_BACK_FAIL',
+  34818: 'STENCIL_BACK_PASS_DEPTH_FAIL',
+  34819: 'STENCIL_BACK_PASS_DEPTH_PASS',
+  34877: 'BLEND_EQUATION_ALPHA',
+  34921: 'MAX_VERTEX_ATTRIBS',
+  34922: 'VERTEX_ATTRIB_ARRAY_NORMALIZED',
+  34930: 'MAX_TEXTURE_IMAGE_UNITS',
+  34962: 'ARRAY_BUFFER',
+  34963: 'ELEMENT_ARRAY_BUFFER',
+  34964: 'ARRAY_BUFFER_BINDING',
+  34965: 'ELEMENT_ARRAY_BUFFER_BINDING',
+  34975: 'VERTEX_ATTRIB_ARRAY_BUFFER_BINDING',
+  35040: 'STREAM_DRAW',
+  35044: 'STATIC_DRAW',
+  35048: 'DYNAMIC_DRAW',
+  35632: 'FRAGMENT_SHADER',
+  35633: 'VERTEX_SHADER',
+  35660: 'MAX_VERTEX_TEXTURE_IMAGE_UNITS',
+  35661: 'MAX_COMBINED_TEXTURE_IMAGE_UNITS',
+  35663: 'SHADER_TYPE',
+  35664: 'FLOAT_VEC2',
+  35665: 'FLOAT_VEC3',
+  35666: 'FLOAT_VEC4',
+  35667: 'INT_VEC2',
+  35668: 'INT_VEC3',
+  35669: 'INT_VEC4',
+  35670: 'BOOL',
+  35671: 'BOOL_VEC2',
+  35672: 'BOOL_VEC3',
+  35673: 'BOOL_VEC4',
+  35674: 'FLOAT_MAT2',
+  35675: 'FLOAT_MAT3',
+  35676: 'FLOAT_MAT4',
+  35678: 'SAMPLER_2D',
+  35680: 'SAMPLER_CUBE',
+  35712: 'DELETE_STATUS',
+  35713: 'COMPILE_STATUS',
+  35714: 'LINK_STATUS',
+  35715: 'VALIDATE_STATUS',
+  35716: 'INFO_LOG_LENGTH',
+  35717: 'ATTACHED_SHADERS',
+  35718: 'ACTIVE_UNIFORMS',
+  35719: 'ACTIVE_UNIFORM_MAX_LENGTH',
+  35720: 'SHADER_SOURCE_LENGTH',
+  35721: 'ACTIVE_ATTRIBUTES',
+  35722: 'ACTIVE_ATTRIBUTE_MAX_LENGTH',
+  35724: 'SHADING_LANGUAGE_VERSION',
+  35725: 'CURRENT_PROGRAM',
+  36003: 'STENCIL_BACK_REF',
+  36004: 'STENCIL_BACK_VALUE_MASK',
+  36005: 'STENCIL_BACK_WRITEMASK',
+  36006: 'FRAMEBUFFER_BINDING',
+  36007: 'RENDERBUFFER_BINDING',
+  36048: 'FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE',
+  36049: 'FRAMEBUFFER_ATTACHMENT_OBJECT_NAME',
+  36050: 'FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL',
+  36051: 'FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE',
+  36053: 'FRAMEBUFFER_COMPLETE',
+  36054: 'FRAMEBUFFER_INCOMPLETE_ATTACHMENT',
+  36055: 'FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT',
+  36057: 'FRAMEBUFFER_INCOMPLETE_DIMENSIONS',
+  36061: 'FRAMEBUFFER_UNSUPPORTED',
+  36064: 'COLOR_ATTACHMENT0',
+  36096: 'DEPTH_ATTACHMENT',
+  36128: 'STENCIL_ATTACHMENT',
+  36160: 'FRAMEBUFFER',
+  36161: 'RENDERBUFFER',
+  36162: 'RENDERBUFFER_WIDTH',
+  36163: 'RENDERBUFFER_HEIGHT',
+  36164: 'RENDERBUFFER_INTERNAL_FORMAT',
+  36168: 'STENCIL_INDEX8',
+  36176: 'RENDERBUFFER_RED_SIZE',
+  36177: 'RENDERBUFFER_GREEN_SIZE',
+  36178: 'RENDERBUFFER_BLUE_SIZE',
+  36179: 'RENDERBUFFER_ALPHA_SIZE',
+  36180: 'RENDERBUFFER_DEPTH_SIZE',
+  36181: 'RENDERBUFFER_STENCIL_SIZE',
+  36194: 'RGB565',
+  36336: 'LOW_FLOAT',
+  36337: 'MEDIUM_FLOAT',
+  36338: 'HIGH_FLOAT',
+  36339: 'LOW_INT',
+  36340: 'MEDIUM_INT',
+  36341: 'HIGH_INT',
+  36346: 'SHADER_COMPILER',
+  36347: 'MAX_VERTEX_UNIFORM_VECTORS',
+  36348: 'MAX_VARYING_VECTORS',
+  36349: 'MAX_FRAGMENT_UNIFORM_VECTORS',
+  37440: 'UNPACK_FLIP_Y_WEBGL',
+  37441: 'UNPACK_PREMULTIPLY_ALPHA_WEBGL',
+  37442: 'CONTEXT_LOST_WEBGL',
+  37443: 'UNPACK_COLORSPACE_CONVERSION_WEBGL',
+  37444: 'BROWSER_DEFAULT_WEBGL'
+}
+
+},{}],66:[function(require,module,exports){
+var gl10 = require('./1.0/numbers')
+
+module.exports = function lookupConstant (number) {
+  return gl10[number]
+}
+
+},{"./1.0/numbers":65}],67:[function(require,module,exports){
 'use strict'
 
 module.exports = createContour2D
@@ -20431,7 +21460,7 @@ function createContour2D (plot, options) {
   return contours
 }
 
-},{"./lib/shaders":69,"binary-search-bounds":70,"cdt2d":17,"clean-pslg":24,"gl-buffer":67,"gl-shader":125,"iota-array":152,"ndarray":160,"surface-nets":175}],69:[function(require,module,exports){
+},{"./lib/shaders":68,"binary-search-bounds":69,"cdt2d":41,"clean-pslg":47,"gl-buffer":64,"gl-shader":106,"iota-array":124,"ndarray":131,"surface-nets":163}],68:[function(require,module,exports){
 'use strict'
 
 
@@ -20444,9 +21473,9 @@ module.exports = {
   fillVertex: "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 position;\nattribute vec4 color;\n\nuniform mat3 viewTransform;\n\nvarying vec4 fragColor;\n\nvoid main() {\n  fragColor = color;\n  vec3 vPosition = viewTransform * vec3(position, 1.0);\n  gl_Position = vec4(vPosition.xy, 0, vPosition.z);\n}\n"
 }
 
-},{}],70:[function(require,module,exports){
-arguments[4][22][0].apply(exports,arguments)
-},{"dup":22}],71:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"dup":46}],70:[function(require,module,exports){
 'use strict'
 
 var createShader = require('gl-shader')
@@ -20457,62 +21486,62 @@ var shaders = require('./lib/shaders')
 module.exports = createError2D
 
 var WEIGHTS = [
-  // x-error bar
-  [1, 0, 0, 1, 0, 0],
-  [1, 0, 0, -1, 0, 0],
-  [-1, 0, 0, -1, 0, 0],
+  //x-error bar
+  [ 1, 0, 0, 1, 0, 0],
+  [ 1, 0, 0,-1, 0, 0],
+  [-1, 0, 0,-1, 0, 0],
 
-  [-1, 0, 0, -1, 0, 0],
+  [-1, 0, 0,-1, 0, 0],
   [-1, 0, 0, 1, 0, 0],
-  [1, 0, 0, 1, 0, 0],
+  [ 1, 0, 0, 1, 0, 0],
 
-  // x-error right cap
-  [1, 0, -1, 0, 0, 1],
-  [1, 0, -1, 0, 0, -1],
-  [1, 0, 1, 0, 0, -1],
+  //x-error right cap
+  [ 1, 0, -1, 0, 0, 1],
+  [ 1, 0, -1, 0, 0,-1],
+  [ 1, 0,  1, 0, 0,-1],
 
-  [1, 0, 1, 0, 0, -1],
-  [1, 0, 1, 0, 0, 1],
-  [1, 0, -1, 0, 0, 1],
+  [ 1, 0,  1, 0, 0,-1],
+  [ 1, 0,  1, 0, 0, 1],
+  [ 1, 0, -1, 0, 0, 1],
 
-  // x-error left cap
+  //x-error left cap
   [-1, 0, -1, 0, 0, 1],
-  [-1, 0, -1, 0, 0, -1],
-  [-1, 0, 1, 0, 0, -1],
+  [-1, 0, -1, 0, 0,-1],
+  [-1, 0,  1, 0, 0,-1],
 
-  [-1, 0, 1, 0, 0, -1],
-  [-1, 0, 1, 0, 0, 1],
+  [-1, 0,  1, 0, 0,-1],
+  [-1, 0,  1, 0, 0, 1],
   [-1, 0, -1, 0, 0, 1],
 
-  // y-error bar
+  //y-error bar
   [0, 1, 1, 0, 0, 0],
-  [0, 1, -1, 0, 0, 0],
-  [0, -1, -1, 0, 0, 0],
+  [0, 1,-1, 0, 0, 0],
+  [0,-1,-1, 0, 0, 0],
 
-  [0, -1, -1, 0, 0, 0],
+  [0,-1,-1, 0, 0, 0],
   [0, 1, 1, 0, 0, 0],
-  [0, -1, 1, 0, 0, 0],
+  [0,-1, 1, 0, 0, 0],
 
-  // y-error top cap
-  [0, 1, 0, -1, 1, 0],
-  [0, 1, 0, -1, -1, 0],
-  [0, 1, 0, 1, -1, 0],
+  //y-error top cap
+  [ 0, 1, 0,-1, 1, 0],
+  [ 0, 1, 0,-1,-1, 0],
+  [ 0, 1, 0, 1,-1, 0],
 
-  [0, 1, 0, 1, 1, 0],
-  [0, 1, 0, -1, 1, 0],
-  [0, 1, 0, 1, -1, 0],
+  [ 0, 1, 0, 1, 1, 0],
+  [ 0, 1, 0,-1, 1, 0],
+  [ 0, 1, 0, 1,-1, 0],
 
-  // y-error bottom cap
-  [0, -1, 0, -1, 1, 0],
-  [0, -1, 0, -1, -1, 0],
-  [0, -1, 0, 1, -1, 0],
+  //y-error bottom cap
+  [ 0,-1, 0,-1, 1, 0],
+  [ 0,-1, 0,-1,-1, 0],
+  [ 0,-1, 0, 1,-1, 0],
 
-  [0, -1, 0, 1, 1, 0],
-  [0, -1, 0, -1, 1, 0],
-  [0, -1, 0, 1, -1, 0]
+  [ 0,-1, 0, 1, 1, 0],
+  [ 0,-1, 0,-1, 1, 0],
+  [ 0,-1, 0, 1,-1, 0]
 ]
 
-function GLError2D (plot, shader, buffer) {
+function GLError2D(plot, shader, buffer) {
   this.plot = plot
 
   this.shader = shader
@@ -20522,40 +21551,38 @@ function GLError2D (plot, shader, buffer) {
 
   this.numPoints = 0
 
-  this.color = [0, 0, 0, 1]
+  this.color     = [0,0,0,1]
 }
 
 var proto = GLError2D.prototype
 
-proto.draw = (function () {
-  var MATRIX = [
+proto.draw = (function() {
+
+  var MATRIX      = [
     1, 0, 0,
     0, 1, 0,
     0, 0, 1
   ]
 
-  var PIXEL_SCALE = [1, 1]
+  var PIXEL_SCALE = [1,1]
 
-  return function () {
-    var plot = this.plot
-    var shader = this.shader
-    var buffer = this.buffer
-    var bounds = this.bounds
+  return function() {
+    var plot      = this.plot
+    var shader    = this.shader
+    var buffer    = this.buffer
+    var bounds    = this.bounds
     var numPoints = this.numPoints
+    var color     = this.color
 
-    if (!numPoints) {
-      return
-    }
+    var gl          = plot.gl
+    var dataBox     = plot.dataBox
+    var viewBox     = plot.viewBox
+    var pixelRatio  = plot.pixelRatio
 
-    var gl = plot.gl
-    var dataBox = plot.dataBox
-    var viewBox = plot.viewBox
-    var pixelRatio = plot.pixelRatio
-
-    var boundX = bounds[2] - bounds[0]
-    var boundY = bounds[3] - bounds[1]
-    var dataX = dataBox[2] - dataBox[0]
-    var dataY = dataBox[3] - dataBox[1]
+    var boundX  = bounds[2]  - bounds[0]
+    var boundY  = bounds[3]  - bounds[1]
+    var dataX   = dataBox[2] - dataBox[0]
+    var dataY   = dataBox[3] - dataBox[1]
 
     MATRIX[0] = 2.0 * boundX / dataX
     MATRIX[4] = 2.0 * boundY / dataY
@@ -20572,8 +21599,8 @@ proto.draw = (function () {
     shader.bind()
 
     shader.uniforms.viewTransform = MATRIX
-    shader.uniforms.pixelScale = PIXEL_SCALE
-    shader.uniforms.color = this.color
+    shader.uniforms.pixelScale    = PIXEL_SCALE
+    shader.uniforms.color         = this.color
 
     shader.attributes.position.pointer(
       gl.FLOAT,
@@ -20591,47 +21618,45 @@ proto.draw = (function () {
   }
 })()
 
-proto.drawPick = function (offset) { return offset }
-proto.pick = function (x, y) {
+proto.drawPick = function(offset) { return offset }
+proto.pick = function(x, y) {
   return null
 }
 
-proto.update = function (options) {
+proto.update = function(options) {
   options = options || {}
 
-  var i, x, y
-
   var positions = options.positions || []
-  var errors = options.errors || []
+  var errors    = options.errors    || []
 
   var lineWidth = 1
-  if ('lineWidth' in options) {
+  if('lineWidth' in options) {
     lineWidth = +options.lineWidth
   }
 
   var capSize = 5
-  if ('capSize' in options) {
+  if('capSize' in options) {
     capSize = +options.capSize
   }
 
-  this.color = (options.color || [0, 0, 0, 1]).slice()
+  this.color     = (options.color || [0,0,0,1]).slice()
 
-  var bounds = this.bounds = [Infinity, Infinity, -Infinity, -Infinity]
+  var bounds    = this.bounds = [Infinity, Infinity, -Infinity, -Infinity]
 
-  var numPoints = this.numPoints = positions.length >> 1
-  for (i = 0; i < numPoints; ++i) {
-    x = positions[i * 2]
-    y = positions[i * 2 + 1]
+  var numPoints = this.numPoints = positions.length>>1
+  for(var i=0; i<numPoints; ++i) {
+    var x = positions[i*2]
+    var y = positions[i*2+1]
 
     bounds[0] = Math.min(x, bounds[0])
     bounds[1] = Math.min(y, bounds[1])
     bounds[2] = Math.max(x, bounds[2])
     bounds[3] = Math.max(y, bounds[3])
   }
-  if (bounds[2] === bounds[0]) {
+  if(bounds[2] === bounds[0]) {
     bounds[2] += 1
   }
-  if (bounds[3] === bounds[1]) {
+  if(bounds[3] === bounds[1]) {
     bounds[3] += 1
   }
   var sx = 1.0 / (bounds[2] - bounds[0])
@@ -20641,29 +21666,29 @@ proto.update = function (options) {
 
   var bufferData = pool.mallocFloat32(numPoints * WEIGHTS.length * 4)
   var ptr = 0
-  for (i = 0; i < numPoints; ++i) {
-    x = positions[2 * i]
-    y = positions[2 * i + 1]
-    var ex0 = errors[4 * i]
-    var ex1 = errors[4 * i + 1]
-    var ey0 = errors[4 * i + 2]
-    var ey1 = errors[4 * i + 3]
+  for(var i=0; i<numPoints; ++i) {
+    var x   = positions[2*i]
+    var y   = positions[2*i+1]
+    var ex0 = errors[4*i]
+    var ex1 = errors[4*i+1]
+    var ey0 = errors[4*i+2]
+    var ey1 = errors[4*i+3]
 
-    for (var j = 0; j < WEIGHTS.length; ++j) {
+    for(var j=0; j<WEIGHTS.length; ++j) {
       var w = WEIGHTS[j]
 
       var dx = w[0]
       var dy = w[1]
 
-      if (dx < 0) {
+      if(dx < 0) {
         dx *= ex0
-      } else if (dx > 0) {
+      } else if(dx > 0) {
         dx *= ex1
       }
 
-      if (dy < 0) {
+      if(dy < 0) {
         dy *= ey0
-      } else if (dy > 0) {
+      } else if(dy > 0) {
         dy *= ey1
       }
 
@@ -20677,13 +21702,13 @@ proto.update = function (options) {
   pool.free(bufferData)
 }
 
-proto.dispose = function () {
+proto.dispose = function() {
   this.plot.removeObject(this)
   this.shader.dispose()
   this.buffer.dispose()
 }
 
-function createError2D (plot, options) {
+function createError2D(plot, options) {
   var shader = createShader(plot.gl, shaders.vertex, shaders.fragment)
   var buffer = createBuffer(plot.gl)
 
@@ -20696,15 +21721,15 @@ function createError2D (plot, options) {
   return errorbars
 }
 
-},{"./lib/shaders":72,"gl-buffer":67,"gl-shader":125,"typedarray-pool":180}],72:[function(require,module,exports){
+},{"./lib/shaders":71,"gl-buffer":64,"gl-shader":106,"typedarray-pool":170}],71:[function(require,module,exports){
 
 
 module.exports = {
-  vertex: "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 position;\nattribute vec2 pixelOffset;\n\nuniform mat3 viewTransform;\nuniform vec2 pixelScale;\n\nvoid main() {\n  vec3 scrPosition = viewTransform * vec3(position, 1);\n  gl_Position = vec4(\n    scrPosition.xy + scrPosition.z * pixelScale * pixelOffset,\n    0,\n    scrPosition.z);\n}\n",
+  vertex:   "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 position;\nattribute vec2 pixelOffset;\n\nuniform mat3 viewTransform;\nuniform vec2 pixelScale;\n\nvoid main() {\n  vec3 scrPosition = viewTransform * vec3(position, 1);\n  gl_Position = vec4(\n    scrPosition.xy + scrPosition.z * pixelScale * pixelOffset,\n    0,\n    scrPosition.z);\n}\n",
   fragment: "precision mediump float;\n#define GLSLIFY 1\n\nuniform vec4 color;\n\nvoid main() {\n  gl_FragColor = vec4(color.rgb * color.a, color.a);\n}\n"
 }
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 'use strict'
 
 var createTexture = require('gl-texture2d')
@@ -21171,7 +22196,62 @@ function createFBO(gl, width, height, options) {
     WEBGL_draw_buffers)
 }
 
-},{"gl-texture2d":144}],74:[function(require,module,exports){
+},{"gl-texture2d":114}],73:[function(require,module,exports){
+
+var sprintf = require('sprintf-js').sprintf;
+var glConstants = require('gl-constants/lookup');
+var shaderName = require('glsl-shader-name');
+var addLineNumbers = require('add-line-numbers');
+
+module.exports = formatCompilerError;
+
+function formatCompilerError(errLog, src, type) {
+    "use strict";
+
+    var name = shaderName(src) || 'of unknown name (see npm glsl-shader-name)';
+
+    var typeName = 'unknown type';
+    if (type !== undefined) {
+        typeName = type === glConstants.FRAGMENT_SHADER ? 'fragment' : 'vertex'
+    }
+
+    var longForm = sprintf('Error compiling %s shader %s:\n', typeName, name);
+    var shortForm = sprintf("%s%s", longForm, errLog);
+
+    var errorStrings = errLog.split('\n');
+    var errors = {};
+
+    for (var i = 0; i < errorStrings.length; i++) {
+        var errorString = errorStrings[i];
+        if (errorString === '') continue;
+        var lineNo = parseInt(errorString.split(':')[2]);
+        if (isNaN(lineNo)) {
+            throw new Error(sprintf('Could not parse error: %s', errorString));
+        }
+        errors[lineNo] = errorString;
+    }
+
+    var lines = addLineNumbers(src).split('\n');
+
+    for (var i = 0; i < lines.length; i++) {
+        if (!errors[i+3] && !errors[i+2] && !errors[i+1]) continue;
+        var line = lines[i];
+        longForm += line + '\n';
+        if (errors[i+1]) {
+            var e = errors[i+1];
+            e = e.substr(e.split(':', 3).join(':').length + 1).trim();
+            longForm += sprintf('^^^ %s\n\n', e);
+        }
+    }
+
+    return {
+        long: longForm.trim(),
+        short: shortForm.trim()
+    };
+}
+
+
+},{"add-line-numbers":9,"gl-constants/lookup":66,"glsl-shader-name":115,"sprintf-js":161}],74:[function(require,module,exports){
 'use strict'
 
 module.exports = createHeatmap2D
@@ -21463,7 +22543,7 @@ function createHeatmap2D(plot, options) {
   return heatmap
 }
 
-},{"./lib/shaders":75,"binary-search-bounds":76,"gl-buffer":67,"gl-shader":125,"iota-array":152,"typedarray-pool":180}],75:[function(require,module,exports){
+},{"./lib/shaders":75,"binary-search-bounds":76,"gl-buffer":64,"gl-shader":106,"iota-array":124,"typedarray-pool":170}],75:[function(require,module,exports){
 'use strict'
 
 
@@ -21476,8 +22556,8 @@ module.exports = {
 }
 
 },{}],76:[function(require,module,exports){
-arguments[4][22][0].apply(exports,arguments)
-},{"dup":22}],77:[function(require,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"dup":46}],77:[function(require,module,exports){
 
 
 exports.lineVertex    = "precision mediump float;\n#define GLSLIFY 1\n\nfloat inverse_1_0(float m) {\n  return 1.0 / m;\n}\n\nmat2 inverse_1_0(mat2 m) {\n  return mat2(m[1][1],-m[0][1],\n             -m[1][0], m[0][0]) / (m[0][0]*m[1][1] - m[0][1]*m[1][0]);\n}\n\nmat3 inverse_1_0(mat3 m) {\n  float a00 = m[0][0], a01 = m[0][1], a02 = m[0][2];\n  float a10 = m[1][0], a11 = m[1][1], a12 = m[1][2];\n  float a20 = m[2][0], a21 = m[2][1], a22 = m[2][2];\n\n  float b01 = a22 * a11 - a12 * a21;\n  float b11 = -a22 * a10 + a12 * a20;\n  float b21 = a21 * a10 - a11 * a20;\n\n  float det = a00 * b01 + a01 * b11 + a02 * b21;\n\n  return mat3(b01, (-a22 * a01 + a02 * a21), (a12 * a01 - a02 * a11),\n              b11, (a22 * a00 - a02 * a20), (-a12 * a00 + a02 * a10),\n              b21, (-a21 * a00 + a01 * a20), (a11 * a00 - a01 * a10)) / det;\n}\n\nmat4 inverse_1_0(mat4 m) {\n  float\n      a00 = m[0][0], a01 = m[0][1], a02 = m[0][2], a03 = m[0][3],\n      a10 = m[1][0], a11 = m[1][1], a12 = m[1][2], a13 = m[1][3],\n      a20 = m[2][0], a21 = m[2][1], a22 = m[2][2], a23 = m[2][3],\n      a30 = m[3][0], a31 = m[3][1], a32 = m[3][2], a33 = m[3][3],\n\n      b00 = a00 * a11 - a01 * a10,\n      b01 = a00 * a12 - a02 * a10,\n      b02 = a00 * a13 - a03 * a10,\n      b03 = a01 * a12 - a02 * a11,\n      b04 = a01 * a13 - a03 * a11,\n      b05 = a02 * a13 - a03 * a12,\n      b06 = a20 * a31 - a21 * a30,\n      b07 = a20 * a32 - a22 * a30,\n      b08 = a20 * a33 - a23 * a30,\n      b09 = a21 * a32 - a22 * a31,\n      b10 = a21 * a33 - a23 * a31,\n      b11 = a22 * a33 - a23 * a32,\n\n      det = b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;\n\n  return mat4(\n      a11 * b11 - a12 * b10 + a13 * b09,\n      a02 * b10 - a01 * b11 - a03 * b09,\n      a31 * b05 - a32 * b04 + a33 * b03,\n      a22 * b04 - a21 * b05 - a23 * b03,\n      a12 * b08 - a10 * b11 - a13 * b07,\n      a00 * b11 - a02 * b08 + a03 * b07,\n      a32 * b02 - a30 * b05 - a33 * b01,\n      a20 * b05 - a22 * b02 + a23 * b01,\n      a10 * b10 - a11 * b08 + a13 * b06,\n      a01 * b08 - a00 * b10 - a03 * b06,\n      a30 * b04 - a31 * b02 + a33 * b00,\n      a21 * b02 - a20 * b04 - a23 * b00,\n      a11 * b07 - a10 * b09 - a12 * b06,\n      a00 * b09 - a01 * b07 + a02 * b06,\n      a31 * b01 - a30 * b03 - a32 * b00,\n      a20 * b03 - a21 * b01 + a22 * b00) / det;\n}\n\n\n\nattribute vec2 a, d;\n\nuniform mat3 matrix;\nuniform vec2 screenShape;\nuniform float width;\n\nvarying vec2 direction;\n\nvoid main() {\n  vec2 dir = (matrix * vec3(d, 0)).xy;\n  vec3 base = matrix * vec3(a, 1);\n  vec2 n = 0.5 * width *\n    normalize(screenShape.yx * vec2(dir.y, -dir.x)) / screenShape.xy;\n  vec2 tangent = normalize(screenShape.xy * dir);\n  if(dir.x < 0.0 || (dir.x == 0.0 && dir.y < 0.0)) {\n    direction = -tangent;\n  } else {\n    direction = tangent;\n  }\n  gl_Position = vec4(base.xy/base.z + n, 0, 1);\n}\n"
@@ -21962,7 +23042,7 @@ function createLinePlot(plot, options) {
   return linePlot
 }
 
-},{"./lib/shaders":77,"gl-buffer":67,"gl-shader":125,"gl-texture2d":144,"ndarray":160,"typedarray-pool":180}],79:[function(require,module,exports){
+},{"./lib/shaders":77,"gl-buffer":64,"gl-shader":106,"gl-texture2d":114,"ndarray":131,"typedarray-pool":170}],79:[function(require,module,exports){
 module.exports = fromQuat;
 
 /**
@@ -22073,7 +23153,7 @@ function createBoxes(plot) {
   return new Boxes(plot, vbo, shader)
 }
 
-},{"./shaders":83,"gl-buffer":67,"gl-shader":125}],81:[function(require,module,exports){
+},{"./shaders":83,"gl-buffer":64,"gl-shader":106}],81:[function(require,module,exports){
 'use strict'
 
 module.exports = createGrid
@@ -22142,7 +23222,7 @@ proto.draw = (function() {
       shader.uniforms.color     = gridColor[i]
 
       var size = ticks[i].length * 6
-      if(gridEnable[i] && size) {
+      if(gridEnable[i]) {
         gl.drawArrays(gl.TRIANGLES, offset, size)
       }
       offset += size
@@ -22222,52 +23302,44 @@ proto.drawTickMarks = (function() {
     TICK_SCALE[0]         = tickMarkLength[1] * pixelRatio / screenWidth
     TICK_SCALE[1]         = tickMarkWidth[1]  * pixelRatio / screenHeight
 
-    if(yCount) {
-      uniforms.color        = tickMarkColor[1]
-      uniforms.tickScale    = TICK_SCALE
-      uniforms.dataAxis     = Y_AXIS
-      uniforms.screenOffset = SCR_OFFSET
-      gl.drawArrays(gl.TRIANGLES, yOffset, yCount)
-    }
+    uniforms.color        = tickMarkColor[1]
+    uniforms.tickScale    = TICK_SCALE
+    uniforms.dataAxis     = Y_AXIS
+    uniforms.screenOffset = SCR_OFFSET
+    gl.drawArrays(gl.TRIANGLES, yOffset, yCount)
 
     SCR_OFFSET[0]         = (viewBox[2] + viewBox[0]) / screenWidth - 1.0
     SCR_OFFSET[1]         = 2.0 * (viewBox[1] - tickMarkLength[0]) / screenHeight - 1.0
     TICK_SCALE[0]         = tickMarkWidth[0]  * pixelRatio / screenWidth
     TICK_SCALE[1]         = tickMarkLength[0] * pixelRatio / screenHeight
 
-    if(xCount) {
-      uniforms.color        = tickMarkColor[0]
-      uniforms.tickScale    = TICK_SCALE
-      uniforms.dataAxis     = X_AXIS
-      uniforms.screenOffset = SCR_OFFSET
-      gl.drawArrays(gl.TRIANGLES, xOffset, xCount)
-    }
+    uniforms.color        = tickMarkColor[0]
+    uniforms.tickScale    = TICK_SCALE
+    uniforms.dataAxis     = X_AXIS
+    uniforms.screenOffset = SCR_OFFSET
+    gl.drawArrays(gl.TRIANGLES, xOffset, xCount)
 
     SCR_OFFSET[0]         = 2.0 * (viewBox[2] + tickMarkLength[3]) / screenWidth - 1.0
     SCR_OFFSET[1]         = (viewBox[3] + viewBox[1]) / screenHeight - 1.0
     TICK_SCALE[0]         = tickMarkLength[3] * pixelRatio / screenWidth
     TICK_SCALE[1]         = tickMarkWidth[3]  * pixelRatio / screenHeight
 
-    if(yCount) {
-      uniforms.color        = tickMarkColor[3]
-      uniforms.tickScale    = TICK_SCALE
-      uniforms.dataAxis     = Y_AXIS
-      uniforms.screenOffset = SCR_OFFSET
-      gl.drawArrays(gl.TRIANGLES, yOffset, yCount)
-    }
+    uniforms.color        = tickMarkColor[3]
+    uniforms.tickScale    = TICK_SCALE
+    uniforms.dataAxis     = Y_AXIS
+    uniforms.screenOffset = SCR_OFFSET
+    gl.drawArrays(gl.TRIANGLES, yOffset, yCount)
 
     SCR_OFFSET[0]         = (viewBox[2] + viewBox[0]) / screenWidth - 1.0
     SCR_OFFSET[1]         = 2.0 * (viewBox[3] + tickMarkLength[2]) / screenHeight - 1.0
     TICK_SCALE[0]         = tickMarkWidth[2]  * pixelRatio / screenWidth
     TICK_SCALE[1]         = tickMarkLength[2] * pixelRatio / screenHeight
 
-    if(xCount) {
-      uniforms.color        = tickMarkColor[2]
-      uniforms.tickScale    = TICK_SCALE
-      uniforms.dataAxis     = X_AXIS
-      uniforms.screenOffset = SCR_OFFSET
-      gl.drawArrays(gl.TRIANGLES, xOffset, xCount)
-    }
+    uniforms.color        = tickMarkColor[2]
+    uniforms.tickScale    = TICK_SCALE
+    uniforms.dataAxis     = X_AXIS
+    uniforms.screenOffset = SCR_OFFSET
+    gl.drawArrays(gl.TRIANGLES, xOffset, xCount)
   }
 })()
 
@@ -22320,7 +23392,7 @@ function createGrid(plot) {
   return grid
 }
 
-},{"./shaders":83,"binary-search-bounds":85,"gl-buffer":67,"gl-shader":125}],82:[function(require,module,exports){
+},{"./shaders":83,"binary-search-bounds":85,"gl-buffer":64,"gl-shader":106}],82:[function(require,module,exports){
 'use strict'
 
 module.exports = createLines
@@ -22385,7 +23457,7 @@ function createLines(plot) {
   return lines
 }
 
-},{"./shaders":83,"gl-buffer":67,"gl-shader":125}],83:[function(require,module,exports){
+},{"./shaders":83,"gl-buffer":64,"gl-shader":106}],83:[function(require,module,exports){
 'use strict'
 
 
@@ -22467,7 +23539,7 @@ proto.drawTicks = (function() {
     SCREEN_OFFSET[axis^1] = screenScale * viewBox[axis^1] - 1.0
     if(tickEnable[axis]) {
       SCREEN_OFFSET[axis^1] -= screenScale * pixelRatio * tickPad[axis]
-      if(start < end && tickOffset[end] > tickOffset[start]) {
+      if(start < end) {
         shader.uniforms.dataAxis     = DATA_AXIS
         shader.uniforms.screenOffset = SCREEN_OFFSET
         shader.uniforms.color        = textColor[axis]
@@ -22478,7 +23550,7 @@ proto.drawTicks = (function() {
           tickOffset[end] - tickOffset[start])
       }
     }
-    if(labelEnable[axis] && labelCount) {
+    if(labelEnable[axis]) {
       SCREEN_OFFSET[axis^1] -= screenScale * pixelRatio * labelPad[axis]
       shader.uniforms.dataAxis     = ZERO_2
       shader.uniforms.screenOffset = SCREEN_OFFSET
@@ -22493,7 +23565,7 @@ proto.drawTicks = (function() {
     SCREEN_OFFSET[axis^1] = screenScale * viewBox[2+(axis^1)] - 1.0
     if(tickEnable[axis+2]) {
       SCREEN_OFFSET[axis^1] += screenScale * pixelRatio * tickPad[axis+2]
-      if(start < end && tickOffset[end] > tickOffset[start]) {
+      if(start < end) {
         shader.uniforms.dataAxis     = DATA_AXIS
         shader.uniforms.screenOffset = SCREEN_OFFSET
         shader.uniforms.color        = textColor[axis+2]
@@ -22504,7 +23576,7 @@ proto.drawTicks = (function() {
           tickOffset[end] - tickOffset[start])
       }
     }
-    if(labelEnable[axis+2] && labelCount) {
+    if(labelEnable[axis+2]) {
       SCREEN_OFFSET[axis^1] += screenScale * pixelRatio * labelPad[axis+2]
       shader.uniforms.dataAxis     = ZERO_2
       shader.uniforms.screenOffset = SCREEN_OFFSET
@@ -22533,10 +23605,6 @@ proto.drawTitle = (function() {
     var titleColor  = plot.titleColor
     var titleCenter = plot.titleCenter
     var pixelRatio  = plot.pixelRatio
-
-    if(!this.titleCount) {
-      return
-    }
 
     for(var i=0; i<2; ++i) {
       SCREEN_OFFSET[i] = 2.0 * (titleCenter[i]*pixelRatio - screenBox[i]) /
@@ -22678,9 +23746,9 @@ function createTextElements(plot) {
   return text
 }
 
-},{"./shaders":83,"binary-search-bounds":85,"gl-buffer":67,"gl-shader":125,"text-cache":176}],85:[function(require,module,exports){
-arguments[4][22][0].apply(exports,arguments)
-},{"dup":22}],86:[function(require,module,exports){
+},{"./shaders":83,"binary-search-bounds":85,"gl-buffer":64,"gl-shader":106,"text-cache":164}],85:[function(require,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"dup":46}],86:[function(require,module,exports){
 'use strict'
 
 module.exports = createGLPlot2D
@@ -23253,7 +24321,7 @@ function createGLPlot2D(options) {
   return plot
 }
 
-},{"./lib/box":80,"./lib/grid":81,"./lib/line":82,"./lib/text":84,"gl-select-static":124}],87:[function(require,module,exports){
+},{"./lib/box":80,"./lib/grid":81,"./lib/line":82,"./lib/text":84,"gl-select-static":105}],87:[function(require,module,exports){
 
 
 exports.pointVertex       = "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 position;\n\nuniform mat3 matrix;\nuniform float pointSize;\nuniform float pointCloud;\n\nhighp float rand(vec2 co) {\n  highp float a = 12.9898;\n  highp float b = 78.233;\n  highp float c = 43758.5453;\n  highp float d = dot(co.xy, vec2(a, b));\n  highp float e = mod(d, 3.14);\n  return fract(sin(e) * c);\n}\n\nvoid main() {\n  vec3 hgPosition = matrix * vec3(position, 1);\n  gl_Position  = vec4(hgPosition.xy, 0, hgPosition.z);\n    // if we don't jitter the point size a bit, overall point cloud\n    // saturation 'jumps' on zooming, which is disturbing and confusing\n  gl_PointSize = pointSize * ((19.5 + rand(position)) / 20.0);\n  if(pointCloud != 0.0) { // pointCloud is truthy\n    // get the same square surface as circle would be\n    gl_PointSize *= 0.886;\n  }\n}"
@@ -24276,1618 +25344,7 @@ function createProgram(gl, vref, fref, attribs, locations) {
   return getCache(gl).getProgram(vref, fref, attribs, locations)
 }
 
-},{"./GLError":89,"gl-format-compiler-error":95,"weakmap-shim":113}],95:[function(require,module,exports){
-
-var sprintf = require('sprintf-js').sprintf;
-var glConstants = require('gl-constants/lookup');
-var shaderName = require('glsl-shader-name');
-var addLineNumbers = require('add-line-numbers');
-
-module.exports = formatCompilerError;
-
-function formatCompilerError(errLog, src, type) {
-    "use strict";
-
-    var name = shaderName(src) || 'of unknown name (see npm glsl-shader-name)';
-
-    var typeName = 'unknown type';
-    if (type !== undefined) {
-        typeName = type === glConstants.FRAGMENT_SHADER ? 'fragment' : 'vertex'
-    }
-
-    var longForm = sprintf('Error compiling %s shader %s:\n', typeName, name);
-    var shortForm = sprintf("%s%s", longForm, errLog);
-
-    var errorStrings = errLog.split('\n');
-    var errors = {};
-
-    for (var i = 0; i < errorStrings.length; i++) {
-        var errorString = errorStrings[i];
-        if (errorString === '') continue;
-        var lineNo = parseInt(errorString.split(':')[2]);
-        if (isNaN(lineNo)) {
-            throw new Error(sprintf('Could not parse error: %s', errorString));
-        }
-        errors[lineNo] = errorString;
-    }
-
-    var lines = addLineNumbers(src).split('\n');
-
-    for (var i = 0; i < lines.length; i++) {
-        if (!errors[i+3] && !errors[i+2] && !errors[i+1]) continue;
-        var line = lines[i];
-        longForm += line + '\n';
-        if (errors[i+1]) {
-            var e = errors[i+1];
-            e = e.substr(e.split(':', 3).join(':').length + 1).trim();
-            longForm += sprintf('^^^ %s\n\n', e);
-        }
-    }
-
-    return {
-        long: longForm.trim(),
-        short: shortForm.trim()
-    };
-}
-
-
-},{"add-line-numbers":96,"gl-constants/lookup":100,"glsl-shader-name":101,"sprintf-js":110}],96:[function(require,module,exports){
-var padLeft = require('pad-left')
-
-module.exports = addLineNumbers
-function addLineNumbers (string, start, delim) {
-  start = typeof start === 'number' ? start : 1
-  delim = delim || ': '
-
-  var lines = string.split(/\r?\n/)
-  var totalDigits = String(lines.length + start - 1).length
-  return lines.map(function (line, i) {
-    var c = i + start
-    var digits = String(c).length
-    var prefix = padLeft(c, totalDigits - digits)
-    return prefix + delim + line
-  }).join('\n')
-}
-
-},{"pad-left":97}],97:[function(require,module,exports){
-/*!
- * pad-left <https://github.com/jonschlinkert/pad-left>
- *
- * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT license.
- */
-
-'use strict';
-
-var repeat = require('repeat-string');
-
-module.exports = function padLeft(str, num, ch) {
-  ch = typeof ch !== 'undefined' ? (ch + '') : ' ';
-  return repeat(ch, num) + str;
-};
-},{"repeat-string":98}],98:[function(require,module,exports){
-/*!
- * repeat-string <https://github.com/jonschlinkert/repeat-string>
- *
- * Copyright (c) 2014-2015, Jon Schlinkert.
- * Licensed under the MIT License.
- */
-
-'use strict';
-
-/**
- * Results cache
- */
-
-var res = '';
-var cache;
-
-/**
- * Expose `repeat`
- */
-
-module.exports = repeat;
-
-/**
- * Repeat the given `string` the specified `number`
- * of times.
- *
- * **Example:**
- *
- * ```js
- * var repeat = require('repeat-string');
- * repeat('A', 5);
- * //=> AAAAA
- * ```
- *
- * @param {String} `string` The string to repeat
- * @param {Number} `number` The number of times to repeat the string
- * @return {String} Repeated string
- * @api public
- */
-
-function repeat(str, num) {
-  if (typeof str !== 'string') {
-    throw new TypeError('repeat-string expects a string.');
-  }
-
-  // cover common, quick use cases
-  if (num === 1) return str;
-  if (num === 2) return str + str;
-
-  var max = str.length * num;
-  if (cache !== str || typeof cache === 'undefined') {
-    cache = str;
-    res = '';
-  }
-
-  while (max > res.length && num > 0) {
-    if (num & 1) {
-      res += str;
-    }
-
-    num >>= 1;
-    if (!num) break;
-    str += str;
-  }
-
-  return res.substr(0, max);
-}
-
-
-},{}],99:[function(require,module,exports){
-module.exports = {
-  0: 'NONE',
-  1: 'ONE',
-  2: 'LINE_LOOP',
-  3: 'LINE_STRIP',
-  4: 'TRIANGLES',
-  5: 'TRIANGLE_STRIP',
-  6: 'TRIANGLE_FAN',
-  256: 'DEPTH_BUFFER_BIT',
-  512: 'NEVER',
-  513: 'LESS',
-  514: 'EQUAL',
-  515: 'LEQUAL',
-  516: 'GREATER',
-  517: 'NOTEQUAL',
-  518: 'GEQUAL',
-  519: 'ALWAYS',
-  768: 'SRC_COLOR',
-  769: 'ONE_MINUS_SRC_COLOR',
-  770: 'SRC_ALPHA',
-  771: 'ONE_MINUS_SRC_ALPHA',
-  772: 'DST_ALPHA',
-  773: 'ONE_MINUS_DST_ALPHA',
-  774: 'DST_COLOR',
-  775: 'ONE_MINUS_DST_COLOR',
-  776: 'SRC_ALPHA_SATURATE',
-  1024: 'STENCIL_BUFFER_BIT',
-  1028: 'FRONT',
-  1029: 'BACK',
-  1032: 'FRONT_AND_BACK',
-  1280: 'INVALID_ENUM',
-  1281: 'INVALID_VALUE',
-  1282: 'INVALID_OPERATION',
-  1285: 'OUT_OF_MEMORY',
-  1286: 'INVALID_FRAMEBUFFER_OPERATION',
-  2304: 'CW',
-  2305: 'CCW',
-  2849: 'LINE_WIDTH',
-  2884: 'CULL_FACE',
-  2885: 'CULL_FACE_MODE',
-  2886: 'FRONT_FACE',
-  2928: 'DEPTH_RANGE',
-  2929: 'DEPTH_TEST',
-  2930: 'DEPTH_WRITEMASK',
-  2931: 'DEPTH_CLEAR_VALUE',
-  2932: 'DEPTH_FUNC',
-  2960: 'STENCIL_TEST',
-  2961: 'STENCIL_CLEAR_VALUE',
-  2962: 'STENCIL_FUNC',
-  2963: 'STENCIL_VALUE_MASK',
-  2964: 'STENCIL_FAIL',
-  2965: 'STENCIL_PASS_DEPTH_FAIL',
-  2966: 'STENCIL_PASS_DEPTH_PASS',
-  2967: 'STENCIL_REF',
-  2968: 'STENCIL_WRITEMASK',
-  2978: 'VIEWPORT',
-  3024: 'DITHER',
-  3042: 'BLEND',
-  3088: 'SCISSOR_BOX',
-  3089: 'SCISSOR_TEST',
-  3106: 'COLOR_CLEAR_VALUE',
-  3107: 'COLOR_WRITEMASK',
-  3317: 'UNPACK_ALIGNMENT',
-  3333: 'PACK_ALIGNMENT',
-  3379: 'MAX_TEXTURE_SIZE',
-  3386: 'MAX_VIEWPORT_DIMS',
-  3408: 'SUBPIXEL_BITS',
-  3410: 'RED_BITS',
-  3411: 'GREEN_BITS',
-  3412: 'BLUE_BITS',
-  3413: 'ALPHA_BITS',
-  3414: 'DEPTH_BITS',
-  3415: 'STENCIL_BITS',
-  3553: 'TEXTURE_2D',
-  4352: 'DONT_CARE',
-  4353: 'FASTEST',
-  4354: 'NICEST',
-  5120: 'BYTE',
-  5121: 'UNSIGNED_BYTE',
-  5122: 'SHORT',
-  5123: 'UNSIGNED_SHORT',
-  5124: 'INT',
-  5125: 'UNSIGNED_INT',
-  5126: 'FLOAT',
-  5386: 'INVERT',
-  5890: 'TEXTURE',
-  6401: 'STENCIL_INDEX',
-  6402: 'DEPTH_COMPONENT',
-  6406: 'ALPHA',
-  6407: 'RGB',
-  6408: 'RGBA',
-  6409: 'LUMINANCE',
-  6410: 'LUMINANCE_ALPHA',
-  7680: 'KEEP',
-  7681: 'REPLACE',
-  7682: 'INCR',
-  7683: 'DECR',
-  7936: 'VENDOR',
-  7937: 'RENDERER',
-  7938: 'VERSION',
-  9728: 'NEAREST',
-  9729: 'LINEAR',
-  9984: 'NEAREST_MIPMAP_NEAREST',
-  9985: 'LINEAR_MIPMAP_NEAREST',
-  9986: 'NEAREST_MIPMAP_LINEAR',
-  9987: 'LINEAR_MIPMAP_LINEAR',
-  10240: 'TEXTURE_MAG_FILTER',
-  10241: 'TEXTURE_MIN_FILTER',
-  10242: 'TEXTURE_WRAP_S',
-  10243: 'TEXTURE_WRAP_T',
-  10497: 'REPEAT',
-  10752: 'POLYGON_OFFSET_UNITS',
-  16384: 'COLOR_BUFFER_BIT',
-  32769: 'CONSTANT_COLOR',
-  32770: 'ONE_MINUS_CONSTANT_COLOR',
-  32771: 'CONSTANT_ALPHA',
-  32772: 'ONE_MINUS_CONSTANT_ALPHA',
-  32773: 'BLEND_COLOR',
-  32774: 'FUNC_ADD',
-  32777: 'BLEND_EQUATION_RGB',
-  32778: 'FUNC_SUBTRACT',
-  32779: 'FUNC_REVERSE_SUBTRACT',
-  32819: 'UNSIGNED_SHORT_4_4_4_4',
-  32820: 'UNSIGNED_SHORT_5_5_5_1',
-  32823: 'POLYGON_OFFSET_FILL',
-  32824: 'POLYGON_OFFSET_FACTOR',
-  32854: 'RGBA4',
-  32855: 'RGB5_A1',
-  32873: 'TEXTURE_BINDING_2D',
-  32926: 'SAMPLE_ALPHA_TO_COVERAGE',
-  32928: 'SAMPLE_COVERAGE',
-  32936: 'SAMPLE_BUFFERS',
-  32937: 'SAMPLES',
-  32938: 'SAMPLE_COVERAGE_VALUE',
-  32939: 'SAMPLE_COVERAGE_INVERT',
-  32968: 'BLEND_DST_RGB',
-  32969: 'BLEND_SRC_RGB',
-  32970: 'BLEND_DST_ALPHA',
-  32971: 'BLEND_SRC_ALPHA',
-  33071: 'CLAMP_TO_EDGE',
-  33170: 'GENERATE_MIPMAP_HINT',
-  33189: 'DEPTH_COMPONENT16',
-  33306: 'DEPTH_STENCIL_ATTACHMENT',
-  33635: 'UNSIGNED_SHORT_5_6_5',
-  33648: 'MIRRORED_REPEAT',
-  33901: 'ALIASED_POINT_SIZE_RANGE',
-  33902: 'ALIASED_LINE_WIDTH_RANGE',
-  33984: 'TEXTURE0',
-  33985: 'TEXTURE1',
-  33986: 'TEXTURE2',
-  33987: 'TEXTURE3',
-  33988: 'TEXTURE4',
-  33989: 'TEXTURE5',
-  33990: 'TEXTURE6',
-  33991: 'TEXTURE7',
-  33992: 'TEXTURE8',
-  33993: 'TEXTURE9',
-  33994: 'TEXTURE10',
-  33995: 'TEXTURE11',
-  33996: 'TEXTURE12',
-  33997: 'TEXTURE13',
-  33998: 'TEXTURE14',
-  33999: 'TEXTURE15',
-  34000: 'TEXTURE16',
-  34001: 'TEXTURE17',
-  34002: 'TEXTURE18',
-  34003: 'TEXTURE19',
-  34004: 'TEXTURE20',
-  34005: 'TEXTURE21',
-  34006: 'TEXTURE22',
-  34007: 'TEXTURE23',
-  34008: 'TEXTURE24',
-  34009: 'TEXTURE25',
-  34010: 'TEXTURE26',
-  34011: 'TEXTURE27',
-  34012: 'TEXTURE28',
-  34013: 'TEXTURE29',
-  34014: 'TEXTURE30',
-  34015: 'TEXTURE31',
-  34016: 'ACTIVE_TEXTURE',
-  34024: 'MAX_RENDERBUFFER_SIZE',
-  34041: 'DEPTH_STENCIL',
-  34055: 'INCR_WRAP',
-  34056: 'DECR_WRAP',
-  34067: 'TEXTURE_CUBE_MAP',
-  34068: 'TEXTURE_BINDING_CUBE_MAP',
-  34069: 'TEXTURE_CUBE_MAP_POSITIVE_X',
-  34070: 'TEXTURE_CUBE_MAP_NEGATIVE_X',
-  34071: 'TEXTURE_CUBE_MAP_POSITIVE_Y',
-  34072: 'TEXTURE_CUBE_MAP_NEGATIVE_Y',
-  34073: 'TEXTURE_CUBE_MAP_POSITIVE_Z',
-  34074: 'TEXTURE_CUBE_MAP_NEGATIVE_Z',
-  34076: 'MAX_CUBE_MAP_TEXTURE_SIZE',
-  34338: 'VERTEX_ATTRIB_ARRAY_ENABLED',
-  34339: 'VERTEX_ATTRIB_ARRAY_SIZE',
-  34340: 'VERTEX_ATTRIB_ARRAY_STRIDE',
-  34341: 'VERTEX_ATTRIB_ARRAY_TYPE',
-  34342: 'CURRENT_VERTEX_ATTRIB',
-  34373: 'VERTEX_ATTRIB_ARRAY_POINTER',
-  34466: 'NUM_COMPRESSED_TEXTURE_FORMATS',
-  34467: 'COMPRESSED_TEXTURE_FORMATS',
-  34660: 'BUFFER_SIZE',
-  34661: 'BUFFER_USAGE',
-  34816: 'STENCIL_BACK_FUNC',
-  34817: 'STENCIL_BACK_FAIL',
-  34818: 'STENCIL_BACK_PASS_DEPTH_FAIL',
-  34819: 'STENCIL_BACK_PASS_DEPTH_PASS',
-  34877: 'BLEND_EQUATION_ALPHA',
-  34921: 'MAX_VERTEX_ATTRIBS',
-  34922: 'VERTEX_ATTRIB_ARRAY_NORMALIZED',
-  34930: 'MAX_TEXTURE_IMAGE_UNITS',
-  34962: 'ARRAY_BUFFER',
-  34963: 'ELEMENT_ARRAY_BUFFER',
-  34964: 'ARRAY_BUFFER_BINDING',
-  34965: 'ELEMENT_ARRAY_BUFFER_BINDING',
-  34975: 'VERTEX_ATTRIB_ARRAY_BUFFER_BINDING',
-  35040: 'STREAM_DRAW',
-  35044: 'STATIC_DRAW',
-  35048: 'DYNAMIC_DRAW',
-  35632: 'FRAGMENT_SHADER',
-  35633: 'VERTEX_SHADER',
-  35660: 'MAX_VERTEX_TEXTURE_IMAGE_UNITS',
-  35661: 'MAX_COMBINED_TEXTURE_IMAGE_UNITS',
-  35663: 'SHADER_TYPE',
-  35664: 'FLOAT_VEC2',
-  35665: 'FLOAT_VEC3',
-  35666: 'FLOAT_VEC4',
-  35667: 'INT_VEC2',
-  35668: 'INT_VEC3',
-  35669: 'INT_VEC4',
-  35670: 'BOOL',
-  35671: 'BOOL_VEC2',
-  35672: 'BOOL_VEC3',
-  35673: 'BOOL_VEC4',
-  35674: 'FLOAT_MAT2',
-  35675: 'FLOAT_MAT3',
-  35676: 'FLOAT_MAT4',
-  35678: 'SAMPLER_2D',
-  35680: 'SAMPLER_CUBE',
-  35712: 'DELETE_STATUS',
-  35713: 'COMPILE_STATUS',
-  35714: 'LINK_STATUS',
-  35715: 'VALIDATE_STATUS',
-  35716: 'INFO_LOG_LENGTH',
-  35717: 'ATTACHED_SHADERS',
-  35718: 'ACTIVE_UNIFORMS',
-  35719: 'ACTIVE_UNIFORM_MAX_LENGTH',
-  35720: 'SHADER_SOURCE_LENGTH',
-  35721: 'ACTIVE_ATTRIBUTES',
-  35722: 'ACTIVE_ATTRIBUTE_MAX_LENGTH',
-  35724: 'SHADING_LANGUAGE_VERSION',
-  35725: 'CURRENT_PROGRAM',
-  36003: 'STENCIL_BACK_REF',
-  36004: 'STENCIL_BACK_VALUE_MASK',
-  36005: 'STENCIL_BACK_WRITEMASK',
-  36006: 'FRAMEBUFFER_BINDING',
-  36007: 'RENDERBUFFER_BINDING',
-  36048: 'FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE',
-  36049: 'FRAMEBUFFER_ATTACHMENT_OBJECT_NAME',
-  36050: 'FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL',
-  36051: 'FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE',
-  36053: 'FRAMEBUFFER_COMPLETE',
-  36054: 'FRAMEBUFFER_INCOMPLETE_ATTACHMENT',
-  36055: 'FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT',
-  36057: 'FRAMEBUFFER_INCOMPLETE_DIMENSIONS',
-  36061: 'FRAMEBUFFER_UNSUPPORTED',
-  36064: 'COLOR_ATTACHMENT0',
-  36096: 'DEPTH_ATTACHMENT',
-  36128: 'STENCIL_ATTACHMENT',
-  36160: 'FRAMEBUFFER',
-  36161: 'RENDERBUFFER',
-  36162: 'RENDERBUFFER_WIDTH',
-  36163: 'RENDERBUFFER_HEIGHT',
-  36164: 'RENDERBUFFER_INTERNAL_FORMAT',
-  36168: 'STENCIL_INDEX8',
-  36176: 'RENDERBUFFER_RED_SIZE',
-  36177: 'RENDERBUFFER_GREEN_SIZE',
-  36178: 'RENDERBUFFER_BLUE_SIZE',
-  36179: 'RENDERBUFFER_ALPHA_SIZE',
-  36180: 'RENDERBUFFER_DEPTH_SIZE',
-  36181: 'RENDERBUFFER_STENCIL_SIZE',
-  36194: 'RGB565',
-  36336: 'LOW_FLOAT',
-  36337: 'MEDIUM_FLOAT',
-  36338: 'HIGH_FLOAT',
-  36339: 'LOW_INT',
-  36340: 'MEDIUM_INT',
-  36341: 'HIGH_INT',
-  36346: 'SHADER_COMPILER',
-  36347: 'MAX_VERTEX_UNIFORM_VECTORS',
-  36348: 'MAX_VARYING_VECTORS',
-  36349: 'MAX_FRAGMENT_UNIFORM_VECTORS',
-  37440: 'UNPACK_FLIP_Y_WEBGL',
-  37441: 'UNPACK_PREMULTIPLY_ALPHA_WEBGL',
-  37442: 'CONTEXT_LOST_WEBGL',
-  37443: 'UNPACK_COLORSPACE_CONVERSION_WEBGL',
-  37444: 'BROWSER_DEFAULT_WEBGL'
-}
-
-},{}],100:[function(require,module,exports){
-var gl10 = require('./1.0/numbers')
-
-module.exports = function lookupConstant (number) {
-  return gl10[number]
-}
-
-},{"./1.0/numbers":99}],101:[function(require,module,exports){
-var tokenize = require('glsl-tokenizer')
-var atob     = require('atob-lite')
-
-module.exports = getName
-
-function getName(src) {
-  var tokens = Array.isArray(src)
-    ? src
-    : tokenize(src)
-
-  for (var i = 0; i < tokens.length; i++) {
-    var token = tokens[i]
-    if (token.type !== 'preprocessor') continue
-    var match = token.data.match(/\#define\s+SHADER_NAME(_B64)?\s+(.+)$/)
-    if (!match) continue
-    if (!match[2]) continue
-
-    var b64  = match[1]
-    var name = match[2]
-
-    return (b64 ? atob(name) : name).trim()
-  }
-}
-
-},{"atob-lite":102,"glsl-tokenizer":109}],102:[function(require,module,exports){
-module.exports = function _atob(str) {
-  return atob(str)
-}
-
-},{}],103:[function(require,module,exports){
-module.exports = tokenize
-
-var literals100 = require('./lib/literals')
-  , operators = require('./lib/operators')
-  , builtins100 = require('./lib/builtins')
-  , literals300es = require('./lib/literals-300es')
-  , builtins300es = require('./lib/builtins-300es')
-
-var NORMAL = 999          // <-- never emitted
-  , TOKEN = 9999          // <-- never emitted
-  , BLOCK_COMMENT = 0
-  , LINE_COMMENT = 1
-  , PREPROCESSOR = 2
-  , OPERATOR = 3
-  , INTEGER = 4
-  , FLOAT = 5
-  , IDENT = 6
-  , BUILTIN = 7
-  , KEYWORD = 8
-  , WHITESPACE = 9
-  , EOF = 10
-  , HEX = 11
-
-var map = [
-    'block-comment'
-  , 'line-comment'
-  , 'preprocessor'
-  , 'operator'
-  , 'integer'
-  , 'float'
-  , 'ident'
-  , 'builtin'
-  , 'keyword'
-  , 'whitespace'
-  , 'eof'
-  , 'integer'
-]
-
-function tokenize(opt) {
-  var i = 0
-    , total = 0
-    , mode = NORMAL
-    , c
-    , last
-    , content = []
-    , tokens = []
-    , token_idx = 0
-    , token_offs = 0
-    , line = 1
-    , col = 0
-    , start = 0
-    , isnum = false
-    , isoperator = false
-    , input = ''
-    , len
-
-  opt = opt || {}
-  var allBuiltins = builtins100
-  var allLiterals = literals100
-  if (opt.version === '300 es') {
-    allBuiltins = builtins300es
-    allLiterals = literals300es
-  }
-
-  return function(data) {
-    tokens = []
-    if (data !== null) return write(data.replace ? data.replace(/\r\n/g, '\n') : data)
-    return end()
-  }
-
-  function token(data) {
-    if (data.length) {
-      tokens.push({
-        type: map[mode]
-      , data: data
-      , position: start
-      , line: line
-      , column: col
-      })
-    }
-  }
-
-  function write(chunk) {
-    i = 0
-    input += chunk
-    len = input.length
-
-    var last
-
-    while(c = input[i], i < len) {
-      last = i
-
-      switch(mode) {
-        case BLOCK_COMMENT: i = block_comment(); break
-        case LINE_COMMENT: i = line_comment(); break
-        case PREPROCESSOR: i = preprocessor(); break
-        case OPERATOR: i = operator(); break
-        case INTEGER: i = integer(); break
-        case HEX: i = hex(); break
-        case FLOAT: i = decimal(); break
-        case TOKEN: i = readtoken(); break
-        case WHITESPACE: i = whitespace(); break
-        case NORMAL: i = normal(); break
-      }
-
-      if(last !== i) {
-        switch(input[last]) {
-          case '\n': col = 0; ++line; break
-          default: ++col; break
-        }
-      }
-    }
-
-    total += i
-    input = input.slice(i)
-    return tokens
-  }
-
-  function end(chunk) {
-    if(content.length) {
-      token(content.join(''))
-    }
-
-    mode = EOF
-    token('(eof)')
-    return tokens
-  }
-
-  function normal() {
-    content = content.length ? [] : content
-
-    if(last === '/' && c === '*') {
-      start = total + i - 1
-      mode = BLOCK_COMMENT
-      last = c
-      return i + 1
-    }
-
-    if(last === '/' && c === '/') {
-      start = total + i - 1
-      mode = LINE_COMMENT
-      last = c
-      return i + 1
-    }
-
-    if(c === '#') {
-      mode = PREPROCESSOR
-      start = total + i
-      return i
-    }
-
-    if(/\s/.test(c)) {
-      mode = WHITESPACE
-      start = total + i
-      return i
-    }
-
-    isnum = /\d/.test(c)
-    isoperator = /[^\w_]/.test(c)
-
-    start = total + i
-    mode = isnum ? INTEGER : isoperator ? OPERATOR : TOKEN
-    return i
-  }
-
-  function whitespace() {
-    if(/[^\s]/g.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function preprocessor() {
-    if((c === '\r' || c === '\n') && last !== '\\') {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function line_comment() {
-    return preprocessor()
-  }
-
-  function block_comment() {
-    if(c === '/' && last === '*') {
-      content.push(c)
-      token(content.join(''))
-      mode = NORMAL
-      return i + 1
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function operator() {
-    if(last === '.' && /\d/.test(c)) {
-      mode = FLOAT
-      return i
-    }
-
-    if(last === '/' && c === '*') {
-      mode = BLOCK_COMMENT
-      return i
-    }
-
-    if(last === '/' && c === '/') {
-      mode = LINE_COMMENT
-      return i
-    }
-
-    if(c === '.' && content.length) {
-      while(determine_operator(content));
-
-      mode = FLOAT
-      return i
-    }
-
-    if(c === ';' || c === ')' || c === '(') {
-      if(content.length) while(determine_operator(content));
-      token(c)
-      mode = NORMAL
-      return i + 1
-    }
-
-    var is_composite_operator = content.length === 2 && c !== '='
-    if(/[\w_\d\s]/.test(c) || is_composite_operator) {
-      while(determine_operator(content));
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function determine_operator(buf) {
-    var j = 0
-      , idx
-      , res
-
-    do {
-      idx = operators.indexOf(buf.slice(0, buf.length + j).join(''))
-      res = operators[idx]
-
-      if(idx === -1) {
-        if(j-- + buf.length > 0) continue
-        res = buf.slice(0, 1).join('')
-      }
-
-      token(res)
-
-      start += res.length
-      content = content.slice(res.length)
-      return content.length
-    } while(1)
-  }
-
-  function hex() {
-    if(/[^a-fA-F0-9]/.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function integer() {
-    if(c === '.') {
-      content.push(c)
-      mode = FLOAT
-      last = c
-      return i + 1
-    }
-
-    if(/[eE]/.test(c)) {
-      content.push(c)
-      mode = FLOAT
-      last = c
-      return i + 1
-    }
-
-    if(c === 'x' && content.length === 1 && content[0] === '0') {
-      mode = HEX
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
-    if(/[^\d]/.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function decimal() {
-    if(c === 'f') {
-      content.push(c)
-      last = c
-      i += 1
-    }
-
-    if(/[eE]/.test(c)) {
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
-    if (c === '-' && /[eE]/.test(last)) {
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
-    if(/[^\d]/.test(c)) {
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-
-    content.push(c)
-    last = c
-    return i + 1
-  }
-
-  function readtoken() {
-    if(/[^\d\w_]/.test(c)) {
-      var contentstr = content.join('')
-      if(allLiterals.indexOf(contentstr) > -1) {
-        mode = KEYWORD
-      } else if(allBuiltins.indexOf(contentstr) > -1) {
-        mode = BUILTIN
-      } else {
-        mode = IDENT
-      }
-      token(content.join(''))
-      mode = NORMAL
-      return i
-    }
-    content.push(c)
-    last = c
-    return i + 1
-  }
-}
-
-},{"./lib/builtins":105,"./lib/builtins-300es":104,"./lib/literals":107,"./lib/literals-300es":106,"./lib/operators":108}],104:[function(require,module,exports){
-// 300es builtins/reserved words that were previously valid in v100
-var v100 = require('./builtins')
-
-// The texture2D|Cube functions have been removed
-// And the gl_ features are updated
-v100 = v100.slice().filter(function (b) {
-  return !/^(gl\_|texture)/.test(b)
-})
-
-module.exports = v100.concat([
-  // the updated gl_ constants
-    'gl_VertexID'
-  , 'gl_InstanceID'
-  , 'gl_Position'
-  , 'gl_PointSize'
-  , 'gl_FragCoord'
-  , 'gl_FrontFacing'
-  , 'gl_FragDepth'
-  , 'gl_PointCoord'
-  , 'gl_MaxVertexAttribs'
-  , 'gl_MaxVertexUniformVectors'
-  , 'gl_MaxVertexOutputVectors'
-  , 'gl_MaxFragmentInputVectors'
-  , 'gl_MaxVertexTextureImageUnits'
-  , 'gl_MaxCombinedTextureImageUnits'
-  , 'gl_MaxTextureImageUnits'
-  , 'gl_MaxFragmentUniformVectors'
-  , 'gl_MaxDrawBuffers'
-  , 'gl_MinProgramTexelOffset'
-  , 'gl_MaxProgramTexelOffset'
-  , 'gl_DepthRangeParameters'
-  , 'gl_DepthRange'
-
-  // other builtins
-  , 'trunc'
-  , 'round'
-  , 'roundEven'
-  , 'isnan'
-  , 'isinf'
-  , 'floatBitsToInt'
-  , 'floatBitsToUint'
-  , 'intBitsToFloat'
-  , 'uintBitsToFloat'
-  , 'packSnorm2x16'
-  , 'unpackSnorm2x16'
-  , 'packUnorm2x16'
-  , 'unpackUnorm2x16'
-  , 'packHalf2x16'
-  , 'unpackHalf2x16'
-  , 'outerProduct'
-  , 'transpose'
-  , 'determinant'
-  , 'inverse'
-  , 'texture'
-  , 'textureSize'
-  , 'textureProj'
-  , 'textureLod'
-  , 'textureOffset'
-  , 'texelFetch'
-  , 'texelFetchOffset'
-  , 'textureProjOffset'
-  , 'textureLodOffset'
-  , 'textureProjLod'
-  , 'textureProjLodOffset'
-  , 'textureGrad'
-  , 'textureGradOffset'
-  , 'textureProjGrad'
-  , 'textureProjGradOffset'
-])
-
-},{"./builtins":105}],105:[function(require,module,exports){
-module.exports = [
-  // Keep this list sorted
-  'abs'
-  , 'acos'
-  , 'all'
-  , 'any'
-  , 'asin'
-  , 'atan'
-  , 'ceil'
-  , 'clamp'
-  , 'cos'
-  , 'cross'
-  , 'dFdx'
-  , 'dFdy'
-  , 'degrees'
-  , 'distance'
-  , 'dot'
-  , 'equal'
-  , 'exp'
-  , 'exp2'
-  , 'faceforward'
-  , 'floor'
-  , 'fract'
-  , 'gl_BackColor'
-  , 'gl_BackLightModelProduct'
-  , 'gl_BackLightProduct'
-  , 'gl_BackMaterial'
-  , 'gl_BackSecondaryColor'
-  , 'gl_ClipPlane'
-  , 'gl_ClipVertex'
-  , 'gl_Color'
-  , 'gl_DepthRange'
-  , 'gl_DepthRangeParameters'
-  , 'gl_EyePlaneQ'
-  , 'gl_EyePlaneR'
-  , 'gl_EyePlaneS'
-  , 'gl_EyePlaneT'
-  , 'gl_Fog'
-  , 'gl_FogCoord'
-  , 'gl_FogFragCoord'
-  , 'gl_FogParameters'
-  , 'gl_FragColor'
-  , 'gl_FragCoord'
-  , 'gl_FragData'
-  , 'gl_FragDepth'
-  , 'gl_FragDepthEXT'
-  , 'gl_FrontColor'
-  , 'gl_FrontFacing'
-  , 'gl_FrontLightModelProduct'
-  , 'gl_FrontLightProduct'
-  , 'gl_FrontMaterial'
-  , 'gl_FrontSecondaryColor'
-  , 'gl_LightModel'
-  , 'gl_LightModelParameters'
-  , 'gl_LightModelProducts'
-  , 'gl_LightProducts'
-  , 'gl_LightSource'
-  , 'gl_LightSourceParameters'
-  , 'gl_MaterialParameters'
-  , 'gl_MaxClipPlanes'
-  , 'gl_MaxCombinedTextureImageUnits'
-  , 'gl_MaxDrawBuffers'
-  , 'gl_MaxFragmentUniformComponents'
-  , 'gl_MaxLights'
-  , 'gl_MaxTextureCoords'
-  , 'gl_MaxTextureImageUnits'
-  , 'gl_MaxTextureUnits'
-  , 'gl_MaxVaryingFloats'
-  , 'gl_MaxVertexAttribs'
-  , 'gl_MaxVertexTextureImageUnits'
-  , 'gl_MaxVertexUniformComponents'
-  , 'gl_ModelViewMatrix'
-  , 'gl_ModelViewMatrixInverse'
-  , 'gl_ModelViewMatrixInverseTranspose'
-  , 'gl_ModelViewMatrixTranspose'
-  , 'gl_ModelViewProjectionMatrix'
-  , 'gl_ModelViewProjectionMatrixInverse'
-  , 'gl_ModelViewProjectionMatrixInverseTranspose'
-  , 'gl_ModelViewProjectionMatrixTranspose'
-  , 'gl_MultiTexCoord0'
-  , 'gl_MultiTexCoord1'
-  , 'gl_MultiTexCoord2'
-  , 'gl_MultiTexCoord3'
-  , 'gl_MultiTexCoord4'
-  , 'gl_MultiTexCoord5'
-  , 'gl_MultiTexCoord6'
-  , 'gl_MultiTexCoord7'
-  , 'gl_Normal'
-  , 'gl_NormalMatrix'
-  , 'gl_NormalScale'
-  , 'gl_ObjectPlaneQ'
-  , 'gl_ObjectPlaneR'
-  , 'gl_ObjectPlaneS'
-  , 'gl_ObjectPlaneT'
-  , 'gl_Point'
-  , 'gl_PointCoord'
-  , 'gl_PointParameters'
-  , 'gl_PointSize'
-  , 'gl_Position'
-  , 'gl_ProjectionMatrix'
-  , 'gl_ProjectionMatrixInverse'
-  , 'gl_ProjectionMatrixInverseTranspose'
-  , 'gl_ProjectionMatrixTranspose'
-  , 'gl_SecondaryColor'
-  , 'gl_TexCoord'
-  , 'gl_TextureEnvColor'
-  , 'gl_TextureMatrix'
-  , 'gl_TextureMatrixInverse'
-  , 'gl_TextureMatrixInverseTranspose'
-  , 'gl_TextureMatrixTranspose'
-  , 'gl_Vertex'
-  , 'greaterThan'
-  , 'greaterThanEqual'
-  , 'inversesqrt'
-  , 'length'
-  , 'lessThan'
-  , 'lessThanEqual'
-  , 'log'
-  , 'log2'
-  , 'matrixCompMult'
-  , 'max'
-  , 'min'
-  , 'mix'
-  , 'mod'
-  , 'normalize'
-  , 'not'
-  , 'notEqual'
-  , 'pow'
-  , 'radians'
-  , 'reflect'
-  , 'refract'
-  , 'sign'
-  , 'sin'
-  , 'smoothstep'
-  , 'sqrt'
-  , 'step'
-  , 'tan'
-  , 'texture2D'
-  , 'texture2DLod'
-  , 'texture2DProj'
-  , 'texture2DProjLod'
-  , 'textureCube'
-  , 'textureCubeLod'
-  , 'texture2DLodEXT'
-  , 'texture2DProjLodEXT'
-  , 'textureCubeLodEXT'
-  , 'texture2DGradEXT'
-  , 'texture2DProjGradEXT'
-  , 'textureCubeGradEXT'
-]
-
-},{}],106:[function(require,module,exports){
-var v100 = require('./literals')
-
-module.exports = v100.slice().concat([
-   'layout'
-  , 'centroid'
-  , 'smooth'
-  , 'case'
-  , 'mat2x2'
-  , 'mat2x3'
-  , 'mat2x4'
-  , 'mat3x2'
-  , 'mat3x3'
-  , 'mat3x4'
-  , 'mat4x2'
-  , 'mat4x3'
-  , 'mat4x4'
-  , 'uint'
-  , 'uvec2'
-  , 'uvec3'
-  , 'uvec4'
-  , 'samplerCubeShadow'
-  , 'sampler2DArray'
-  , 'sampler2DArrayShadow'
-  , 'isampler2D'
-  , 'isampler3D'
-  , 'isamplerCube'
-  , 'isampler2DArray'
-  , 'usampler2D'
-  , 'usampler3D'
-  , 'usamplerCube'
-  , 'usampler2DArray'
-  , 'coherent'
-  , 'restrict'
-  , 'readonly'
-  , 'writeonly'
-  , 'resource'
-  , 'atomic_uint'
-  , 'noperspective'
-  , 'patch'
-  , 'sample'
-  , 'subroutine'
-  , 'common'
-  , 'partition'
-  , 'active'
-  , 'filter'
-  , 'image1D'
-  , 'image2D'
-  , 'image3D'
-  , 'imageCube'
-  , 'iimage1D'
-  , 'iimage2D'
-  , 'iimage3D'
-  , 'iimageCube'
-  , 'uimage1D'
-  , 'uimage2D'
-  , 'uimage3D'
-  , 'uimageCube'
-  , 'image1DArray'
-  , 'image2DArray'
-  , 'iimage1DArray'
-  , 'iimage2DArray'
-  , 'uimage1DArray'
-  , 'uimage2DArray'
-  , 'image1DShadow'
-  , 'image2DShadow'
-  , 'image1DArrayShadow'
-  , 'image2DArrayShadow'
-  , 'imageBuffer'
-  , 'iimageBuffer'
-  , 'uimageBuffer'
-  , 'sampler1DArray'
-  , 'sampler1DArrayShadow'
-  , 'isampler1D'
-  , 'isampler1DArray'
-  , 'usampler1D'
-  , 'usampler1DArray'
-  , 'isampler2DRect'
-  , 'usampler2DRect'
-  , 'samplerBuffer'
-  , 'isamplerBuffer'
-  , 'usamplerBuffer'
-  , 'sampler2DMS'
-  , 'isampler2DMS'
-  , 'usampler2DMS'
-  , 'sampler2DMSArray'
-  , 'isampler2DMSArray'
-  , 'usampler2DMSArray'
-])
-
-},{"./literals":107}],107:[function(require,module,exports){
-module.exports = [
-  // current
-    'precision'
-  , 'highp'
-  , 'mediump'
-  , 'lowp'
-  , 'attribute'
-  , 'const'
-  , 'uniform'
-  , 'varying'
-  , 'break'
-  , 'continue'
-  , 'do'
-  , 'for'
-  , 'while'
-  , 'if'
-  , 'else'
-  , 'in'
-  , 'out'
-  , 'inout'
-  , 'float'
-  , 'int'
-  , 'void'
-  , 'bool'
-  , 'true'
-  , 'false'
-  , 'discard'
-  , 'return'
-  , 'mat2'
-  , 'mat3'
-  , 'mat4'
-  , 'vec2'
-  , 'vec3'
-  , 'vec4'
-  , 'ivec2'
-  , 'ivec3'
-  , 'ivec4'
-  , 'bvec2'
-  , 'bvec3'
-  , 'bvec4'
-  , 'sampler1D'
-  , 'sampler2D'
-  , 'sampler3D'
-  , 'samplerCube'
-  , 'sampler1DShadow'
-  , 'sampler2DShadow'
-  , 'struct'
-
-  // future
-  , 'asm'
-  , 'class'
-  , 'union'
-  , 'enum'
-  , 'typedef'
-  , 'template'
-  , 'this'
-  , 'packed'
-  , 'goto'
-  , 'switch'
-  , 'default'
-  , 'inline'
-  , 'noinline'
-  , 'volatile'
-  , 'public'
-  , 'static'
-  , 'extern'
-  , 'external'
-  , 'interface'
-  , 'long'
-  , 'short'
-  , 'double'
-  , 'half'
-  , 'fixed'
-  , 'unsigned'
-  , 'input'
-  , 'output'
-  , 'hvec2'
-  , 'hvec3'
-  , 'hvec4'
-  , 'dvec2'
-  , 'dvec3'
-  , 'dvec4'
-  , 'fvec2'
-  , 'fvec3'
-  , 'fvec4'
-  , 'sampler2DRect'
-  , 'sampler3DRect'
-  , 'sampler2DRectShadow'
-  , 'sizeof'
-  , 'cast'
-  , 'namespace'
-  , 'using'
-]
-
-},{}],108:[function(require,module,exports){
-module.exports = [
-    '<<='
-  , '>>='
-  , '++'
-  , '--'
-  , '<<'
-  , '>>'
-  , '<='
-  , '>='
-  , '=='
-  , '!='
-  , '&&'
-  , '||'
-  , '+='
-  , '-='
-  , '*='
-  , '/='
-  , '%='
-  , '&='
-  , '^^'
-  , '^='
-  , '|='
-  , '('
-  , ')'
-  , '['
-  , ']'
-  , '.'
-  , '!'
-  , '~'
-  , '*'
-  , '/'
-  , '%'
-  , '+'
-  , '-'
-  , '<'
-  , '>'
-  , '&'
-  , '^'
-  , '|'
-  , '?'
-  , ':'
-  , '='
-  , ','
-  , ';'
-  , '{'
-  , '}'
-]
-
-},{}],109:[function(require,module,exports){
-var tokenize = require('./index')
-
-module.exports = tokenizeString
-
-function tokenizeString(str, opt) {
-  var generator = tokenize(opt)
-  var tokens = []
-
-  tokens = tokens.concat(generator(str))
-  tokens = tokens.concat(generator(null))
-
-  return tokens
-}
-
-},{"./index":103}],110:[function(require,module,exports){
-(function(window) {
-    var re = {
-        not_string: /[^s]/,
-        number: /[diefg]/,
-        json: /[j]/,
-        not_json: /[^j]/,
-        text: /^[^\x25]+/,
-        modulo: /^\x25{2}/,
-        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^\)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijosuxX])/,
-        key: /^([a-z_][a-z_\d]*)/i,
-        key_access: /^\.([a-z_][a-z_\d]*)/i,
-        index_access: /^\[(\d+)\]/,
-        sign: /^[\+\-]/
-    }
-
-    function sprintf() {
-        var key = arguments[0], cache = sprintf.cache
-        if (!(cache[key] && cache.hasOwnProperty(key))) {
-            cache[key] = sprintf.parse(key)
-        }
-        return sprintf.format.call(null, cache[key], arguments)
-    }
-
-    sprintf.format = function(parse_tree, argv) {
-        var cursor = 1, tree_length = parse_tree.length, node_type = "", arg, output = [], i, k, match, pad, pad_character, pad_length, is_positive = true, sign = ""
-        for (i = 0; i < tree_length; i++) {
-            node_type = get_type(parse_tree[i])
-            if (node_type === "string") {
-                output[output.length] = parse_tree[i]
-            }
-            else if (node_type === "array") {
-                match = parse_tree[i] // convenience purposes only
-                if (match[2]) { // keyword argument
-                    arg = argv[cursor]
-                    for (k = 0; k < match[2].length; k++) {
-                        if (!arg.hasOwnProperty(match[2][k])) {
-                            throw new Error(sprintf("[sprintf] property '%s' does not exist", match[2][k]))
-                        }
-                        arg = arg[match[2][k]]
-                    }
-                }
-                else if (match[1]) { // positional argument (explicit)
-                    arg = argv[match[1]]
-                }
-                else { // positional argument (implicit)
-                    arg = argv[cursor++]
-                }
-
-                if (get_type(arg) == "function") {
-                    arg = arg()
-                }
-
-                if (re.not_string.test(match[8]) && re.not_json.test(match[8]) && (get_type(arg) != "number" && isNaN(arg))) {
-                    throw new TypeError(sprintf("[sprintf] expecting number but found %s", get_type(arg)))
-                }
-
-                if (re.number.test(match[8])) {
-                    is_positive = arg >= 0
-                }
-
-                switch (match[8]) {
-                    case "b":
-                        arg = arg.toString(2)
-                    break
-                    case "c":
-                        arg = String.fromCharCode(arg)
-                    break
-                    case "d":
-                    case "i":
-                        arg = parseInt(arg, 10)
-                    break
-                    case "j":
-                        arg = JSON.stringify(arg, null, match[6] ? parseInt(match[6]) : 0)
-                    break
-                    case "e":
-                        arg = match[7] ? arg.toExponential(match[7]) : arg.toExponential()
-                    break
-                    case "f":
-                        arg = match[7] ? parseFloat(arg).toFixed(match[7]) : parseFloat(arg)
-                    break
-                    case "g":
-                        arg = match[7] ? parseFloat(arg).toPrecision(match[7]) : parseFloat(arg)
-                    break
-                    case "o":
-                        arg = arg.toString(8)
-                    break
-                    case "s":
-                        arg = ((arg = String(arg)) && match[7] ? arg.substring(0, match[7]) : arg)
-                    break
-                    case "u":
-                        arg = arg >>> 0
-                    break
-                    case "x":
-                        arg = arg.toString(16)
-                    break
-                    case "X":
-                        arg = arg.toString(16).toUpperCase()
-                    break
-                }
-                if (re.json.test(match[8])) {
-                    output[output.length] = arg
-                }
-                else {
-                    if (re.number.test(match[8]) && (!is_positive || match[3])) {
-                        sign = is_positive ? "+" : "-"
-                        arg = arg.toString().replace(re.sign, "")
-                    }
-                    else {
-                        sign = ""
-                    }
-                    pad_character = match[4] ? match[4] === "0" ? "0" : match[4].charAt(1) : " "
-                    pad_length = match[6] - (sign + arg).length
-                    pad = match[6] ? (pad_length > 0 ? str_repeat(pad_character, pad_length) : "") : ""
-                    output[output.length] = match[5] ? sign + arg + pad : (pad_character === "0" ? sign + pad + arg : pad + sign + arg)
-                }
-            }
-        }
-        return output.join("")
-    }
-
-    sprintf.cache = {}
-
-    sprintf.parse = function(fmt) {
-        var _fmt = fmt, match = [], parse_tree = [], arg_names = 0
-        while (_fmt) {
-            if ((match = re.text.exec(_fmt)) !== null) {
-                parse_tree[parse_tree.length] = match[0]
-            }
-            else if ((match = re.modulo.exec(_fmt)) !== null) {
-                parse_tree[parse_tree.length] = "%"
-            }
-            else if ((match = re.placeholder.exec(_fmt)) !== null) {
-                if (match[2]) {
-                    arg_names |= 1
-                    var field_list = [], replacement_field = match[2], field_match = []
-                    if ((field_match = re.key.exec(replacement_field)) !== null) {
-                        field_list[field_list.length] = field_match[1]
-                        while ((replacement_field = replacement_field.substring(field_match[0].length)) !== "") {
-                            if ((field_match = re.key_access.exec(replacement_field)) !== null) {
-                                field_list[field_list.length] = field_match[1]
-                            }
-                            else if ((field_match = re.index_access.exec(replacement_field)) !== null) {
-                                field_list[field_list.length] = field_match[1]
-                            }
-                            else {
-                                throw new SyntaxError("[sprintf] failed to parse named argument key")
-                            }
-                        }
-                    }
-                    else {
-                        throw new SyntaxError("[sprintf] failed to parse named argument key")
-                    }
-                    match[2] = field_list
-                }
-                else {
-                    arg_names |= 2
-                }
-                if (arg_names === 3) {
-                    throw new Error("[sprintf] mixing positional and named placeholders is not (yet) supported")
-                }
-                parse_tree[parse_tree.length] = match
-            }
-            else {
-                throw new SyntaxError("[sprintf] unexpected placeholder")
-            }
-            _fmt = _fmt.substring(match[0].length)
-        }
-        return parse_tree
-    }
-
-    var vsprintf = function(fmt, argv, _argv) {
-        _argv = (argv || []).slice(0)
-        _argv.splice(0, 0, fmt)
-        return sprintf.apply(null, _argv)
-    }
-
-    /**
-     * helpers
-     */
-    function get_type(variable) {
-        return Object.prototype.toString.call(variable).slice(8, -1).toLowerCase()
-    }
-
-    function str_repeat(input, multiplier) {
-        return Array(multiplier + 1).join(input)
-    }
-
-    /**
-     * export to either browser or node.js
-     */
-    if (typeof exports !== "undefined") {
-        exports.sprintf = sprintf
-        exports.vsprintf = vsprintf
-    }
-    else {
-        window.sprintf = sprintf
-        window.vsprintf = vsprintf
-
-        if (typeof define === "function" && define.amd) {
-            define(function() {
-                return {
-                    sprintf: sprintf,
-                    vsprintf: vsprintf
-                }
-            })
-        }
-    }
-})(typeof window === "undefined" ? this : window);
-
-},{}],111:[function(require,module,exports){
-var hiddenStore = require('./hidden-store.js');
-
-module.exports = createStore;
-
-function createStore() {
-    var key = {};
-
-    return function (obj) {
-        if ((typeof obj !== 'object' || obj === null) &&
-            typeof obj !== 'function'
-        ) {
-            throw new Error('Weakmap-shim: Key must be object')
-        }
-
-        var store = obj.valueOf(key);
-        return store && store.identity === key ?
-            store : hiddenStore(obj, key);
-    };
-}
-
-},{"./hidden-store.js":112}],112:[function(require,module,exports){
-module.exports = hiddenStore;
-
-function hiddenStore(obj, key) {
-    var store = { identity: key };
-    var valueOf = obj.valueOf;
-
-    Object.defineProperty(obj, "valueOf", {
-        value: function (value) {
-            return value !== key ?
-                valueOf.apply(this, arguments) : store;
-        },
-        writable: true
-    });
-
-    return store;
-}
-
-},{}],113:[function(require,module,exports){
-// Original - @Gozola. 
-// https://gist.github.com/Gozala/1269991
-// This is a reimplemented version (with a few bug fixes).
-
-var createStore = require('./create-store.js');
-
-module.exports = weakMap;
-
-function weakMap() {
-    var privates = createStore();
-
-    return {
-        'get': function (key, fallback) {
-            var store = privates(key)
-            return store.hasOwnProperty('value') ?
-                store.value : fallback
-        },
-        'set': function (key, value) {
-            privates(key).value = value;
-        },
-        'has': function(key) {
-            return 'value' in privates(key);
-        },
-        'delete': function (key) {
-            return delete privates(key).value;
-        }
-    }
-}
-
-},{"./create-store.js":111}],114:[function(require,module,exports){
+},{"./GLError":89,"gl-format-compiler-error":73,"weakmap-shim":177}],95:[function(require,module,exports){
 'use strict'
 
 var createShader = require('gl-shader')
@@ -26107,7 +25564,7 @@ function createPointcloud2D(plot, options) {
   return result
 }
 
-},{"./lib/shader":87,"gl-buffer":67,"gl-shader":88,"typedarray-pool":180}],115:[function(require,module,exports){
+},{"./lib/shader":87,"gl-buffer":64,"gl-shader":88,"typedarray-pool":170}],96:[function(require,module,exports){
 'use strict'
 
 
@@ -26119,7 +25576,7 @@ module.exports = {
   pickFragment: "precision lowp float;\n#define GLSLIFY 1\nvarying vec4 fragColor;\nvoid main() {\n  gl_FragColor = fragColor;\n}\n"
 }
 
-},{}],116:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 'use strict'
 
 module.exports = createFancyScatter2D
@@ -26281,10 +25738,6 @@ var proto = GLScatterFancy.prototype
     var shader        = this.shader
     var numVertices   = this.numVertices
 
-    if(!numVertices) {
-      return
-    }
-
     var gl          = plot.gl
 
     calcScales.call(this)
@@ -26316,10 +25769,6 @@ var proto = GLScatterFancy.prototype
     var gl          = plot.gl
 
     this.pickOffset = offset
-
-    if(!numVertices) {
-      return offset
-    }
 
     for(var i=0; i<4; ++i) {
       PICK_OFFSET[i] = ((offset>>(i*8)) & 0xff)
@@ -26506,7 +25955,7 @@ function createFancyScatter2D(plot, options) {
   return scatter
 }
 
-},{"./lib/shaders":115,"gl-buffer":67,"gl-shader":125,"text-cache":176,"typedarray-pool":180,"vectorize-text":182}],117:[function(require,module,exports){
+},{"./lib/shaders":96,"gl-buffer":64,"gl-shader":106,"text-cache":164,"typedarray-pool":170,"vectorize-text":173}],98:[function(require,module,exports){
 
 
 exports.pointVertex       = "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 position;\nattribute float weight;\n\nuniform mat3 matrix;\nuniform float pointSize, useWeight;\n\nvarying float fragWeight;\n\nvoid main() {\n  vec3 hgPosition = matrix * vec3(position, 1);\n  gl_Position  = vec4(hgPosition.xy, 0, hgPosition.z);\n  gl_PointSize = pointSize;\n  fragWeight = mix(1.0, weight, useWeight);\n}\n"
@@ -26514,9 +25963,9 @@ exports.pointFragment     = "precision mediump float;\n#define GLSLIFY 1\n\nunif
 exports.pickVertex        = "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 position;\nattribute vec4 pickId;\n\nuniform mat3 matrix;\nuniform float pointSize;\nuniform vec4 pickOffset;\n\nvarying vec4 fragId;\n\nvoid main() {\n  vec3 hgPosition = matrix * vec3(position, 1);\n  gl_Position  = vec4(hgPosition.xy, 0, hgPosition.z);\n  gl_PointSize = pointSize;\n\n  vec4 id = pickId + pickOffset;\n  id.y += floor(id.x / 256.0);\n  id.x -= floor(id.x / 256.0) * 256.0;\n\n  id.z += floor(id.y / 256.0);\n  id.y -= floor(id.y / 256.0) * 256.0;\n\n  id.w += floor(id.z / 256.0);\n  id.z -= floor(id.z / 256.0) * 256.0;\n\n  fragId = id;\n}\n"
 exports.pickFragment      = "precision mediump float;\n#define GLSLIFY 1\n\nvarying vec4 fragId;\n\nvoid main() {\n  float radius = length(2.0*gl_PointCoord.xy-1.0);\n  if(radius > 1.0) {\n    discard;\n  }\n  gl_FragColor = fragId / 255.0;\n}\n"
 
-},{}],118:[function(require,module,exports){
-arguments[4][22][0].apply(exports,arguments)
-},{"dup":22}],119:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
+arguments[4][46][0].apply(exports,arguments)
+},{"dup":46}],100:[function(require,module,exports){
 'use strict'
 
 module.exports = sortLevels
@@ -26814,7 +26263,7 @@ function quickSort(left, right, data_levels, data_points, data_ids, data_weights
   }
 }
 
-},{}],120:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
 'use strict'
 
 var pool = require('typedarray-pool')
@@ -26954,7 +26403,7 @@ function snapPoints(points, ids, weights, bounds) {
   return lod
 }
 
-},{"./lib/sort":119,"typedarray-pool":180}],121:[function(require,module,exports){
+},{"./lib/sort":100,"typedarray-pool":170}],102:[function(require,module,exports){
 'use strict'
 
 var createShader = require('gl-shader')
@@ -27122,9 +26571,7 @@ return function(pickOffset) {
     var startOffset = bsearch.ge(xCoords, xStart, intervalStart, intervalEnd-1)
     var endOffset   = bsearch.lt(xCoords, xEnd, startOffset, intervalEnd-1)+1
 
-    if(endOffset > startOffset) {
-      gl.drawArrays(gl.POINTS, startOffset, endOffset - startOffset)
-    }
+    gl.drawArrays(gl.POINTS, startOffset, endOffset - startOffset)
   }
 
   return pickOffset + this.pointCount
@@ -27205,9 +26652,7 @@ proto.draw = (function() {
       var startOffset = bsearch.ge(xCoords, xStart, intervalStart, intervalEnd-1)
       var endOffset   = bsearch.lt(xCoords, xEnd, startOffset, intervalEnd-1)+1
 
-      if(endOffset > startOffset) {
-        gl.drawArrays(gl.POINTS, startOffset, endOffset - startOffset)
-      }
+      gl.drawArrays(gl.POINTS, startOffset, endOffset - startOffset)
 
       if(firstLevel) {
         firstLevel = false
@@ -27250,7 +26695,7 @@ function createScatter2D(plot, options) {
   return result
 }
 
-},{"./lib/shader":117,"binary-search-bounds":118,"gl-buffer":67,"gl-shader":125,"snap-points-2d":120,"typedarray-pool":180}],122:[function(require,module,exports){
+},{"./lib/shader":98,"binary-search-bounds":99,"gl-buffer":64,"gl-shader":106,"snap-points-2d":101,"typedarray-pool":170}],103:[function(require,module,exports){
 'use strict'
 
 
@@ -27258,7 +26703,7 @@ function createScatter2D(plot, options) {
 exports.boxVertex = "precision mediump float;\n#define GLSLIFY 1\n\nattribute vec2 vertex;\n\nuniform vec2 cornerA, cornerB;\n\nvoid main() {\n  gl_Position = vec4(mix(cornerA, cornerB, vertex), 0, 1);\n}\n"
 exports.boxFragment = "precision mediump float;\n#define GLSLIFY 1\n\nuniform vec4 color;\n\nvoid main() {\n  gl_FragColor = color;\n}\n"
 
-},{}],123:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 'use strict'
 
 var createShader = require('gl-shader')
@@ -27384,7 +26829,7 @@ function createSelectBox(plot, options) {
   return selectBox
 }
 
-},{"./lib/shaders":122,"gl-buffer":67,"gl-shader":125}],124:[function(require,module,exports){
+},{"./lib/shaders":103,"gl-buffer":64,"gl-shader":106}],105:[function(require,module,exports){
 'use strict'
 
 module.exports = createSelectBuffer
@@ -27539,7 +26984,7 @@ function createSelectBuffer(gl, shape) {
   return new SelectBuffer(gl, fbo, buffer)
 }
 
-},{"bit-twiddle":10,"cwise/lib/wrapper":62,"gl-fbo":73,"ndarray":160,"typedarray-pool":180}],125:[function(require,module,exports){
+},{"bit-twiddle":30,"cwise/lib/wrapper":54,"gl-fbo":72,"ndarray":131,"typedarray-pool":170}],106:[function(require,module,exports){
 'use strict'
 
 var createUniformWrapper   = require('./lib/create-uniforms')
@@ -27775,41 +27220,19 @@ function createShader(
 
 module.exports = createShader
 
-},{"./lib/GLError":126,"./lib/create-attributes":127,"./lib/create-uniforms":128,"./lib/reflect":129,"./lib/runtime-reflect":130,"./lib/shader-cache":131}],126:[function(require,module,exports){
+},{"./lib/GLError":107,"./lib/create-attributes":108,"./lib/create-uniforms":109,"./lib/reflect":110,"./lib/runtime-reflect":111,"./lib/shader-cache":112}],107:[function(require,module,exports){
 arguments[4][89][0].apply(exports,arguments)
-},{"dup":89}],127:[function(require,module,exports){
+},{"dup":89}],108:[function(require,module,exports){
 arguments[4][90][0].apply(exports,arguments)
-},{"./GLError":126,"dup":90}],128:[function(require,module,exports){
+},{"./GLError":107,"dup":90}],109:[function(require,module,exports){
 arguments[4][91][0].apply(exports,arguments)
-},{"./GLError":126,"./reflect":129,"dup":91}],129:[function(require,module,exports){
+},{"./GLError":107,"./reflect":110,"dup":91}],110:[function(require,module,exports){
 arguments[4][92][0].apply(exports,arguments)
-},{"dup":92}],130:[function(require,module,exports){
+},{"dup":92}],111:[function(require,module,exports){
 arguments[4][93][0].apply(exports,arguments)
-},{"dup":93}],131:[function(require,module,exports){
+},{"dup":93}],112:[function(require,module,exports){
 arguments[4][94][0].apply(exports,arguments)
-},{"./GLError":126,"dup":94,"gl-format-compiler-error":132,"weakmap-shim":142}],132:[function(require,module,exports){
-arguments[4][95][0].apply(exports,arguments)
-},{"add-line-numbers":133,"dup":95,"gl-constants/lookup":136,"glsl-shader-name":137,"sprintf-js":139}],133:[function(require,module,exports){
-arguments[4][96][0].apply(exports,arguments)
-},{"dup":96,"pad-left":134}],134:[function(require,module,exports){
-arguments[4][97][0].apply(exports,arguments)
-},{"dup":97,"repeat-string":161}],135:[function(require,module,exports){
-arguments[4][99][0].apply(exports,arguments)
-},{"dup":99}],136:[function(require,module,exports){
-arguments[4][100][0].apply(exports,arguments)
-},{"./1.0/numbers":135,"dup":100}],137:[function(require,module,exports){
-arguments[4][101][0].apply(exports,arguments)
-},{"atob-lite":138,"dup":101,"glsl-tokenizer":151}],138:[function(require,module,exports){
-arguments[4][102][0].apply(exports,arguments)
-},{"dup":102}],139:[function(require,module,exports){
-arguments[4][110][0].apply(exports,arguments)
-},{"dup":110}],140:[function(require,module,exports){
-arguments[4][111][0].apply(exports,arguments)
-},{"./hidden-store.js":141,"dup":111}],141:[function(require,module,exports){
-arguments[4][112][0].apply(exports,arguments)
-},{"dup":112}],142:[function(require,module,exports){
-arguments[4][113][0].apply(exports,arguments)
-},{"./create-store.js":140,"dup":113}],143:[function(require,module,exports){
+},{"./GLError":107,"dup":94,"gl-format-compiler-error":73,"weakmap-shim":177}],113:[function(require,module,exports){
 'use strict'
 
 module.exports = createSpikes2D
@@ -27897,7 +27320,7 @@ function createSpikes2D(plot, options) {
   return spikes
 }
 
-},{}],144:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 'use strict'
 
 var ndarray = require('ndarray')
@@ -28456,14 +27879,37 @@ function createTexture2D(gl) {
   throw new Error('gl-texture2d: Invalid arguments for texture2d constructor')
 }
 
-},{"ndarray":160,"ndarray-ops":159,"typedarray-pool":180}],145:[function(require,module,exports){
+},{"ndarray":131,"ndarray-ops":130,"typedarray-pool":170}],115:[function(require,module,exports){
+var tokenize = require('glsl-tokenizer')
+var atob     = require('atob-lite')
+
+module.exports = getName
+
+function getName(src) {
+  var tokens = Array.isArray(src)
+    ? src
+    : tokenize(src)
+
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i]
+    if (token.type !== 'preprocessor') continue
+    var match = token.data.match(/\#define\s+SHADER_NAME(_B64)?\s+(.+)$/)
+    if (!match) continue
+    if (!match[2]) continue
+
+    var b64  = match[1]
+    var name = match[2]
+
+    return (b64 ? atob(name) : name).trim()
+  }
+}
+
+},{"atob-lite":11,"glsl-tokenizer":120}],116:[function(require,module,exports){
 module.exports = tokenize
 
-var literals100 = require('./lib/literals')
+var literals = require('./lib/literals')
   , operators = require('./lib/operators')
-  , builtins100 = require('./lib/builtins')
-  , literals300es = require('./lib/literals-300es')
-  , builtins300es = require('./lib/builtins-300es')
+  , builtins = require('./lib/builtins')
 
 var NORMAL = 999          // <-- never emitted
   , TOKEN = 9999          // <-- never emitted
@@ -28495,7 +27941,7 @@ var map = [
   , 'integer'
 ]
 
-function tokenize(opt) {
+function tokenize() {
   var i = 0
     , total = 0
     , mode = NORMAL
@@ -28512,14 +27958,6 @@ function tokenize(opt) {
     , isoperator = false
     , input = ''
     , len
-
-  opt = opt || {}
-  var allBuiltins = builtins100
-  var allLiterals = literals100
-  if (opt.version === '300 es') {
-    allBuiltins = builtins300es
-    allLiterals = literals300es
-  }
 
   return function(data) {
     tokens = []
@@ -28783,18 +28221,11 @@ function tokenize(opt) {
       return i + 1
     }
 
-    if (c === '-' && /[eE]/.test(last)) {
-      content.push(c)
-      last = c
-      return i + 1
-    }
-
     if(/[^\d]/.test(c)) {
       token(content.join(''))
       mode = NORMAL
       return i
     }
-
     content.push(c)
     last = c
     return i + 1
@@ -28803,9 +28234,9 @@ function tokenize(opt) {
   function readtoken() {
     if(/[^\d\w_]/.test(c)) {
       var contentstr = content.join('')
-      if(allLiterals.indexOf(contentstr) > -1) {
+      if(literals.indexOf(contentstr) > -1) {
         mode = KEYWORD
-      } else if(allBuiltins.indexOf(contentstr) > -1) {
+      } else if(builtins.indexOf(contentstr) > -1) {
         mode = BUILTIN
       } else {
         mode = IDENT
@@ -28820,19 +28251,779 @@ function tokenize(opt) {
   }
 }
 
-},{"./lib/builtins":147,"./lib/builtins-300es":146,"./lib/literals":149,"./lib/literals-300es":148,"./lib/operators":150}],146:[function(require,module,exports){
-arguments[4][104][0].apply(exports,arguments)
-},{"./builtins":147,"dup":104}],147:[function(require,module,exports){
-arguments[4][105][0].apply(exports,arguments)
-},{"dup":105}],148:[function(require,module,exports){
-arguments[4][106][0].apply(exports,arguments)
-},{"./literals":149,"dup":106}],149:[function(require,module,exports){
-arguments[4][107][0].apply(exports,arguments)
-},{"dup":107}],150:[function(require,module,exports){
-arguments[4][108][0].apply(exports,arguments)
-},{"dup":108}],151:[function(require,module,exports){
-arguments[4][109][0].apply(exports,arguments)
-},{"./index":145,"dup":109}],152:[function(require,module,exports){
+},{"./lib/builtins":117,"./lib/literals":118,"./lib/operators":119}],117:[function(require,module,exports){
+module.exports = [
+    'gl_Position'
+  , 'gl_PointSize'
+  , 'gl_ClipVertex'
+  , 'gl_FragCoord'
+  , 'gl_FrontFacing'
+  , 'gl_FragColor'
+  , 'gl_FragData'
+  , 'gl_FragDepth'
+  , 'gl_Color'
+  , 'gl_SecondaryColor'
+  , 'gl_Normal'
+  , 'gl_Vertex'
+  , 'gl_MultiTexCoord0'
+  , 'gl_MultiTexCoord1'
+  , 'gl_MultiTexCoord2'
+  , 'gl_MultiTexCoord3'
+  , 'gl_MultiTexCoord4'
+  , 'gl_MultiTexCoord5'
+  , 'gl_MultiTexCoord6'
+  , 'gl_MultiTexCoord7'
+  , 'gl_FogCoord'
+  , 'gl_MaxLights'
+  , 'gl_MaxClipPlanes'
+  , 'gl_MaxTextureUnits'
+  , 'gl_MaxTextureCoords'
+  , 'gl_MaxVertexAttribs'
+  , 'gl_MaxVertexUniformComponents'
+  , 'gl_MaxVaryingFloats'
+  , 'gl_MaxVertexTextureImageUnits'
+  , 'gl_MaxCombinedTextureImageUnits'
+  , 'gl_MaxTextureImageUnits'
+  , 'gl_MaxFragmentUniformComponents'
+  , 'gl_MaxDrawBuffers'
+  , 'gl_ModelViewMatrix'
+  , 'gl_ProjectionMatrix'
+  , 'gl_ModelViewProjectionMatrix'
+  , 'gl_TextureMatrix'
+  , 'gl_NormalMatrix'
+  , 'gl_ModelViewMatrixInverse'
+  , 'gl_ProjectionMatrixInverse'
+  , 'gl_ModelViewProjectionMatrixInverse'
+  , 'gl_TextureMatrixInverse'
+  , 'gl_ModelViewMatrixTranspose'
+  , 'gl_ProjectionMatrixTranspose'
+  , 'gl_ModelViewProjectionMatrixTranspose'
+  , 'gl_TextureMatrixTranspose'
+  , 'gl_ModelViewMatrixInverseTranspose'
+  , 'gl_ProjectionMatrixInverseTranspose'
+  , 'gl_ModelViewProjectionMatrixInverseTranspose'
+  , 'gl_TextureMatrixInverseTranspose'
+  , 'gl_NormalScale'
+  , 'gl_DepthRangeParameters'
+  , 'gl_DepthRange'
+  , 'gl_ClipPlane'
+  , 'gl_PointParameters'
+  , 'gl_Point'
+  , 'gl_MaterialParameters'
+  , 'gl_FrontMaterial'
+  , 'gl_BackMaterial'
+  , 'gl_LightSourceParameters'
+  , 'gl_LightSource'
+  , 'gl_LightModelParameters'
+  , 'gl_LightModel'
+  , 'gl_LightModelProducts'
+  , 'gl_FrontLightModelProduct'
+  , 'gl_BackLightModelProduct'
+  , 'gl_LightProducts'
+  , 'gl_FrontLightProduct'
+  , 'gl_BackLightProduct'
+  , 'gl_FogParameters'
+  , 'gl_Fog'
+  , 'gl_TextureEnvColor'
+  , 'gl_EyePlaneS'
+  , 'gl_EyePlaneT'
+  , 'gl_EyePlaneR'
+  , 'gl_EyePlaneQ'
+  , 'gl_ObjectPlaneS'
+  , 'gl_ObjectPlaneT'
+  , 'gl_ObjectPlaneR'
+  , 'gl_ObjectPlaneQ'
+  , 'gl_FrontColor'
+  , 'gl_BackColor'
+  , 'gl_FrontSecondaryColor'
+  , 'gl_BackSecondaryColor'
+  , 'gl_TexCoord'
+  , 'gl_FogFragCoord'
+  , 'gl_Color'
+  , 'gl_SecondaryColor'
+  , 'gl_TexCoord'
+  , 'gl_FogFragCoord'
+  , 'gl_PointCoord'
+  , 'radians'
+  , 'degrees'
+  , 'sin'
+  , 'cos'
+  , 'tan'
+  , 'asin'
+  , 'acos'
+  , 'atan'
+  , 'pow'
+  , 'exp'
+  , 'log'
+  , 'exp2'
+  , 'log2'
+  , 'sqrt'
+  , 'inversesqrt'
+  , 'abs'
+  , 'sign'
+  , 'floor'
+  , 'ceil'
+  , 'fract'
+  , 'mod'
+  , 'min'
+  , 'max'
+  , 'clamp'
+  , 'mix'
+  , 'step'
+  , 'smoothstep'
+  , 'length'
+  , 'distance'
+  , 'dot'
+  , 'cross'
+  , 'normalize'
+  , 'faceforward'
+  , 'reflect'
+  , 'refract'
+  , 'matrixCompMult'
+  , 'lessThan'
+  , 'lessThanEqual'
+  , 'greaterThan'
+  , 'greaterThanEqual'
+  , 'equal'
+  , 'notEqual'
+  , 'any'
+  , 'all'
+  , 'not'
+  , 'texture2D'
+  , 'texture2DProj'
+  , 'texture2DLod'
+  , 'texture2DProjLod'
+  , 'textureCube'
+  , 'textureCubeLod'
+  , 'dFdx'
+  , 'dFdy'
+]
+
+},{}],118:[function(require,module,exports){
+module.exports = [
+  // current
+    'precision'
+  , 'highp'
+  , 'mediump'
+  , 'lowp'
+  , 'attribute'
+  , 'const'
+  , 'uniform'
+  , 'varying'
+  , 'break'
+  , 'continue'
+  , 'do'
+  , 'for'
+  , 'while'
+  , 'if'
+  , 'else'
+  , 'in'
+  , 'out'
+  , 'inout'
+  , 'float'
+  , 'int'
+  , 'void'
+  , 'bool'
+  , 'true'
+  , 'false'
+  , 'discard'
+  , 'return'
+  , 'mat2'
+  , 'mat3'
+  , 'mat4'
+  , 'vec2'
+  , 'vec3'
+  , 'vec4'
+  , 'ivec2'
+  , 'ivec3'
+  , 'ivec4'
+  , 'bvec2'
+  , 'bvec3'
+  , 'bvec4'
+  , 'sampler1D'
+  , 'sampler2D'
+  , 'sampler3D'
+  , 'samplerCube'
+  , 'sampler1DShadow'
+  , 'sampler2DShadow'
+  , 'struct'
+
+  // future
+  , 'asm'
+  , 'class'
+  , 'union'
+  , 'enum'
+  , 'typedef'
+  , 'template'
+  , 'this'
+  , 'packed'
+  , 'goto'
+  , 'switch'
+  , 'default'
+  , 'inline'
+  , 'noinline'
+  , 'volatile'
+  , 'public'
+  , 'static'
+  , 'extern'
+  , 'external'
+  , 'interface'
+  , 'long'
+  , 'short'
+  , 'double'
+  , 'half'
+  , 'fixed'
+  , 'unsigned'
+  , 'input'
+  , 'output'
+  , 'hvec2'
+  , 'hvec3'
+  , 'hvec4'
+  , 'dvec2'
+  , 'dvec3'
+  , 'dvec4'
+  , 'fvec2'
+  , 'fvec3'
+  , 'fvec4'
+  , 'sampler2DRect'
+  , 'sampler3DRect'
+  , 'sampler2DRectShadow'
+  , 'sizeof'
+  , 'cast'
+  , 'namespace'
+  , 'using'
+]
+
+},{}],119:[function(require,module,exports){
+module.exports = [
+    '<<='
+  , '>>='
+  , '++'
+  , '--'
+  , '<<'
+  , '>>'
+  , '<='
+  , '>='
+  , '=='
+  , '!='
+  , '&&'
+  , '||'
+  , '+='
+  , '-='
+  , '*='
+  , '/='
+  , '%='
+  , '&='
+  , '^^'
+  , '^='
+  , '|='
+  , '('
+  , ')'
+  , '['
+  , ']'
+  , '.'
+  , '!'
+  , '~'
+  , '*'
+  , '/'
+  , '%'
+  , '+'
+  , '-'
+  , '<'
+  , '>'
+  , '&'
+  , '^'
+  , '|'
+  , '?'
+  , ':'
+  , '='
+  , ','
+  , ';'
+  , '{'
+  , '}'
+]
+
+},{}],120:[function(require,module,exports){
+var tokenize = require('./index')
+
+module.exports = tokenizeString
+
+function tokenizeString(str) {
+  var generator = tokenize()
+  var tokens = []
+
+  tokens = tokens.concat(generator(str))
+  tokens = tokens.concat(generator(null))
+
+  return tokens
+}
+
+},{"./index":116}],121:[function(require,module,exports){
+exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+  var e, m
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var nBits = -7
+  var i = isLE ? (nBytes - 1) : 0
+  var d = isLE ? -1 : 1
+  var s = buffer[offset + i]
+
+  i += d
+
+  e = s & ((1 << (-nBits)) - 1)
+  s >>= (-nBits)
+  nBits += eLen
+  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  m = e & ((1 << (-nBits)) - 1)
+  e >>= (-nBits)
+  nBits += mLen
+  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+  if (e === 0) {
+    e = 1 - eBias
+  } else if (e === eMax) {
+    return m ? NaN : ((s ? -1 : 1) * Infinity)
+  } else {
+    m = m + Math.pow(2, mLen)
+    e = e - eBias
+  }
+  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+}
+
+exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+  var e, m, c
+  var eLen = nBytes * 8 - mLen - 1
+  var eMax = (1 << eLen) - 1
+  var eBias = eMax >> 1
+  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+  var i = isLE ? 0 : (nBytes - 1)
+  var d = isLE ? 1 : -1
+  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+  value = Math.abs(value)
+
+  if (isNaN(value) || value === Infinity) {
+    m = isNaN(value) ? 1 : 0
+    e = eMax
+  } else {
+    e = Math.floor(Math.log(value) / Math.LN2)
+    if (value * (c = Math.pow(2, -e)) < 1) {
+      e--
+      c *= 2
+    }
+    if (e + eBias >= 1) {
+      value += rt / c
+    } else {
+      value += rt * Math.pow(2, 1 - eBias)
+    }
+    if (value * c >= 2) {
+      e++
+      c /= 2
+    }
+
+    if (e + eBias >= eMax) {
+      m = 0
+      e = eMax
+    } else if (e + eBias >= 1) {
+      m = (value * c - 1) * Math.pow(2, mLen)
+      e = e + eBias
+    } else {
+      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+      e = 0
+    }
+  }
+
+  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+  e = (e << mLen) | m
+  eLen += mLen
+  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+  buffer[offset + i - d] |= s * 128
+}
+
+},{}],122:[function(require,module,exports){
+"use strict"
+
+var bounds = require("binary-search-bounds")
+
+var NOT_FOUND = 0
+var SUCCESS = 1
+var EMPTY = 2
+
+module.exports = createWrapper
+
+function IntervalTreeNode(mid, left, right, leftPoints, rightPoints) {
+  this.mid = mid
+  this.left = left
+  this.right = right
+  this.leftPoints = leftPoints
+  this.rightPoints = rightPoints
+  this.count = (left ? left.count : 0) + (right ? right.count : 0) + leftPoints.length
+}
+
+var proto = IntervalTreeNode.prototype
+
+function copy(a, b) {
+  a.mid = b.mid
+  a.left = b.left
+  a.right = b.right
+  a.leftPoints = b.leftPoints
+  a.rightPoints = b.rightPoints
+  a.count = b.count
+}
+
+function rebuild(node, intervals) {
+  var ntree = createIntervalTree(intervals)
+  node.mid = ntree.mid
+  node.left = ntree.left
+  node.right = ntree.right
+  node.leftPoints = ntree.leftPoints
+  node.rightPoints = ntree.rightPoints
+  node.count = ntree.count
+}
+
+function rebuildWithInterval(node, interval) {
+  var intervals = node.intervals([])
+  intervals.push(interval)
+  rebuild(node, intervals)    
+}
+
+function rebuildWithoutInterval(node, interval) {
+  var intervals = node.intervals([])
+  var idx = intervals.indexOf(interval)
+  if(idx < 0) {
+    return NOT_FOUND
+  }
+  intervals.splice(idx, 1)
+  rebuild(node, intervals)
+  return SUCCESS
+}
+
+proto.intervals = function(result) {
+  result.push.apply(result, this.leftPoints)
+  if(this.left) {
+    this.left.intervals(result)
+  }
+  if(this.right) {
+    this.right.intervals(result)
+  }
+  return result
+}
+
+proto.insert = function(interval) {
+  var weight = this.count - this.leftPoints.length
+  this.count += 1
+  if(interval[1] < this.mid) {
+    if(this.left) {
+      if(4*(this.left.count+1) > 3*(weight+1)) {
+        rebuildWithInterval(this, interval)
+      } else {
+        this.left.insert(interval)
+      }
+    } else {
+      this.left = createIntervalTree([interval])
+    }
+  } else if(interval[0] > this.mid) {
+    if(this.right) {
+      if(4*(this.right.count+1) > 3*(weight+1)) {
+        rebuildWithInterval(this, interval)
+      } else {
+        this.right.insert(interval)
+      }
+    } else {
+      this.right = createIntervalTree([interval])
+    }
+  } else {
+    var l = bounds.ge(this.leftPoints, interval, compareBegin)
+    var r = bounds.ge(this.rightPoints, interval, compareEnd)
+    this.leftPoints.splice(l, 0, interval)
+    this.rightPoints.splice(r, 0, interval)
+  }
+}
+
+proto.remove = function(interval) {
+  var weight = this.count - this.leftPoints
+  if(interval[1] < this.mid) {
+    if(!this.left) {
+      return NOT_FOUND
+    }
+    var rw = this.right ? this.right.count : 0
+    if(4 * rw > 3 * (weight-1)) {
+      return rebuildWithoutInterval(this, interval)
+    }
+    var r = this.left.remove(interval)
+    if(r === EMPTY) {
+      this.left = null
+      this.count -= 1
+      return SUCCESS
+    } else if(r === SUCCESS) {
+      this.count -= 1
+    }
+    return r
+  } else if(interval[0] > this.mid) {
+    if(!this.right) {
+      return NOT_FOUND
+    }
+    var lw = this.left ? this.left.count : 0
+    if(4 * lw > 3 * (weight-1)) {
+      return rebuildWithoutInterval(this, interval)
+    }
+    var r = this.right.remove(interval)
+    if(r === EMPTY) {
+      this.right = null
+      this.count -= 1
+      return SUCCESS
+    } else if(r === SUCCESS) {
+      this.count -= 1
+    }
+    return r
+  } else {
+    if(this.count === 1) {
+      if(this.leftPoints[0] === interval) {
+        return EMPTY
+      } else {
+        return NOT_FOUND
+      }
+    }
+    if(this.leftPoints.length === 1 && this.leftPoints[0] === interval) {
+      if(this.left && this.right) {
+        var p = this
+        var n = this.left
+        while(n.right) {
+          p = n
+          n = n.right
+        }
+        if(p === this) {
+          n.right = this.right
+        } else {
+          var l = this.left
+          var r = this.right
+          p.count -= n.count
+          p.right = n.left
+          n.left = l
+          n.right = r
+        }
+        copy(this, n)
+        this.count = (this.left?this.left.count:0) + (this.right?this.right.count:0) + this.leftPoints.length
+      } else if(this.left) {
+        copy(this, this.left)
+      } else {
+        copy(this, this.right)
+      }
+      return SUCCESS
+    }
+    for(var l = bounds.ge(this.leftPoints, interval, compareBegin); l<this.leftPoints.length; ++l) {
+      if(this.leftPoints[l][0] !== interval[0]) {
+        break
+      }
+      if(this.leftPoints[l] === interval) {
+        this.count -= 1
+        this.leftPoints.splice(l, 1)
+        for(var r = bounds.ge(this.rightPoints, interval, compareEnd); r<this.rightPoints.length; ++r) {
+          if(this.rightPoints[r][1] !== interval[1]) {
+            break
+          } else if(this.rightPoints[r] === interval) {
+            this.rightPoints.splice(r, 1)
+            return SUCCESS
+          }
+        }
+      }
+    }
+    return NOT_FOUND
+  }
+}
+
+function reportLeftRange(arr, hi, cb) {
+  for(var i=0; i<arr.length && arr[i][0] <= hi; ++i) {
+    var r = cb(arr[i])
+    if(r) { return r }
+  }
+}
+
+function reportRightRange(arr, lo, cb) {
+  for(var i=arr.length-1; i>=0 && arr[i][1] >= lo; --i) {
+    var r = cb(arr[i])
+    if(r) { return r }
+  }
+}
+
+function reportRange(arr, cb) {
+  for(var i=0; i<arr.length; ++i) {
+    var r = cb(arr[i])
+    if(r) { return r }
+  }
+}
+
+proto.queryPoint = function(x, cb) {
+  if(x < this.mid) {
+    if(this.left) {
+      var r = this.left.queryPoint(x, cb)
+      if(r) { return r }
+    }
+    return reportLeftRange(this.leftPoints, x, cb)
+  } else if(x > this.mid) {
+    if(this.right) {
+      var r = this.right.queryPoint(x, cb)
+      if(r) { return r }
+    }
+    return reportRightRange(this.rightPoints, x, cb)
+  } else {
+    return reportRange(this.leftPoints, cb)
+  }
+}
+
+proto.queryInterval = function(lo, hi, cb) {
+  if(lo < this.mid && this.left) {
+    var r = this.left.queryInterval(lo, hi, cb)
+    if(r) { return r }
+  }
+  if(hi > this.mid && this.right) {
+    var r = this.right.queryInterval(lo, hi, cb)
+    if(r) { return r }
+  }
+  if(hi < this.mid) {
+    return reportLeftRange(this.leftPoints, hi, cb)
+  } else if(lo > this.mid) {
+    return reportRightRange(this.rightPoints, lo, cb)
+  } else {
+    return reportRange(this.leftPoints, cb)
+  }
+}
+
+function compareNumbers(a, b) {
+  return a - b
+}
+
+function compareBegin(a, b) {
+  var d = a[0] - b[0]
+  if(d) { return d }
+  return a[1] - b[1]
+}
+
+function compareEnd(a, b) {
+  var d = a[1] - b[1]
+  if(d) { return d }
+  return a[0] - b[0]
+}
+
+function createIntervalTree(intervals) {
+  if(intervals.length === 0) {
+    return null
+  }
+  var pts = []
+  for(var i=0; i<intervals.length; ++i) {
+    pts.push(intervals[i][0], intervals[i][1])
+  }
+  pts.sort(compareNumbers)
+
+  var mid = pts[pts.length>>1]
+
+  var leftIntervals = []
+  var rightIntervals = []
+  var centerIntervals = []
+  for(var i=0; i<intervals.length; ++i) {
+    var s = intervals[i]
+    if(s[1] < mid) {
+      leftIntervals.push(s)
+    } else if(mid < s[0]) {
+      rightIntervals.push(s)
+    } else {
+      centerIntervals.push(s)
+    }
+  }
+
+  //Split center intervals
+  var leftPoints = centerIntervals
+  var rightPoints = centerIntervals.slice()
+  leftPoints.sort(compareBegin)
+  rightPoints.sort(compareEnd)
+
+  return new IntervalTreeNode(mid, 
+    createIntervalTree(leftIntervals),
+    createIntervalTree(rightIntervals),
+    leftPoints,
+    rightPoints)
+}
+
+//User friendly wrapper that makes it possible to support empty trees
+function IntervalTree(root) {
+  this.root = root
+}
+
+var tproto = IntervalTree.prototype
+
+tproto.insert = function(interval) {
+  if(this.root) {
+    this.root.insert(interval)
+  } else {
+    this.root = new IntervalTreeNode(interval[0], null, null, [interval], [interval])
+  }
+}
+
+tproto.remove = function(interval) {
+  if(this.root) {
+    var r = this.root.remove(interval)
+    if(r === EMPTY) {
+      this.root = null
+    }
+    return r !== NOT_FOUND
+  }
+  return false
+}
+
+tproto.queryPoint = function(p, cb) {
+  if(this.root) {
+    return this.root.queryPoint(p, cb)
+  }
+}
+
+tproto.queryInterval = function(lo, hi, cb) {
+  if(lo <= hi && this.root) {
+    return this.root.queryInterval(lo, hi, cb)
+  }
+}
+
+Object.defineProperty(tproto, "count", {
+  get: function() {
+    if(this.root) {
+      return this.root.count
+    }
+    return 0
+  }
+})
+
+Object.defineProperty(tproto, "intervals", {
+  get: function() {
+    if(this.root) {
+      return this.root.intervals([])
+    }
+    return []
+  }
+})
+
+function createWrapper(intervals) {
+  if(!intervals || intervals.length === 0) {
+    return new IntervalTree(null)
+  }
+  return new IntervalTree(createIntervalTree(intervals))
+}
+
+},{"binary-search-bounds":29}],123:[function(require,module,exports){
+"use strict"
+
+function invertPermutation(pi, result) {
+  result = result || new Array(pi.length)
+  for(var i=0; i<pi.length; ++i) {
+    result[pi[i]] = i
+  }
+  return result
+}
+
+module.exports = invertPermutation
+},{}],124:[function(require,module,exports){
 "use strict"
 
 function iota(n) {
@@ -28844,7 +29035,7 @@ function iota(n) {
 }
 
 module.exports = iota
-},{}],153:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 /**
  * Determine if an object is Buffer
  *
@@ -28863,7 +29054,7 @@ module.exports = function (obj) {
     ))
 }
 
-},{}],154:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 'use strict'
 
 module.exports = mouseListen
@@ -29072,7 +29263,7 @@ function mouseListen(element, callback) {
   return result
 }
 
-},{"mouse-event":155}],155:[function(require,module,exports){
+},{"mouse-event":127}],127:[function(require,module,exports){
 'use strict'
 
 function mouseButtons(ev) {
@@ -29134,79 +29325,7 @@ function mouseRelativeY(ev) {
 }
 exports.y = mouseRelativeY
 
-},{}],156:[function(require,module,exports){
-module.exports = function parseUnit(str, out) {
-    if (!out)
-        out = [ 0, '' ]
-
-    str = String(str)
-    var num = parseFloat(str, 10)
-    out[0] = num
-    out[1] = str.match(/[\d.\-\+]*\s*(.*)/)[1] || ''
-    return out
-}
-},{}],157:[function(require,module,exports){
-'use strict'
-
-var parseUnit = require('parse-unit')
-
-module.exports = toPX
-
-var PIXELS_PER_INCH = 96
-
-function getPropertyInPX(element, prop) {
-  var parts = parseUnit(getComputedStyle(element).getPropertyValue(prop))
-  return parts[0] * toPX(parts[1], element)
-}
-
-//This brutal hack is needed
-function getSizeBrutal(unit, element) {
-  var testDIV = document.createElement('div')
-  testDIV.style['font-size'] = '128' + unit
-  element.appendChild(testDIV)
-  var size = getPropertyInPX(testDIV, 'font-size') / 128
-  element.removeChild(testDIV)
-  return size
-}
-
-function toPX(str, element) {
-  element = element || document.body
-  str = (str || 'px').trim().toLowerCase()
-  if(element === window || element === document) {
-    element = document.body 
-  }
-  switch(str) {
-    case '%':  //Ambiguous, not sure if we should use width or height
-      return element.clientHeight / 100.0
-    case 'ch':
-    case 'ex':
-      return getSizeBrutal(str, element)
-    case 'em':
-      return getPropertyInPX(element, 'font-size')
-    case 'rem':
-      return getPropertyInPX(document.body, 'font-size')
-    case 'vw':
-      return window.innerWidth/100
-    case 'vh':
-      return window.innerHeight/100
-    case 'vmin':
-      return Math.min(window.innerWidth, window.innerHeight) / 100
-    case 'vmax':
-      return Math.max(window.innerWidth, window.innerHeight) / 100
-    case 'in':
-      return PIXELS_PER_INCH
-    case 'cm':
-      return PIXELS_PER_INCH / 2.54
-    case 'mm':
-      return PIXELS_PER_INCH / 25.4
-    case 'pt':
-      return PIXELS_PER_INCH / 72
-    case 'pc':
-      return PIXELS_PER_INCH / 6
-  }
-  return 1
-}
-},{"parse-unit":156}],158:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 'use strict'
 
 var toPX = require('to-px')
@@ -29248,7 +29367,423 @@ function mouseWheelListen(element, callback, noScroll) {
   return listener
 }
 
-},{"to-px":157}],159:[function(require,module,exports){
+},{"to-px":166}],129:[function(require,module,exports){
+"use strict"
+
+var pool = require("typedarray-pool")
+
+module.exports = createSurfaceExtractor
+
+//Helper macros
+function array(i) {
+  return "a" + i
+}
+function data(i) {
+  return "d" + i
+}
+function cube(i,bitmask) {
+  return "c" + i + "_" + bitmask
+}
+function shape(i) {
+  return "s" + i
+}
+function stride(i,j) {
+  return "t" + i + "_" + j
+}
+function offset(i) {
+  return "o" + i
+}
+function scalar(i) {
+  return "x" + i
+}
+function pointer(i) {
+  return "p" + i
+}
+function delta(i,bitmask) {
+  return "d" + i + "_" + bitmask
+}
+function index(i) {
+  return "i" + i
+}
+function step(i,j) {
+  return "u" + i + "_" + j
+}
+function pcube(bitmask) {
+  return "b" + bitmask
+}
+function qcube(bitmask) {
+  return "y" + bitmask
+}
+function pdelta(bitmask) {
+  return "e" + bitmask
+}
+function vert(i) {
+  return "v" + i
+}
+var VERTEX_IDS = "V"
+var PHASES = "P"
+var VERTEX_COUNT = "N"
+var POOL_SIZE = "Q"
+var POINTER = "X"
+var TEMPORARY = "T"
+
+function permBitmask(dimension, mask, order) {
+  var r = 0
+  for(var i=0; i<dimension; ++i) {
+    if(mask & (1<<i)) {
+      r |= (1<<order[i])
+    }
+  }
+  return r
+}
+
+//Generates the surface procedure
+function compileSurfaceProcedure(vertexFunc, faceFunc, phaseFunc, scalarArgs, order, typesig) {
+  var arrayArgs = typesig.length
+  var dimension = order.length
+
+  if(dimension < 2) {
+    throw new Error("ndarray-extract-contour: Dimension must be at least 2")
+  }
+
+  var funcName = "extractContour" + order.join("_")
+  var code = []
+  var vars = []
+  var args = []
+
+  //Assemble arguments
+  for(var i=0; i<arrayArgs; ++i) {
+    args.push(array(i))  
+  }
+  for(var i=0; i<scalarArgs; ++i) {
+    args.push(scalar(i))
+  }
+
+  //Shape
+  for(var i=0; i<dimension; ++i) {
+    vars.push(shape(i) + "=" + array(0) + ".shape[" + i + "]|0")
+  }
+  //Data, stride, offset pointers
+  for(var i=0; i<arrayArgs; ++i) {
+    vars.push(data(i) + "=" + array(i) + ".data",
+              offset(i) + "=" + array(i) + ".offset|0")
+    for(var j=0; j<dimension; ++j) {
+      vars.push(stride(i,j) + "=" + array(i) + ".stride[" + j + "]|0")
+    }
+  }
+  //Pointer, delta and cube variables
+  for(var i=0; i<arrayArgs; ++i) {
+    vars.push(pointer(i) + "=" + offset(i))
+    vars.push(cube(i,0))
+    for(var j=1; j<(1<<dimension); ++j) {
+      var ptrStr = []
+      for(var k=0; k<dimension; ++k) {
+        if(j & (1<<k)) {
+          ptrStr.push("-" + stride(i,k))
+        }
+      }
+      vars.push(delta(i,j) + "=(" + ptrStr.join("") + ")|0")
+      vars.push(cube(i,j) + "=0")
+    }
+  }
+  //Create step variables
+  for(var i=0; i<arrayArgs; ++i) {
+    for(var j=0; j<dimension; ++j) {
+      var stepVal = [ stride(i,order[j]) ]
+      if(j > 0) {
+        stepVal.push(stride(i, order[j-1]) + "*" + shape(order[j-1]) )
+      }
+      vars.push(step(i,order[j]) + "=(" + stepVal.join("-") + ")|0")
+    }
+  }
+  //Create index variables
+  for(var i=0; i<dimension; ++i) {
+    vars.push(index(i) + "=0")
+  }
+  //Vertex count
+  vars.push(VERTEX_COUNT + "=0")
+  //Compute pool size, initialize pool step
+  var sizeVariable = ["2"]
+  for(var i=dimension-2; i>=0; --i) {
+    sizeVariable.push(shape(order[i]))
+  }
+  //Previous phases and vertex_ids
+  vars.push(POOL_SIZE + "=(" + sizeVariable.join("*") + ")|0",
+            PHASES + "=mallocUint32(" + POOL_SIZE + ")",
+            VERTEX_IDS + "=mallocUint32(" + POOL_SIZE + ")",
+            POINTER + "=0")
+  //Create cube variables for phases
+  vars.push(pcube(0) + "=0")
+  for(var j=1; j<(1<<dimension); ++j) {
+    var cubeDelta = []
+    var cubeStep = [ ]
+    for(var k=0; k<dimension; ++k) {
+      if(j & (1<<k)) {
+        if(cubeStep.length === 0) {
+          cubeDelta.push("1")
+        } else {
+          cubeDelta.unshift(cubeStep.join("*"))
+        }
+      }
+      cubeStep.push(shape(order[k]))
+    }
+    var signFlag = ""
+    if(cubeDelta[0].indexOf(shape(order[dimension-2])) < 0) {
+      signFlag = "-"
+    }
+    var jperm = permBitmask(dimension, j, order)
+    vars.push(pdelta(jperm) + "=(-" + cubeDelta.join("-") + ")|0",
+              qcube(jperm) + "=(" + signFlag + cubeDelta.join("-") + ")|0",
+              pcube(jperm) + "=0")
+  }
+  vars.push(vert(0) + "=0", TEMPORARY + "=0")
+
+  function forLoopBegin(i, start) {
+    code.push("for(", index(order[i]), "=", start, ";",
+      index(order[i]), "<", shape(order[i]), ";",
+      "++", index(order[i]), "){")
+  }
+
+  function forLoopEnd(i) {
+    for(var j=0; j<arrayArgs; ++j) {
+      code.push(pointer(j), "+=", step(j,order[i]), ";")
+    }
+    code.push("}")
+  }
+
+  function fillEmptySlice(k) {
+    for(var i=k-1; i>=0; --i) {
+      forLoopBegin(i, 0) 
+    }
+    var phaseFuncArgs = []
+    for(var i=0; i<arrayArgs; ++i) {
+      if(typesig[i]) {
+        phaseFuncArgs.push(data(i) + ".get(" + pointer(i) + ")")
+      } else {
+        phaseFuncArgs.push(data(i) + "[" + pointer(i) + "]")
+      }
+    }
+    for(var i=0; i<scalarArgs; ++i) {
+      phaseFuncArgs.push(scalar(i))
+    }
+    code.push(PHASES, "[", POINTER, "++]=phase(", phaseFuncArgs.join(), ");")
+    for(var i=0; i<k; ++i) {
+      forLoopEnd(i)
+    }
+    for(var j=0; j<arrayArgs; ++j) {
+      code.push(pointer(j), "+=", step(j,order[k]), ";")
+    }
+  }
+
+  function processGridCell(mask) {
+    //Read in local data
+    for(var i=0; i<arrayArgs; ++i) {
+      if(typesig[i]) {
+        code.push(cube(i,0), "=", data(i), ".get(", pointer(i), ");")
+      } else {
+        code.push(cube(i,0), "=", data(i), "[", pointer(i), "];")
+      }
+    }
+
+    //Read in phase
+    var phaseFuncArgs = []
+    for(var i=0; i<arrayArgs; ++i) {
+      phaseFuncArgs.push(cube(i,0))
+    }
+    for(var i=0; i<scalarArgs; ++i) {
+      phaseFuncArgs.push(scalar(i))
+    }
+    
+    code.push(pcube(0), "=", PHASES, "[", POINTER, "]=phase(", phaseFuncArgs.join(), ");")
+    
+    //Read in other cube data
+    for(var j=1; j<(1<<dimension); ++j) {
+      code.push(pcube(j), "=", PHASES, "[", POINTER, "+", pdelta(j), "];")
+    }
+
+    //Check for boundary crossing
+    var vertexPredicate = []
+    for(var j=1; j<(1<<dimension); ++j) {
+      vertexPredicate.push("(" + pcube(0) + "!==" + pcube(j) + ")")
+    }
+    code.push("if(", vertexPredicate.join("||"), "){")
+
+    //Read in boundary data
+    var vertexArgs = []
+    for(var i=0; i<dimension; ++i) {
+      vertexArgs.push(index(i))
+    }
+    for(var i=0; i<arrayArgs; ++i) {
+      vertexArgs.push(cube(i,0))
+      for(var j=1; j<(1<<dimension); ++j) {
+        if(typesig[i]) {
+          code.push(cube(i,j), "=", data(i), ".get(", pointer(i), "+", delta(i,j), ");")
+        } else {
+          code.push(cube(i,j), "=", data(i), "[", pointer(i), "+", delta(i,j), "];")
+        }
+        vertexArgs.push(cube(i,j))
+      }
+    }
+    for(var i=0; i<(1<<dimension); ++i) {
+      vertexArgs.push(pcube(i))
+    }
+    for(var i=0; i<scalarArgs; ++i) {
+      vertexArgs.push(scalar(i))
+    }
+
+    //Generate vertex
+    code.push("vertex(", vertexArgs.join(), ");",
+      vert(0), "=", VERTEX_IDS, "[", POINTER, "]=", VERTEX_COUNT, "++;")
+
+    //Check for face crossings
+    var base = (1<<dimension)-1
+    var corner = pcube(base)
+    for(var j=0; j<dimension; ++j) {
+      if((mask & ~(1<<j))===0) {
+        //Check face
+        var subset = base^(1<<j)
+        var edge = pcube(subset)
+        var faceArgs = [ ]
+        for(var k=subset; k>0; k=(k-1)&subset) {
+          faceArgs.push(VERTEX_IDS + "[" + POINTER + "+" + pdelta(k) + "]")
+        }
+        faceArgs.push(vert(0))
+        for(var k=0; k<arrayArgs; ++k) {
+          if(j&1) {
+            faceArgs.push(cube(k,base), cube(k,subset))
+          } else {
+            faceArgs.push(cube(k,subset), cube(k,base))
+          }
+        }
+        if(j&1) {
+          faceArgs.push(corner, edge)
+        } else {
+          faceArgs.push(edge, corner)
+        }
+        for(var k=0; k<scalarArgs; ++k) {
+          faceArgs.push(scalar(k))
+        }
+        code.push("if(", corner, "!==", edge, "){",
+          "face(", faceArgs.join(), ")}")
+      }
+    }
+    
+    //Increment pointer, close off if statement
+    code.push("}",
+      POINTER, "+=1;")
+  }
+
+  function flip() {
+    for(var j=1; j<(1<<dimension); ++j) {
+      code.push(TEMPORARY, "=", pdelta(j), ";",
+                pdelta(j), "=", qcube(j), ";",
+                qcube(j), "=", TEMPORARY, ";")
+    }
+  }
+
+  function createLoop(i, mask) {
+    if(i < 0) {
+      processGridCell(mask)
+      return
+    }
+    fillEmptySlice(i)
+    code.push("if(", shape(order[i]), ">0){",
+      index(order[i]), "=1;")
+    createLoop(i-1, mask|(1<<order[i]))
+
+    for(var j=0; j<arrayArgs; ++j) {
+      code.push(pointer(j), "+=", step(j,order[i]), ";")
+    }
+    if(i === dimension-1) {
+      code.push(POINTER, "=0;")
+      flip()
+    }
+    forLoopBegin(i, 2)
+    createLoop(i-1, mask)
+    if(i === dimension-1) {
+      code.push("if(", index(order[dimension-1]), "&1){",
+        POINTER, "=0;}")
+      flip()
+    }
+    forLoopEnd(i)
+    code.push("}")
+  }
+
+  createLoop(dimension-1, 0)
+
+  //Release scratch memory
+  code.push("freeUint32(", VERTEX_IDS, ");freeUint32(", PHASES, ");")
+
+  //Compile and link procedure
+  var procedureCode = [
+    "'use strict';",
+    "function ", funcName, "(", args.join(), "){",
+      "var ", vars.join(), ";",
+      code.join(""),
+    "}",
+    "return ", funcName ].join("")
+
+  var proc = new Function(
+    "vertex", 
+    "face", 
+    "phase", 
+    "mallocUint32", 
+    "freeUint32",
+    procedureCode)
+  return proc(
+    vertexFunc, 
+    faceFunc, 
+    phaseFunc, 
+    pool.mallocUint32, 
+    pool.freeUint32)
+}
+
+function createSurfaceExtractor(args) {
+  function error(msg) {
+    throw new Error("ndarray-extract-contour: " + msg)
+  }
+  if(typeof args !== "object") {
+    error("Must specify arguments")
+  }
+  var order = args.order
+  if(!Array.isArray(order)) {
+    error("Must specify order")
+  }
+  var arrays = args.arrayArguments||1
+  if(arrays < 1) {
+    error("Must have at least one array argument")
+  }
+  var scalars = args.scalarArguments||0
+  if(scalars < 0) {
+    error("Scalar arg count must be > 0")
+  }
+  if(typeof args.vertex !== "function") {
+    error("Must specify vertex creation function")
+  }
+  if(typeof args.cell !== "function") {
+    error("Must specify cell creation function")
+  }
+  if(typeof args.phase !== "function") {
+    error("Must specify phase function")
+  }
+  var getters = args.getters || []
+  var typesig = new Array(arrays)
+  for(var i=0; i<arrays; ++i) {
+    if(getters.indexOf(i) >= 0) {
+      typesig[i] = true
+    } else {
+      typesig[i] = false
+    }
+  }
+  return compileSurfaceProcedure(
+    args.vertex,
+    args.cell,
+    args.phase,
+    scalars,
+    order,
+    typesig)
+}
+},{"typedarray-pool":170}],130:[function(require,module,exports){
 "use strict"
 
 var compile = require("cwise-compiler")
@@ -29711,7 +30246,7 @@ exports.equals = compile({
 
 
 
-},{"cwise-compiler":59}],160:[function(require,module,exports){
+},{"cwise-compiler":51}],131:[function(require,module,exports){
 var iota = require("iota-array")
 var isBuffer = require("is-buffer")
 
@@ -30056,9 +30591,1154 @@ function wrappedNDArrayCtor(data, shape, stride, offset) {
 
 module.exports = wrappedNDArrayCtor
 
-},{"iota-array":152,"is-buffer":153}],161:[function(require,module,exports){
-arguments[4][98][0].apply(exports,arguments)
-},{"dup":98}],162:[function(require,module,exports){
+},{"iota-array":124,"is-buffer":125}],132:[function(require,module,exports){
+"use strict"
+
+var doubleBits = require("double-bits")
+
+var SMALLEST_DENORM = Math.pow(2, -1074)
+var UINT_MAX = (-1)>>>0
+
+module.exports = nextafter
+
+function nextafter(x, y) {
+  if(isNaN(x) || isNaN(y)) {
+    return NaN
+  }
+  if(x === y) {
+    return x
+  }
+  if(x === 0) {
+    if(y < 0) {
+      return -SMALLEST_DENORM
+    } else {
+      return SMALLEST_DENORM
+    }
+  }
+  var hi = doubleBits.hi(x)
+  var lo = doubleBits.lo(x)
+  if((y > x) === (x > 0)) {
+    if(lo === UINT_MAX) {
+      hi += 1
+      lo = 0
+    } else {
+      lo += 1
+    }
+  } else {
+    if(lo === 0) {
+      lo = UINT_MAX
+      hi -= 1
+    } else {
+      lo -= 1
+    }
+  }
+  return doubleBits.pack(lo, hi)
+}
+},{"double-bits":56}],133:[function(require,module,exports){
+/*!
+ * pad-left <https://github.com/jonschlinkert/pad-left>
+ *
+ * Copyright (c) 2014-2015, Jon Schlinkert.
+ * Licensed under the MIT license.
+ */
+
+'use strict';
+
+var repeat = require('repeat-string');
+
+module.exports = function padLeft(str, num, ch) {
+  ch = typeof ch !== 'undefined' ? (ch + '') : ' ';
+  return repeat(ch, num) + str;
+};
+},{"repeat-string":146}],134:[function(require,module,exports){
+module.exports = function parseUnit(str, out) {
+    if (!out)
+        out = [ 0, '' ]
+
+    str = String(str)
+    var num = parseFloat(str, 10)
+    out[0] = num
+    out[1] = str.match(/[\d.\-\+]*\s*(.*)/)[1] || ''
+    return out
+}
+},{}],135:[function(require,module,exports){
+"use strict"
+
+module.exports = permutationSign
+
+var BRUTE_FORCE_CUTOFF = 32
+
+var pool = require("typedarray-pool")
+
+function permutationSign(p) {
+  var n = p.length
+  if(n < BRUTE_FORCE_CUTOFF) {
+    //Use quadratic algorithm for small n
+    var sgn = 1
+    for(var i=0; i<n; ++i) {
+      for(var j=0; j<i; ++j) {
+        if(p[i] < p[j]) {
+          sgn = -sgn
+        } else if(p[i] === p[j]) {
+          return 0
+        }
+      }
+    }
+    return sgn
+  } else {
+    //Otherwise use linear time algorithm
+    var visited = pool.mallocUint8(n)
+    for(var i=0; i<n; ++i) {
+      visited[i] = 0
+    }
+    var sgn = 1
+    for(var i=0; i<n; ++i) {
+      if(!visited[i]) {
+        var count = 1
+        visited[i] = 1
+        for(var j=p[i]; j!==i; j=p[j]) {
+          if(visited[j]) {
+            pool.freeUint8(visited)
+            return 0
+          }
+          count += 1
+          visited[j] = 1
+        }
+        if(!(count & 1)) {
+          sgn = -sgn
+        }
+      }
+    }
+    pool.freeUint8(visited)
+    return sgn
+  }
+}
+},{"typedarray-pool":170}],136:[function(require,module,exports){
+"use strict"
+
+var pool = require("typedarray-pool")
+var inverse = require("invert-permutation")
+
+function rank(permutation) {
+  var n = permutation.length
+  switch(n) {
+    case 0:
+    case 1:
+      return 0
+    case 2:
+      return permutation[1]
+    default:
+      break
+  }
+  var p = pool.mallocUint32(n)
+  var pinv = pool.mallocUint32(n)
+  var r = 0, s, t, i
+  inverse(permutation, pinv)
+  for(i=0; i<n; ++i) {
+    p[i] = permutation[i]
+  }
+  for(i=n-1; i>0; --i) {
+    t = pinv[i]
+    s = p[i]
+    p[i] = p[t]
+    p[t] = s
+    pinv[i] = pinv[s]
+    pinv[s] = t
+    r = (r + s) * i
+  }
+  pool.freeUint32(pinv)
+  pool.freeUint32(p)
+  return r
+}
+
+function unrank(n, r, p) {
+  switch(n) {
+    case 0:
+      if(p) { return p }
+      return []
+    case 1:
+      if(p) {
+        p[0] = 0
+        return p
+      } else {
+        return [0]
+      }
+    case 2:
+      if(p) {
+        if(r) {
+          p[0] = 0
+          p[1] = 1
+        } else {
+          p[0] = 1
+          p[1] = 0
+        }
+        return p
+      } else {
+        return r ? [0,1] : [1,0]
+      }
+    default:
+      break
+  }
+  p = p || new Array(n)
+  var s, t, i, nf=1
+  p[0] = 0
+  for(i=1; i<n; ++i) {
+    p[i] = i
+    nf = (nf*i)|0
+  }
+  for(i=n-1; i>0; --i) {
+    s = (r / nf)|0
+    r = (r - s * nf)|0
+    nf = (nf / i)|0
+    t = p[i]|0
+    p[i] = p[s]|0
+    p[s] = t|0
+  }
+  return p
+}
+
+exports.rank = rank
+exports.unrank = unrank
+
+},{"invert-permutation":123,"typedarray-pool":170}],137:[function(require,module,exports){
+"use strict"
+
+module.exports = planarDual
+
+var compareAngle = require("compare-angle")
+
+function planarDual(cells, positions) {
+
+  var numVertices = positions.length|0
+  var numEdges = cells.length
+  var adj = [new Array(numVertices), new Array(numVertices)]
+  for(var i=0; i<numVertices; ++i) {
+    adj[0][i] = []
+    adj[1][i] = []
+  }
+  for(var i=0; i<numEdges; ++i) {
+    var c = cells[i]
+    adj[0][c[0]].push(c)
+    adj[1][c[1]].push(c)
+  }
+
+  var cycles = []
+
+  //Add isolated vertices as trivial case
+  for(var i=0; i<numVertices; ++i) {
+    if(adj[0][i].length + adj[1][i].length === 0) {
+      cycles.push( [i] )
+    }
+  }
+
+  //Remove a half edge
+  function cut(c, i) {
+    var a = adj[i][c[i]]
+    a.splice(a.indexOf(c), 1)
+  }
+
+  //Find next vertex and cut edge
+  function next(a, b, noCut) {
+    var nextCell, nextVertex, nextDir
+    for(var i=0; i<2; ++i) {
+      if(adj[i][b].length > 0) {
+        nextCell = adj[i][b][0]
+        nextDir = i
+        break
+      }
+    }
+    nextVertex = nextCell[nextDir^1]
+
+    for(var dir=0; dir<2; ++dir) {
+      var nbhd = adj[dir][b]
+      for(var k=0; k<nbhd.length; ++k) {
+        var e = nbhd[k]
+        var p = e[dir^1]
+        var cmp = compareAngle(
+            positions[a], 
+            positions[b], 
+            positions[nextVertex],
+            positions[p])
+        if(cmp > 0) {
+          nextCell = e
+          nextVertex = p
+          nextDir = dir
+        }
+      }
+    }
+    if(noCut) {
+      return nextVertex
+    }
+    if(nextCell) {
+      cut(nextCell, nextDir)
+    }
+    return nextVertex
+  }
+
+  function extractCycle(v, dir) {
+    var e0 = adj[dir][v][0]
+    var cycle = [v]
+    cut(e0, dir)
+    var u = e0[dir^1]
+    var d0 = dir
+    while(true) {
+      while(u !== v) {
+        cycle.push(u)
+        u = next(cycle[cycle.length-2], u, false)
+      }
+      if(adj[0][v].length + adj[1][v].length === 0) {
+        break
+      }
+      var a = cycle[cycle.length-1]
+      var b = v
+      var c = cycle[1]
+      var d = next(a, b, true)
+      if(compareAngle(positions[a], positions[b], positions[c], positions[d]) < 0) {
+        break
+      }
+      cycle.push(v)
+      u = next(a, b)
+    }
+    return cycle
+  }
+
+  function shouldGlue(pcycle, ncycle) {
+    return (ncycle[1] === ncycle[ncycle.length-1])
+  }
+
+  for(var i=0; i<numVertices; ++i) {
+    for(var j=0; j<2; ++j) {
+      var pcycle = []
+      while(adj[j][i].length > 0) {
+        var ni = adj[0][i].length
+        var ncycle = extractCycle(i,j)
+        if(shouldGlue(pcycle, ncycle)) {
+          //Glue together trivial cycles
+          pcycle.push.apply(pcycle, ncycle)
+        } else {
+          if(pcycle.length > 0) {
+            cycles.push(pcycle)
+          }
+          pcycle = ncycle
+        }
+      }
+      if(pcycle.length > 0) {
+        cycles.push(pcycle)
+      }
+    }
+  }
+
+  //Combine paths and loops together
+  return cycles
+}
+},{"compare-angle":49}],138:[function(require,module,exports){
+'use strict'
+
+module.exports = trimLeaves
+
+var e2a = require('edges-to-adjacency-list')
+
+function trimLeaves(edges, positions) {
+  var adj = e2a(edges, positions.length)
+  var live = new Array(positions.length)
+  var nbhd = new Array(positions.length)
+
+  var dead = []
+  for(var i=0; i<positions.length; ++i) {
+    var count = adj[i].length
+    nbhd[i] = count
+    live[i] = true
+    if(count <= 1) {
+      dead.push(i)
+    }
+  }
+
+  while(dead.length > 0) {
+    var v = dead.pop()
+    live[v] = false
+    var n = adj[v]
+    for(var i=0; i<n.length; ++i) {
+      var u = n[i]
+      if(--nbhd[u] === 0) {
+        dead.push(u)
+      }
+    }
+  }
+
+  var newIndex = new Array(positions.length)
+  var npositions = []
+  for(var i=0; i<positions.length; ++i) {
+    if(live[i]) {
+      var v = npositions.length
+      newIndex[i] = v
+      npositions.push(positions[i])
+    } else {
+      newIndex[i] = -1
+    }
+  }
+
+  var nedges = []
+  for(var i=0; i<edges.length; ++i) {
+    var e = edges[i]
+    if(live[e[0]] && live[e[1]]) {
+      nedges.push([ newIndex[e[0]], newIndex[e[1]] ])
+    }
+  }
+  
+  return [ nedges, npositions ]
+}
+},{"edges-to-adjacency-list":58}],139:[function(require,module,exports){
+'use strict'
+
+module.exports = planarGraphToPolyline
+
+var e2a = require('edges-to-adjacency-list')
+var planarDual = require('planar-dual')
+var preprocessPolygon = require('point-in-big-polygon')
+var twoProduct = require('two-product')
+var robustSum = require('robust-sum')
+var uniq = require('uniq')
+var trimLeaves = require('./lib/trim-leaves')
+
+function makeArray(length, fill) {
+  var result = new Array(length)
+  for(var i=0; i<length; ++i) {
+    result[i] = fill
+  }
+  return result
+}
+
+function makeArrayOfArrays(length) {
+  var result = new Array(length)
+  for(var i=0; i<length; ++i) {
+    result[i] = []
+  }
+  return result
+}
+
+
+function planarGraphToPolyline(edges, positions) {
+
+  //Trim leaves
+  var result = trimLeaves(edges, positions)
+  edges = result[0]
+  positions = result[1]
+
+  var numVertices = positions.length
+  var numEdges = edges.length
+
+  //Calculate adjacency list, check manifold
+  var adj = e2a(edges, positions.length)
+  for(var i=0; i<numVertices; ++i) {
+    if(adj[i].length % 2 === 1) {
+      throw new Error('planar-graph-to-polyline: graph must be manifold')
+    }
+  }
+
+  //Get faces
+  var faces = planarDual(edges, positions)
+
+  //Check orientation of a polygon using exact arithmetic
+  function ccw(c) {
+    var n = c.length
+    var area = [0]
+    for(var j=0; j<n; ++j) {
+      var a = positions[c[j]]
+      var b = positions[c[(j+1)%n]]
+      var t00 = twoProduct(-a[0], a[1])
+      var t01 = twoProduct(-a[0], b[1])
+      var t10 = twoProduct( b[0], a[1])
+      var t11 = twoProduct( b[0], b[1])
+      area = robustSum(area, robustSum(robustSum(t00, t01), robustSum(t10, t11)))
+    }
+    return area[area.length-1] > 0
+  }
+
+  //Extract all clockwise faces
+  faces = faces.filter(ccw)
+
+  //Detect which loops are contained in one another to handle parent-of relation
+  var numFaces = faces.length
+  var parent = new Array(numFaces)
+  var containment = new Array(numFaces)
+  for(var i=0; i<numFaces; ++i) {
+    parent[i] = i
+    var row = new Array(numFaces)
+    var loopVertices = faces[i].map(function(v) {
+      return positions[v]
+    })
+    var pmc = preprocessPolygon([loopVertices])
+    var count = 0
+    outer:
+    for(var j=0; j<numFaces; ++j) {
+      row[j] = 0
+      if(i === j) {
+        continue
+      }
+      var c = faces[j]
+      var n = c.length
+      for(var k=0; k<n; ++k) {
+        var d = pmc(positions[c[k]])
+        if(d !== 0) {
+          if(d < 0) {
+            row[j] = 1
+            count += 1
+          }
+          continue outer
+        }
+      }
+      row[j] = 1
+      count += 1
+    }
+    containment[i] = [count, i, row]
+  }
+  containment.sort(function(a,b) {
+    return b[0] - a[0]
+  })
+  for(var i=0; i<numFaces; ++i) {
+    var row = containment[i]
+    var idx = row[1]
+    var children = row[2]
+    for(var j=0; j<numFaces; ++j) {
+      if(children[j]) {
+        parent[j] = idx
+      }
+    }
+  }
+
+  //Initialize face adjacency list
+  var fadj = makeArrayOfArrays(numFaces)
+  for(var i=0; i<numFaces; ++i) {
+    fadj[i].push(parent[i])
+    fadj[parent[i]].push(i)
+  }
+
+  //Build adjacency matrix for edges
+  var edgeAdjacency = {}
+  var internalVertices = makeArray(numVertices, false)
+  for(var i=0; i<numFaces; ++i) {
+    var c = faces[i]
+    var n = c.length
+    for(var j=0; j<n; ++j) {
+      var a = c[j]
+      var b = c[(j+1)%n]
+      var key = Math.min(a,b) + ":" + Math.max(a,b)
+      if(key in edgeAdjacency) {
+        var neighbor = edgeAdjacency[key]
+        fadj[neighbor].push(i)
+        fadj[i].push(neighbor)
+        internalVertices[a] = internalVertices[b] = true
+      } else {
+        edgeAdjacency[key] = i
+      }
+    }
+  }
+
+  function sharedBoundary(c) {
+    var n = c.length
+    for(var i=0; i<n; ++i) {
+      if(!internalVertices[c[i]]) {
+        return false
+      }
+    }
+    return true
+  }
+
+  var toVisit = []
+  var parity = makeArray(numFaces, -1)
+  for(var i=0; i<numFaces; ++i) {
+    if(parent[i] === i && !sharedBoundary(faces[i])) {
+      toVisit.push(i)
+      parity[i] = 0
+    } else {
+      parity[i] = -1
+    }
+  }
+
+  //Using face adjacency, classify faces as in/out
+  var result = []
+  while(toVisit.length > 0) {
+    var top = toVisit.pop()
+    var nbhd = fadj[top]
+    uniq(nbhd, function(a,b) {
+      return a-b
+    })
+    var nnbhr = nbhd.length
+    var p = parity[top]
+    var polyline
+    if(p === 0) {
+      var c = faces[top]
+      polyline = [c]
+    }
+    for(var i=0; i<nnbhr; ++i) {
+      var f = nbhd[i]
+      if(parity[f] >= 0) {
+        continue
+      }
+      parity[f] = p^1
+      toVisit.push(f)
+      if(p === 0) {
+        var c = faces[f]
+        if(!sharedBoundary(c)) {
+          c.reverse()
+          polyline.push(c)
+        }
+      }
+    }
+    if(p === 0) {
+      result.push(polyline)
+    }
+  }
+
+  return result
+}
+},{"./lib/trim-leaves":138,"edges-to-adjacency-list":58,"planar-dual":137,"point-in-big-polygon":140,"robust-sum":153,"two-product":168,"uniq":172}],140:[function(require,module,exports){
+module.exports = preprocessPolygon
+
+var orient = require('robust-orientation')[3]
+var makeSlabs = require('slab-decomposition')
+var makeIntervalTree = require('interval-tree-1d')
+var bsearch = require('binary-search-bounds')
+
+function visitInterval() {
+  return true
+}
+
+function intervalSearch(table) {
+  return function(x, y) {
+    var tree = table[x]
+    if(tree) {
+      return !!tree.queryPoint(y, visitInterval)
+    }
+    return false
+  }
+}
+
+function buildVerticalIndex(segments) {
+  var table = {}
+  for(var i=0; i<segments.length; ++i) {
+    var s = segments[i]
+    var x = s[0][0]
+    var y0 = s[0][1]
+    var y1 = s[1][1]
+    var p = [ Math.min(y0, y1), Math.max(y0, y1) ]
+    if(x in table) {
+      table[x].push(p)
+    } else {
+      table[x] = [ p ]
+    }
+  }
+  var intervalTable = {}
+  var keys = Object.keys(table)
+  for(var i=0; i<keys.length; ++i) {
+    var segs = table[keys[i]]
+    intervalTable[keys[i]] = makeIntervalTree(segs)
+  }
+  return intervalSearch(intervalTable)
+}
+
+function buildSlabSearch(slabs, coordinates) {
+  return function(p) {
+    var bucket = bsearch.le(coordinates, p[0])
+    if(bucket < 0) {
+      return 1
+    }
+    var root = slabs[bucket]
+    if(!root) {
+      if(bucket > 0 && coordinates[bucket] === p[0]) {
+        root = slabs[bucket-1]
+      } else {
+        return 1
+      }
+    }
+    var lastOrientation = 1
+    while(root) {
+      var s = root.key
+      var o = orient(p, s[0], s[1])
+      if(s[0][0] < s[1][0]) {
+        if(o < 0) {
+          root = root.left
+        } else if(o > 0) {
+          lastOrientation = -1
+          root = root.right
+        } else {
+          return 0
+        }
+      } else {
+        if(o > 0) {
+          root = root.left
+        } else if(o < 0) {
+          lastOrientation = 1
+          root = root.right
+        } else {
+          return 0
+        }
+      }
+    }
+    return lastOrientation
+  }
+}
+
+function classifyEmpty(p) {
+  return 1
+}
+
+function createClassifyVertical(testVertical) {
+  return function classify(p) {
+    if(testVertical(p[0], p[1])) {
+      return 0
+    }
+    return 1
+  }
+}
+
+function createClassifyPointDegen(testVertical, testNormal) {
+  return function classify(p) {
+    if(testVertical(p[0], p[1])) {
+      return 0
+    }
+    return testNormal(p)
+  }
+}
+
+function preprocessPolygon(loops) {
+  //Compute number of loops
+  var numLoops = loops.length
+
+  //Unpack segments
+  var segments = []
+  var vsegments = []
+  var ptr = 0
+  for(var i=0; i<numLoops; ++i) {
+    var loop = loops[i]
+    var numVertices = loop.length
+    for(var s=numVertices-1,t=0; t<numVertices; s=(t++)) {
+      var a = loop[s]
+      var b = loop[t]
+      if(a[0] === b[0]) {
+        vsegments.push([a,b])
+      } else {
+        segments.push([a,b])
+      }
+    }
+  }
+
+  //Degenerate case: All loops are empty
+  if(segments.length === 0) {
+    if(vsegments.length === 0) {
+      return classifyEmpty
+    } else {
+      return createClassifyVertical(buildVerticalIndex(vsegments))
+    }
+  }
+
+  //Build slab decomposition
+  var slabs = makeSlabs(segments)
+  var testSlab = buildSlabSearch(slabs.slabs, slabs.coordinates)
+
+  if(vsegments.length === 0) {
+    return testSlab
+  } else {
+    return createClassifyPointDegen(
+      buildVerticalIndex(vsegments),
+      testSlab)
+  }
+}
+},{"binary-search-bounds":29,"interval-tree-1d":122,"robust-orientation":148,"slab-decomposition":160}],141:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],142:[function(require,module,exports){
+'use strict'
+
+var bnadd = require('big-rat/add')
+
+module.exports = add
+
+function add(a, b) {
+  var n = a.length
+  var r = new Array(n)
+    for(var i=0; i<n; ++i) {
+    r[i] = bnadd(a[i], b[i])
+  }
+  return r
+}
+
+},{"big-rat/add":13}],143:[function(require,module,exports){
+'use strict'
+
+module.exports = float2rat
+
+var rat = require('big-rat')
+
+function float2rat(v) {
+  var result = new Array(v.length)
+  for(var i=0; i<v.length; ++i) {
+    result[i] = rat(v[i])
+  }
+  return result
+}
+
+},{"big-rat":16}],144:[function(require,module,exports){
+'use strict'
+
+var rat = require('big-rat')
+var mul = require('big-rat/mul')
+
+module.exports = muls
+
+function muls(a, x) {
+  var s = rat(x)
+  var n = a.length
+  var r = new Array(n)
+  for(var i=0; i<n; ++i) {
+    r[i] = mul(a[i], s)
+  }
+  return r
+}
+
+},{"big-rat":16,"big-rat/mul":25}],145:[function(require,module,exports){
+'use strict'
+
+var bnsub = require('big-rat/sub')
+
+module.exports = sub
+
+function sub(a, b) {
+  var n = a.length
+  var r = new Array(n)
+    for(var i=0; i<n; ++i) {
+    r[i] = bnsub(a[i], b[i])
+  }
+  return r
+}
+
+},{"big-rat/sub":27}],146:[function(require,module,exports){
+/*!
+ * repeat-string <https://github.com/jonschlinkert/repeat-string>
+ *
+ * Copyright (c) 2014-2015, Jon Schlinkert.
+ * Licensed under the MIT License.
+ */
+
+'use strict';
+
+/**
+ * Expose `repeat`
+ */
+
+module.exports = repeat;
+
+/**
+ * Repeat the given `string` the specified `number`
+ * of times.
+ *
+ * **Example:**
+ *
+ * ```js
+ * var repeat = require('repeat-string');
+ * repeat('A', 5);
+ * //=> AAAAA
+ * ```
+ *
+ * @param {String} `string` The string to repeat
+ * @param {Number} `number` The number of times to repeat the string
+ * @return {String} Repeated string
+ * @api public
+ */
+
+function repeat(str, num) {
+  if (typeof str !== 'string') {
+    throw new TypeError('repeat-string expects a string.');
+  }
+
+  if (num === 1) return str;
+  if (num === 2) return str + str;
+
+  var max = str.length * num;
+  if (cache !== str || typeof cache === 'undefined') {
+    cache = str;
+    res = '';
+  }
+
+  while (max > res.length && num > 0) {
+    if (num & 1) {
+      res += str;
+    }
+
+    num >>= 1;
+    if (!num) break;
+    str += str;
+  }
+
+  return res.substr(0, max);
+}
+
+/**
+ * Results cache
+ */
+
+var res = '';
+var cache;
+
+},{}],147:[function(require,module,exports){
+"use strict"
+
+var twoProduct = require("two-product")
+var robustSum = require("robust-sum")
+var robustDiff = require("robust-subtract")
+var robustScale = require("robust-scale")
+
+var NUM_EXPAND = 6
+
+function cofactor(m, c) {
+  var result = new Array(m.length-1)
+  for(var i=1; i<m.length; ++i) {
+    var r = result[i-1] = new Array(m.length-1)
+    for(var j=0,k=0; j<m.length; ++j) {
+      if(j === c) {
+        continue
+      }
+      r[k++] = m[i][j]
+    }
+  }
+  return result
+}
+
+function matrix(n) {
+  var result = new Array(n)
+  for(var i=0; i<n; ++i) {
+    result[i] = new Array(n)
+    for(var j=0; j<n; ++j) {
+      result[i][j] = ["m", j, "[", (n-i-2), "]"].join("")
+    }
+  }
+  return result
+}
+
+function generateSum(expr) {
+  if(expr.length === 1) {
+    return expr[0]
+  } else if(expr.length === 2) {
+    return ["sum(", expr[0], ",", expr[1], ")"].join("")
+  } else {
+    var m = expr.length>>1
+    return ["sum(", generateSum(expr.slice(0, m)), ",", generateSum(expr.slice(m)), ")"].join("")
+  }
+}
+
+function makeProduct(a, b) {
+  if(a.charAt(0) === "m") {
+    if(b.charAt(0) === "w") {
+      var toks = a.split("[")
+      return ["w", b.substr(1), "m", toks[0].substr(1)].join("")
+    } else {
+      return ["prod(", a, ",", b, ")"].join("")
+    }
+  } else {
+    return makeProduct(b, a)
+  }
+}
+
+function sign(s) {
+  if(s & 1 !== 0) {
+    return "-"
+  }
+  return ""
+}
+
+function determinant(m) {
+  if(m.length === 2) {
+    return [["diff(", makeProduct(m[0][0], m[1][1]), ",", makeProduct(m[1][0], m[0][1]), ")"].join("")]
+  } else {
+    var expr = []
+    for(var i=0; i<m.length; ++i) {
+      expr.push(["scale(", generateSum(determinant(cofactor(m, i))), ",", sign(i), m[0][i], ")"].join(""))
+    }
+    return expr
+  }
+}
+
+function makeSquare(d, n) {
+  var terms = []
+  for(var i=0; i<n-2; ++i) {
+    terms.push(["prod(m", d, "[", i, "],m", d, "[", i, "])"].join(""))
+  }
+  return generateSum(terms)
+}
+
+function orientation(n) {
+  var pos = []
+  var neg = []
+  var m = matrix(n)
+  for(var i=0; i<n; ++i) {
+    m[0][i] = "1"
+    m[n-1][i] = "w"+i
+  } 
+  for(var i=0; i<n; ++i) {
+    if((i&1)===0) {
+      pos.push.apply(pos,determinant(cofactor(m, i)))
+    } else {
+      neg.push.apply(neg,determinant(cofactor(m, i)))
+    }
+  }
+  var posExpr = generateSum(pos)
+  var negExpr = generateSum(neg)
+  var funcName = "exactInSphere" + n
+  var funcArgs = []
+  for(var i=0; i<n; ++i) {
+    funcArgs.push("m" + i)
+  }
+  var code = ["function ", funcName, "(", funcArgs.join(), "){"]
+  for(var i=0; i<n; ++i) {
+    code.push("var w",i,"=",makeSquare(i,n),";")
+    for(var j=0; j<n; ++j) {
+      if(j !== i) {
+        code.push("var w",i,"m",j,"=scale(w",i,",m",j,"[0]);")
+      }
+    }
+  }
+  code.push("var p=", posExpr, ",n=", negExpr, ",d=diff(p,n);return d[d.length-1];}return ", funcName)
+  var proc = new Function("sum", "diff", "prod", "scale", code.join(""))
+  return proc(robustSum, robustDiff, twoProduct, robustScale)
+}
+
+function inSphere0() { return 0 }
+function inSphere1() { return 0 }
+function inSphere2() { return 0 }
+
+var CACHED = [
+  inSphere0,
+  inSphere1,
+  inSphere2
+]
+
+function slowInSphere(args) {
+  var proc = CACHED[args.length]
+  if(!proc) {
+    proc = CACHED[args.length] = orientation(args.length)
+  }
+  return proc.apply(undefined, args)
+}
+
+function generateInSphereTest() {
+  while(CACHED.length <= NUM_EXPAND) {
+    CACHED.push(orientation(CACHED.length))
+  }
+  var args = []
+  var procArgs = ["slow"]
+  for(var i=0; i<=NUM_EXPAND; ++i) {
+    args.push("a" + i)
+    procArgs.push("o" + i)
+  }
+  var code = [
+    "function testInSphere(", args.join(), "){switch(arguments.length){case 0:case 1:return 0;"
+  ]
+  for(var i=2; i<=NUM_EXPAND; ++i) {
+    code.push("case ", i, ":return o", i, "(", args.slice(0, i).join(), ");")
+  }
+  code.push("}var s=new Array(arguments.length);for(var i=0;i<arguments.length;++i){s[i]=arguments[i]};return slow(s);}return testInSphere")
+  procArgs.push(code.join(""))
+
+  var proc = Function.apply(undefined, procArgs)
+
+  module.exports = proc.apply(undefined, [slowInSphere].concat(CACHED))
+  for(var i=0; i<=NUM_EXPAND; ++i) {
+    module.exports[i] = CACHED[i]
+  }
+}
+
+generateInSphereTest()
+},{"robust-scale":150,"robust-subtract":152,"robust-sum":153,"two-product":168}],148:[function(require,module,exports){
 "use strict"
 
 var twoProduct = require("two-product")
@@ -30249,7 +31929,37 @@ function generateOrientationProc() {
 }
 
 generateOrientationProc()
-},{"robust-scale":163,"robust-subtract":164,"robust-sum":165,"two-product":178}],163:[function(require,module,exports){
+},{"robust-scale":150,"robust-subtract":152,"robust-sum":153,"two-product":168}],149:[function(require,module,exports){
+"use strict"
+
+var robustSum = require("robust-sum")
+var robustScale = require("robust-scale")
+
+module.exports = robustProduct
+
+function robustProduct(a, b) {
+  if(a.length === 1) {
+    return robustScale(b, a[0])
+  }
+  if(b.length === 1) {
+    return robustScale(a, b[0])
+  }
+  if(a.length === 0 || b.length === 0) {
+    return [0]
+  }
+  var r = [0]
+  if(a.length < b.length) {
+    for(var i=0; i<a.length; ++i) {
+      r = robustSum(r, robustScale(b, a[i]))
+    }
+  } else {
+    for(var i=0; i<b.length; ++i) {
+      r = robustSum(r, robustScale(a, b[i]))
+    }    
+  }
+  return r
+}
+},{"robust-scale":150,"robust-sum":153}],150:[function(require,module,exports){
 "use strict"
 
 var twoProduct = require("two-product")
@@ -30300,7 +32010,55 @@ function scaleLinearExpansion(e, scale) {
   g.length = count
   return g
 }
-},{"two-product":178,"two-sum":179}],164:[function(require,module,exports){
+},{"two-product":168,"two-sum":169}],151:[function(require,module,exports){
+"use strict"
+
+module.exports = segmentsIntersect
+
+var orient = require("robust-orientation")[3]
+
+function checkCollinear(a0, a1, b0, b1) {
+
+  for(var d=0; d<2; ++d) {
+    var x0 = a0[d]
+    var y0 = a1[d]
+    var l0 = Math.min(x0, y0)
+    var h0 = Math.max(x0, y0)    
+
+    var x1 = b0[d]
+    var y1 = b1[d]
+    var l1 = Math.min(x1, y1)
+    var h1 = Math.max(x1, y1)    
+
+    if(h1 < l0 || h0 < l1) {
+      return false
+    }
+  }
+
+  return true
+}
+
+function segmentsIntersect(a0, a1, b0, b1) {
+  var x0 = orient(a0, b0, b1)
+  var y0 = orient(a1, b0, b1)
+  if((x0 > 0 && y0 > 0) || (x0 < 0 && y0 < 0)) {
+    return false
+  }
+
+  var x1 = orient(b0, a0, a1)
+  var y1 = orient(b1, a0, a1)
+  if((x1 > 0 && y1 > 0) || (x1 < 0 && y1 < 0)) {
+    return false
+  }
+
+  //Check for degenerate collinear case
+  if(x0 === 0 && y0 === 0 && x1 === 0 && y1 === 0) {
+    return checkCollinear(a0, a1, b0, b1)
+  }
+
+  return true
+}
+},{"robust-orientation":148}],152:[function(require,module,exports){
 "use strict"
 
 module.exports = robustSubtract
@@ -30457,7 +32215,7 @@ function robustSubtract(e, f) {
   g.length = count
   return g
 }
-},{}],165:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 "use strict"
 
 module.exports = linearExpansionSum
@@ -30614,7 +32372,1227 @@ function linearExpansionSum(e, f) {
   g.length = count
   return g
 }
-},{}],166:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
+"use strict"
+
+module.exports = function signum(x) {
+  if(x < 0) { return -1 }
+  if(x > 0) { return 1 }
+  return 0.0
+}
+},{}],155:[function(require,module,exports){
+arguments[4][30][0].apply(exports,arguments)
+},{"dup":30}],156:[function(require,module,exports){
+"use strict"; "use restrict";
+
+var bits      = require("bit-twiddle")
+  , UnionFind = require("union-find")
+
+//Returns the dimension of a cell complex
+function dimension(cells) {
+  var d = 0
+    , max = Math.max
+  for(var i=0, il=cells.length; i<il; ++i) {
+    d = max(d, cells[i].length)
+  }
+  return d-1
+}
+exports.dimension = dimension
+
+//Counts the number of vertices in faces
+function countVertices(cells) {
+  var vc = -1
+    , max = Math.max
+  for(var i=0, il=cells.length; i<il; ++i) {
+    var c = cells[i]
+    for(var j=0, jl=c.length; j<jl; ++j) {
+      vc = max(vc, c[j])
+    }
+  }
+  return vc+1
+}
+exports.countVertices = countVertices
+
+//Returns a deep copy of cells
+function cloneCells(cells) {
+  var ncells = new Array(cells.length)
+  for(var i=0, il=cells.length; i<il; ++i) {
+    ncells[i] = cells[i].slice(0)
+  }
+  return ncells
+}
+exports.cloneCells = cloneCells
+
+//Ranks a pair of cells up to permutation
+function compareCells(a, b) {
+  var n = a.length
+    , t = a.length - b.length
+    , min = Math.min
+  if(t) {
+    return t
+  }
+  switch(n) {
+    case 0:
+      return 0;
+    case 1:
+      return a[0] - b[0];
+    case 2:
+      var d = a[0]+a[1]-b[0]-b[1]
+      if(d) {
+        return d
+      }
+      return min(a[0],a[1]) - min(b[0],b[1])
+    case 3:
+      var l1 = a[0]+a[1]
+        , m1 = b[0]+b[1]
+      d = l1+a[2] - (m1+b[2])
+      if(d) {
+        return d
+      }
+      var l0 = min(a[0], a[1])
+        , m0 = min(b[0], b[1])
+        , d  = min(l0, a[2]) - min(m0, b[2])
+      if(d) {
+        return d
+      }
+      return min(l0+a[2], l1) - min(m0+b[2], m1)
+    
+    //TODO: Maybe optimize n=4 as well?
+    
+    default:
+      var as = a.slice(0)
+      as.sort()
+      var bs = b.slice(0)
+      bs.sort()
+      for(var i=0; i<n; ++i) {
+        t = as[i] - bs[i]
+        if(t) {
+          return t
+        }
+      }
+      return 0
+  }
+}
+exports.compareCells = compareCells
+
+function compareZipped(a, b) {
+  return compareCells(a[0], b[0])
+}
+
+//Puts a cell complex into normal order for the purposes of findCell queries
+function normalize(cells, attr) {
+  if(attr) {
+    var len = cells.length
+    var zipped = new Array(len)
+    for(var i=0; i<len; ++i) {
+      zipped[i] = [cells[i], attr[i]]
+    }
+    zipped.sort(compareZipped)
+    for(var i=0; i<len; ++i) {
+      cells[i] = zipped[i][0]
+      attr[i] = zipped[i][1]
+    }
+    return cells
+  } else {
+    cells.sort(compareCells)
+    return cells
+  }
+}
+exports.normalize = normalize
+
+//Removes all duplicate cells in the complex
+function unique(cells) {
+  if(cells.length === 0) {
+    return []
+  }
+  var ptr = 1
+    , len = cells.length
+  for(var i=1; i<len; ++i) {
+    var a = cells[i]
+    if(compareCells(a, cells[i-1])) {
+      if(i === ptr) {
+        ptr++
+        continue
+      }
+      cells[ptr++] = a
+    }
+  }
+  cells.length = ptr
+  return cells
+}
+exports.unique = unique;
+
+//Finds a cell in a normalized cell complex
+function findCell(cells, c) {
+  var lo = 0
+    , hi = cells.length-1
+    , r  = -1
+  while (lo <= hi) {
+    var mid = (lo + hi) >> 1
+      , s   = compareCells(cells[mid], c)
+    if(s <= 0) {
+      if(s === 0) {
+        r = mid
+      }
+      lo = mid + 1
+    } else if(s > 0) {
+      hi = mid - 1
+    }
+  }
+  return r
+}
+exports.findCell = findCell;
+
+//Builds an index for an n-cell.  This is more general than dual, but less efficient
+function incidence(from_cells, to_cells) {
+  var index = new Array(from_cells.length)
+  for(var i=0, il=index.length; i<il; ++i) {
+    index[i] = []
+  }
+  var b = []
+  for(var i=0, n=to_cells.length; i<n; ++i) {
+    var c = to_cells[i]
+    var cl = c.length
+    for(var k=1, kn=(1<<cl); k<kn; ++k) {
+      b.length = bits.popCount(k)
+      var l = 0
+      for(var j=0; j<cl; ++j) {
+        if(k & (1<<j)) {
+          b[l++] = c[j]
+        }
+      }
+      var idx=findCell(from_cells, b)
+      if(idx < 0) {
+        continue
+      }
+      while(true) {
+        index[idx++].push(i)
+        if(idx >= from_cells.length || compareCells(from_cells[idx], b) !== 0) {
+          break
+        }
+      }
+    }
+  }
+  return index
+}
+exports.incidence = incidence
+
+//Computes the dual of the mesh.  This is basically an optimized version of buildIndex for the situation where from_cells is just the list of vertices
+function dual(cells, vertex_count) {
+  if(!vertex_count) {
+    return incidence(unique(skeleton(cells, 0)), cells, 0)
+  }
+  var res = new Array(vertex_count)
+  for(var i=0; i<vertex_count; ++i) {
+    res[i] = []
+  }
+  for(var i=0, len=cells.length; i<len; ++i) {
+    var c = cells[i]
+    for(var j=0, cl=c.length; j<cl; ++j) {
+      res[c[j]].push(i)
+    }
+  }
+  return res
+}
+exports.dual = dual
+
+//Enumerates all cells in the complex
+function explode(cells) {
+  var result = []
+  for(var i=0, il=cells.length; i<il; ++i) {
+    var c = cells[i]
+      , cl = c.length|0
+    for(var j=1, jl=(1<<cl); j<jl; ++j) {
+      var b = []
+      for(var k=0; k<cl; ++k) {
+        if((j >>> k) & 1) {
+          b.push(c[k])
+        }
+      }
+      result.push(b)
+    }
+  }
+  return normalize(result)
+}
+exports.explode = explode
+
+//Enumerates all of the n-cells of a cell complex
+function skeleton(cells, n) {
+  if(n < 0) {
+    return []
+  }
+  var result = []
+    , k0     = (1<<(n+1))-1
+  for(var i=0; i<cells.length; ++i) {
+    var c = cells[i]
+    for(var k=k0; k<(1<<c.length); k=bits.nextCombination(k)) {
+      var b = new Array(n+1)
+        , l = 0
+      for(var j=0; j<c.length; ++j) {
+        if(k & (1<<j)) {
+          b[l++] = c[j]
+        }
+      }
+      result.push(b)
+    }
+  }
+  return normalize(result)
+}
+exports.skeleton = skeleton;
+
+//Computes the boundary of all cells, does not remove duplicates
+function boundary(cells) {
+  var res = []
+  for(var i=0,il=cells.length; i<il; ++i) {
+    var c = cells[i]
+    for(var j=0,cl=c.length; j<cl; ++j) {
+      var b = new Array(c.length-1)
+      for(var k=0, l=0; k<cl; ++k) {
+        if(k !== j) {
+          b[l++] = c[k]
+        }
+      }
+      res.push(b)
+    }
+  }
+  return normalize(res)
+}
+exports.boundary = boundary;
+
+//Computes connected components for a dense cell complex
+function connectedComponents_dense(cells, vertex_count) {
+  var labels = new UnionFind(vertex_count)
+  for(var i=0; i<cells.length; ++i) {
+    var c = cells[i]
+    for(var j=0; j<c.length; ++j) {
+      for(var k=j+1; k<c.length; ++k) {
+        labels.link(c[j], c[k])
+      }
+    }
+  }
+  var components = []
+    , component_labels = labels.ranks
+  for(var i=0; i<component_labels.length; ++i) {
+    component_labels[i] = -1
+  }
+  for(var i=0; i<cells.length; ++i) {
+    var l = labels.find(cells[i][0])
+    if(component_labels[l] < 0) {
+      component_labels[l] = components.length
+      components.push([cells[i].slice(0)])
+    } else {
+      components[component_labels[l]].push(cells[i].slice(0))
+    }
+  }
+  return components
+}
+
+//Computes connected components for a sparse graph
+function connectedComponents_sparse(cells) {
+  var vertices  = unique(normalize(skeleton(cells, 0)))
+    , labels    = new UnionFind(vertices.length)
+  for(var i=0; i<cells.length; ++i) {
+    var c = cells[i]
+    for(var j=0; j<c.length; ++j) {
+      var vj = findCell(vertices, [c[j]])
+      for(var k=j+1; k<c.length; ++k) {
+        labels.link(vj, findCell(vertices, [c[k]]))
+      }
+    }
+  }
+  var components        = []
+    , component_labels  = labels.ranks
+  for(var i=0; i<component_labels.length; ++i) {
+    component_labels[i] = -1
+  }
+  for(var i=0; i<cells.length; ++i) {
+    var l = labels.find(findCell(vertices, [cells[i][0]]));
+    if(component_labels[l] < 0) {
+      component_labels[l] = components.length
+      components.push([cells[i].slice(0)])
+    } else {
+      components[component_labels[l]].push(cells[i].slice(0))
+    }
+  }
+  return components
+}
+
+//Computes connected components for a cell complex
+function connectedComponents(cells, vertex_count) {
+  if(vertex_count) {
+    return connectedComponents_dense(cells, vertex_count)
+  }
+  return connectedComponents_sparse(cells)
+}
+exports.connectedComponents = connectedComponents
+
+},{"bit-twiddle":155,"union-find":157}],157:[function(require,module,exports){
+"use strict"; "use restrict";
+
+module.exports = UnionFind;
+
+function UnionFind(count) {
+  this.roots = new Array(count);
+  this.ranks = new Array(count);
+  
+  for(var i=0; i<count; ++i) {
+    this.roots[i] = i;
+    this.ranks[i] = 0;
+  }
+}
+
+UnionFind.prototype.length = function() {
+  return this.roots.length;
+}
+
+UnionFind.prototype.makeSet = function() {
+  var n = this.roots.length;
+  this.roots.push(n);
+  this.ranks.push(0);
+  return n;
+}
+
+UnionFind.prototype.find = function(x) {
+  var roots = this.roots;
+  while(roots[x] !== x) {
+    var y = roots[x];
+    roots[x] = roots[y];
+    x = y;
+  }
+  return x;
+}
+
+UnionFind.prototype.link = function(x, y) {
+  var xr = this.find(x)
+    , yr = this.find(y);
+  if(xr === yr) {
+    return;
+  }
+  var ranks = this.ranks
+    , roots = this.roots
+    , xd    = ranks[xr]
+    , yd    = ranks[yr];
+  if(xd < yd) {
+    roots[xr] = yr;
+  } else if(yd < xd) {
+    roots[yr] = xr;
+  } else {
+    roots[yr] = xr;
+    ++ranks[xr];
+  }
+}
+
+
+},{}],158:[function(require,module,exports){
+"use strict"
+
+module.exports = simplifyPolygon
+
+var orient = require("robust-orientation")
+var sc = require("simplicial-complex")
+
+function errorWeight(base, a, b) {
+  var area = Math.abs(orient(base, a, b))
+  var perim = Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1]-b[1], 2))
+  return area / perim
+}
+
+function simplifyPolygon(cells, positions, minArea) {
+
+  var n = positions.length
+  var nc = cells.length
+  var inv = new Array(n)
+  var outv = new Array(n)
+  var weights = new Array(n)
+  var dead = new Array(n)
+  
+  //Initialize tables
+  for(var i=0; i<n; ++i) {
+    inv[i] = outv[i] = -1
+    weights[i] = Infinity
+    dead[i] = false
+  }
+
+  //Compute neighbors
+  for(var i=0; i<nc; ++i) {
+    var c = cells[i]
+    if(c.length !== 2) {
+      throw new Error("Input must be a graph")
+    }
+    var s = c[1]
+    var t = c[0]
+    if(outv[t] !== -1) {
+      outv[t] = -2
+    } else {
+      outv[t] = s
+    }
+    if(inv[s] !== -1) {
+      inv[s] = -2
+    } else {
+      inv[s] = t
+    }
+  }
+
+  //Updates the weight for vertex i
+  function computeWeight(i) {
+    if(dead[i]) {
+      return Infinity
+    }
+    //TODO: Check that the line segment doesn't cross once simplified
+    var s = inv[i]
+    var t = outv[i]
+    if((s<0) || (t<0)) {
+      return Infinity
+    } else {
+      return errorWeight(positions[i], positions[s], positions[t])
+    }
+  }
+
+  //Swaps two nodes on the heap (i,j) are the index of the nodes
+  function heapSwap(i,j) {
+    var a = heap[i]
+    var b = heap[j]
+    heap[i] = b
+    heap[j] = a
+    index[a] = j
+    index[b] = i
+  }
+
+  //Returns the weight of node i on the heap
+  function heapWeight(i) {
+    return weights[heap[i]]
+  }
+
+  function heapParent(i) {
+    if(i & 1) {
+      return (i - 1) >> 1
+    }
+    return (i >> 1) - 1
+  }
+
+  //Bubble element i down the heap
+  function heapDown(i) {
+    var w = heapWeight(i)
+    while(true) {
+      var tw = w
+      var left  = 2*i + 1
+      var right = 2*(i + 1)
+      var next = i
+      if(left < heapCount) {
+        var lw = heapWeight(left)
+        if(lw < tw) {
+          next = left
+          tw = lw
+        }
+      }
+      if(right < heapCount) {
+        var rw = heapWeight(right)
+        if(rw < tw) {
+          next = right
+        }
+      }
+      if(next === i) {
+        return i
+      }
+      heapSwap(i, next)
+      i = next      
+    }
+  }
+
+  //Bubbles element i up the heap
+  function heapUp(i) {
+    var w = heapWeight(i)
+    while(i > 0) {
+      var parent = heapParent(i)
+      if(parent >= 0) {
+        var pw = heapWeight(parent)
+        if(w < pw) {
+          heapSwap(i, parent)
+          i = parent
+          continue
+        }
+      }
+      return i
+    }
+  }
+
+  //Pop minimum element
+  function heapPop() {
+    if(heapCount > 0) {
+      var head = heap[0]
+      heapSwap(0, heapCount-1)
+      heapCount -= 1
+      heapDown(0)
+      return head
+    }
+    return -1
+  }
+
+  //Update heap item i
+  function heapUpdate(i, w) {
+    var a = heap[i]
+    if(weights[a] === w) {
+      return i
+    }
+    weights[a] = -Infinity
+    heapUp(i)
+    heapPop()
+    weights[a] = w
+    heapCount += 1
+    return heapUp(heapCount-1)
+  }
+
+  //Kills a vertex (assume vertex already removed from heap)
+  function kill(i) {
+    if(dead[i]) {
+      return
+    }
+    //Kill vertex
+    dead[i] = true
+    //Fixup topology
+    var s = inv[i]
+    var t = outv[i]
+    if(inv[t] >= 0) {
+      inv[t] = s
+    }
+    if(outv[s] >= 0) {
+      outv[s] = t
+    }
+
+    //Update weights on s and t
+    if(index[s] >= 0) {
+      heapUpdate(index[s], computeWeight(s))
+    }
+    if(index[t] >= 0) {
+      heapUpdate(index[t], computeWeight(t))
+    }
+  }
+
+  //Initialize weights and heap
+  var heap = []
+  var index = new Array(n)
+  for(var i=0; i<n; ++i) {
+    var w = weights[i] = computeWeight(i)
+    if(w < Infinity) {
+      index[i] = heap.length
+      heap.push(i)
+    } else {
+      index[i] = -1
+    }
+  }
+  var heapCount = heap.length
+  for(var i=heapCount>>1; i>=0; --i) {
+    heapDown(i)
+  }
+  
+  //Kill vertices
+  while(true) {
+    var hmin = heapPop()
+    if((hmin < 0) || (weights[hmin] > minArea)) {
+      break
+    }
+    kill(hmin)
+  }
+
+  //Build collapsed vertex table
+  var npositions = []
+  for(var i=0; i<n; ++i) {
+    if(!dead[i]) {
+      index[i] = npositions.length
+      npositions.push(positions[i].slice())
+    }
+  }
+  var nv = npositions.length
+
+  function tortoiseHare(seq, start) {
+    if(seq[start] < 0) {
+      return start
+    }
+    var t = start
+    var h = start
+    do {
+      //Walk two steps with h
+      var nh = seq[h]
+      if(!dead[h] || nh < 0 || nh === h) {
+        break
+      }
+      h = nh
+      nh = seq[h]
+      if(!dead[h] || nh < 0 || nh === h) {
+        break
+      }
+      h = nh
+
+      //Walk one step with t
+      t = seq[t]
+    } while(t !== h)
+    //Compress cycles
+    for(var v=start; v!==h; v = seq[v]) {
+      seq[v] = h
+    }
+    return h
+  }
+
+  var ncells = []
+  cells.forEach(function(c) {
+    var tin = tortoiseHare(inv, c[0])
+    var tout = tortoiseHare(outv, c[1])
+    if(tin >= 0 && tout >= 0 && tin !== tout) {
+      var cin = index[tin]
+      var cout = index[tout]
+      if(cin !== cout) {
+        ncells.push([ cin, cout ])
+      }
+    }
+  })
+
+  //Normalize result
+  sc.unique(sc.normalize(ncells))
+
+  //Return final list of cells
+  return {
+    positions: npositions,
+    edges: ncells
+  }
+}
+},{"robust-orientation":148,"simplicial-complex":156}],159:[function(require,module,exports){
+"use strict"
+
+module.exports = orderSegments
+
+var orient = require("robust-orientation")
+
+function horizontalOrder(a, b) {
+  var bl, br
+  if(b[0][0] < b[1][0]) {
+    bl = b[0]
+    br = b[1]
+  } else if(b[0][0] > b[1][0]) {
+    bl = b[1]
+    br = b[0]
+  } else {
+    var alo = Math.min(a[0][1], a[1][1])
+    var ahi = Math.max(a[0][1], a[1][1])
+    var blo = Math.min(b[0][1], b[1][1])
+    var bhi = Math.max(b[0][1], b[1][1])
+    if(ahi < blo) {
+      return ahi - blo
+    }
+    if(alo > bhi) {
+      return alo - bhi
+    }
+    return ahi - bhi
+  }
+  var al, ar
+  if(a[0][1] < a[1][1]) {
+    al = a[0]
+    ar = a[1]
+  } else {
+    al = a[1]
+    ar = a[0]
+  }
+  var d = orient(br, bl, al)
+  if(d) {
+    return d
+  }
+  d = orient(br, bl, ar)
+  if(d) {
+    return d
+  }
+  return ar - br
+}
+
+function orderSegments(b, a) {
+  var al, ar
+  if(a[0][0] < a[1][0]) {
+    al = a[0]
+    ar = a[1]
+  } else if(a[0][0] > a[1][0]) {
+    al = a[1]
+    ar = a[0]
+  } else {
+    return horizontalOrder(a, b)
+  }
+  var bl, br
+  if(b[0][0] < b[1][0]) {
+    bl = b[0]
+    br = b[1]
+  } else if(b[0][0] > b[1][0]) {
+    bl = b[1]
+    br = b[0]
+  } else {
+    return -horizontalOrder(b, a)
+  }
+  var d1 = orient(al, ar, br)
+  var d2 = orient(al, ar, bl)
+  if(d1 < 0) {
+    if(d2 <= 0) {
+      return d1
+    }
+  } else if(d1 > 0) {
+    if(d2 >= 0) {
+      return d1
+    }
+  } else if(d2) {
+    return d2
+  }
+  d1 = orient(br, bl, ar)
+  d2 = orient(br, bl, al)
+  if(d1 < 0) {
+    if(d2 <= 0) {
+      return d1
+    }
+  } else if(d1 > 0) {
+    if(d2 >= 0) {
+      return d1
+    }
+  } else if(d2) {
+    return d2
+  }
+  return ar[0] - br[0]
+}
+},{"robust-orientation":148}],160:[function(require,module,exports){
+"use strict"
+
+module.exports = createSlabDecomposition
+
+var bounds = require("binary-search-bounds")
+var createRBTree = require("functional-red-black-tree")
+var orient = require("robust-orientation")
+var orderSegments = require("./lib/order-segments")
+
+function SlabDecomposition(slabs, coordinates, horizontal) {
+  this.slabs = slabs
+  this.coordinates = coordinates
+  this.horizontal = horizontal
+}
+
+var proto = SlabDecomposition.prototype
+
+function compareHorizontal(e, y) {
+  return e.y - y
+}
+
+function searchBucket(root, p) {
+  var lastNode = null
+  while(root) {
+    var seg = root.key
+    var l, r
+    if(seg[0][0] < seg[1][0]) {
+      l = seg[0]
+      r = seg[1]
+    } else {
+      l = seg[1]
+      r = seg[0]
+    }
+    var o = orient(l, r, p)
+    if(o < 0) {
+      root = root.left
+    } else if(o > 0) {
+      if(p[0] !== seg[1][0]) {
+        lastNode = root
+        root = root.right
+      } else {
+        var val = searchBucket(root.right, p)
+        if(val) {
+          return val
+        }
+        root = root.left
+      }
+    } else {
+      if(p[0] !== seg[1][0]) {
+        return root
+      } else {
+        var val = searchBucket(root.right, p)
+        if(val) {
+          return val
+        }
+        root = root.left
+      }
+    }
+  }
+  return lastNode
+}
+
+proto.castUp = function(p) {
+  var bucket = bounds.le(this.coordinates, p[0])
+  if(bucket < 0) {
+    return -1
+  }
+  var root = this.slabs[bucket]
+  var hitNode = searchBucket(this.slabs[bucket], p)
+  var lastHit = -1
+  if(hitNode) {
+    lastHit = hitNode.value
+  }
+  //Edge case: need to handle horizontal segments (sucks)
+  if(this.coordinates[bucket] === p[0]) {
+    var lastSegment = null
+    if(hitNode) {
+      lastSegment = hitNode.key
+    }
+    if(bucket > 0) {
+      var otherHitNode = searchBucket(this.slabs[bucket-1], p)
+      if(otherHitNode) {
+        if(lastSegment) {
+          if(orderSegments(otherHitNode.key, lastSegment) > 0) {
+            lastSegment = otherHitNode.key
+            lastHit = otherHitNode.value
+          }
+        } else {
+          lastHit = otherHitNode.value
+          lastSegment = otherHitNode.key
+        }
+      }
+    }
+    var horiz = this.horizontal[bucket]
+    if(horiz.length > 0) {
+      var hbucket = bounds.ge(horiz, p[1], compareHorizontal)
+      if(hbucket < horiz.length) {
+        var e = horiz[hbucket]
+        if(p[1] === e.y) {
+          if(e.closed) {
+            return e.index
+          } else {
+            while(hbucket < horiz.length-1 && horiz[hbucket+1].y === p[1]) {
+              hbucket = hbucket+1
+              e = horiz[hbucket]
+              if(e.closed) {
+                return e.index
+              }
+            }
+            if(e.y === p[1] && !e.start) {
+              hbucket = hbucket+1
+              if(hbucket >= horiz.length) {
+                return lastHit
+              }
+              e = horiz[hbucket]
+            }
+          }
+        }
+        //Check if e is above/below last segment
+        if(e.start) {
+          if(lastSegment) {
+            var o = orient(lastSegment[0], lastSegment[1], [p[0], e.y])
+            if(lastSegment[0][0] > lastSegment[1][0]) {
+              o = -o
+            }
+            if(o > 0) {
+              lastHit = e.index
+            }
+          } else {
+            lastHit = e.index
+          }
+        } else if(e.y !== p[1]) {
+          lastHit = e.index
+        }
+      }
+    }
+  }
+  return lastHit
+}
+
+function IntervalSegment(y, index, start, closed) {
+  this.y = y
+  this.index = index
+  this.start = start
+  this.closed = closed
+}
+
+function Event(x, segment, create, index) {
+  this.x = x
+  this.segment = segment
+  this.create = create
+  this.index = index
+}
+
+
+function createSlabDecomposition(segments) {
+  var numSegments = segments.length
+  var numEvents = 2 * numSegments
+  var events = new Array(numEvents)
+  for(var i=0; i<numSegments; ++i) {
+    var s = segments[i]
+    var f = s[0][0] < s[1][0]
+    events[2*i] = new Event(s[0][0], s, f, i)
+    events[2*i+1] = new Event(s[1][0], s, !f, i)
+  }
+  events.sort(function(a,b) {
+    var d = a.x - b.x
+    if(d) {
+      return d
+    }
+    d = a.create - b.create
+    if(d) {
+      return d
+    }
+    return Math.min(a.segment[0][1], a.segment[1][1]) - Math.min(b.segment[0][1], b.segment[1][1])
+  })
+  var tree = createRBTree(orderSegments)
+  var slabs = []
+  var lines = []
+  var horizontal = []
+  var lastX = -Infinity
+  for(var i=0; i<numEvents; ) {
+    var x = events[i].x
+    var horiz = []
+    while(i < numEvents) {
+      var e = events[i]
+      if(e.x !== x) {
+        break
+      }
+      i += 1
+      if(e.segment[0][0] === e.x && e.segment[1][0] === e.x) {
+        if(e.create) {
+          if(e.segment[0][1] < e.segment[1][1]) {
+            horiz.push(new IntervalSegment(
+                e.segment[0][1],
+                e.index,
+                true,
+                true))
+            horiz.push(new IntervalSegment(
+                e.segment[1][1],
+                e.index,
+                false,
+                false))
+          } else {
+            horiz.push(new IntervalSegment(
+                e.segment[1][1],
+                e.index,
+                true,
+                false))
+            horiz.push(new IntervalSegment(
+                e.segment[0][1],
+                e.index,
+                false,
+                true))
+          }
+        }
+      } else {
+        if(e.create) {
+          tree = tree.insert(e.segment, e.index)
+        } else {
+          tree = tree.remove(e.segment)
+        }
+      }
+    }
+    slabs.push(tree.root)
+    lines.push(x)
+    horizontal.push(horiz)
+  }
+  return new SlabDecomposition(slabs, lines, horizontal)
+}
+},{"./lib/order-segments":159,"binary-search-bounds":29,"functional-red-black-tree":62,"robust-orientation":148}],161:[function(require,module,exports){
+(function(window) {
+    var re = {
+        not_string: /[^s]/,
+        number: /[diefg]/,
+        json: /[j]/,
+        not_json: /[^j]/,
+        text: /^[^\x25]+/,
+        modulo: /^\x25{2}/,
+        placeholder: /^\x25(?:([1-9]\d*)\$|\(([^\)]+)\))?(\+)?(0|'[^$])?(-)?(\d+)?(?:\.(\d+))?([b-gijosuxX])/,
+        key: /^([a-z_][a-z_\d]*)/i,
+        key_access: /^\.([a-z_][a-z_\d]*)/i,
+        index_access: /^\[(\d+)\]/,
+        sign: /^[\+\-]/
+    }
+
+    function sprintf() {
+        var key = arguments[0], cache = sprintf.cache
+        if (!(cache[key] && cache.hasOwnProperty(key))) {
+            cache[key] = sprintf.parse(key)
+        }
+        return sprintf.format.call(null, cache[key], arguments)
+    }
+
+    sprintf.format = function(parse_tree, argv) {
+        var cursor = 1, tree_length = parse_tree.length, node_type = "", arg, output = [], i, k, match, pad, pad_character, pad_length, is_positive = true, sign = ""
+        for (i = 0; i < tree_length; i++) {
+            node_type = get_type(parse_tree[i])
+            if (node_type === "string") {
+                output[output.length] = parse_tree[i]
+            }
+            else if (node_type === "array") {
+                match = parse_tree[i] // convenience purposes only
+                if (match[2]) { // keyword argument
+                    arg = argv[cursor]
+                    for (k = 0; k < match[2].length; k++) {
+                        if (!arg.hasOwnProperty(match[2][k])) {
+                            throw new Error(sprintf("[sprintf] property '%s' does not exist", match[2][k]))
+                        }
+                        arg = arg[match[2][k]]
+                    }
+                }
+                else if (match[1]) { // positional argument (explicit)
+                    arg = argv[match[1]]
+                }
+                else { // positional argument (implicit)
+                    arg = argv[cursor++]
+                }
+
+                if (get_type(arg) == "function") {
+                    arg = arg()
+                }
+
+                if (re.not_string.test(match[8]) && re.not_json.test(match[8]) && (get_type(arg) != "number" && isNaN(arg))) {
+                    throw new TypeError(sprintf("[sprintf] expecting number but found %s", get_type(arg)))
+                }
+
+                if (re.number.test(match[8])) {
+                    is_positive = arg >= 0
+                }
+
+                switch (match[8]) {
+                    case "b":
+                        arg = arg.toString(2)
+                    break
+                    case "c":
+                        arg = String.fromCharCode(arg)
+                    break
+                    case "d":
+                    case "i":
+                        arg = parseInt(arg, 10)
+                    break
+                    case "j":
+                        arg = JSON.stringify(arg, null, match[6] ? parseInt(match[6]) : 0)
+                    break
+                    case "e":
+                        arg = match[7] ? arg.toExponential(match[7]) : arg.toExponential()
+                    break
+                    case "f":
+                        arg = match[7] ? parseFloat(arg).toFixed(match[7]) : parseFloat(arg)
+                    break
+                    case "g":
+                        arg = match[7] ? parseFloat(arg).toPrecision(match[7]) : parseFloat(arg)
+                    break
+                    case "o":
+                        arg = arg.toString(8)
+                    break
+                    case "s":
+                        arg = ((arg = String(arg)) && match[7] ? arg.substring(0, match[7]) : arg)
+                    break
+                    case "u":
+                        arg = arg >>> 0
+                    break
+                    case "x":
+                        arg = arg.toString(16)
+                    break
+                    case "X":
+                        arg = arg.toString(16).toUpperCase()
+                    break
+                }
+                if (re.json.test(match[8])) {
+                    output[output.length] = arg
+                }
+                else {
+                    if (re.number.test(match[8]) && (!is_positive || match[3])) {
+                        sign = is_positive ? "+" : "-"
+                        arg = arg.toString().replace(re.sign, "")
+                    }
+                    else {
+                        sign = ""
+                    }
+                    pad_character = match[4] ? match[4] === "0" ? "0" : match[4].charAt(1) : " "
+                    pad_length = match[6] - (sign + arg).length
+                    pad = match[6] ? (pad_length > 0 ? str_repeat(pad_character, pad_length) : "") : ""
+                    output[output.length] = match[5] ? sign + arg + pad : (pad_character === "0" ? sign + pad + arg : pad + sign + arg)
+                }
+            }
+        }
+        return output.join("")
+    }
+
+    sprintf.cache = {}
+
+    sprintf.parse = function(fmt) {
+        var _fmt = fmt, match = [], parse_tree = [], arg_names = 0
+        while (_fmt) {
+            if ((match = re.text.exec(_fmt)) !== null) {
+                parse_tree[parse_tree.length] = match[0]
+            }
+            else if ((match = re.modulo.exec(_fmt)) !== null) {
+                parse_tree[parse_tree.length] = "%"
+            }
+            else if ((match = re.placeholder.exec(_fmt)) !== null) {
+                if (match[2]) {
+                    arg_names |= 1
+                    var field_list = [], replacement_field = match[2], field_match = []
+                    if ((field_match = re.key.exec(replacement_field)) !== null) {
+                        field_list[field_list.length] = field_match[1]
+                        while ((replacement_field = replacement_field.substring(field_match[0].length)) !== "") {
+                            if ((field_match = re.key_access.exec(replacement_field)) !== null) {
+                                field_list[field_list.length] = field_match[1]
+                            }
+                            else if ((field_match = re.index_access.exec(replacement_field)) !== null) {
+                                field_list[field_list.length] = field_match[1]
+                            }
+                            else {
+                                throw new SyntaxError("[sprintf] failed to parse named argument key")
+                            }
+                        }
+                    }
+                    else {
+                        throw new SyntaxError("[sprintf] failed to parse named argument key")
+                    }
+                    match[2] = field_list
+                }
+                else {
+                    arg_names |= 2
+                }
+                if (arg_names === 3) {
+                    throw new Error("[sprintf] mixing positional and named placeholders is not (yet) supported")
+                }
+                parse_tree[parse_tree.length] = match
+            }
+            else {
+                throw new SyntaxError("[sprintf] unexpected placeholder")
+            }
+            _fmt = _fmt.substring(match[0].length)
+        }
+        return parse_tree
+    }
+
+    var vsprintf = function(fmt, argv, _argv) {
+        _argv = (argv || []).slice(0)
+        _argv.splice(0, 0, fmt)
+        return sprintf.apply(null, _argv)
+    }
+
+    /**
+     * helpers
+     */
+    function get_type(variable) {
+        return Object.prototype.toString.call(variable).slice(8, -1).toLowerCase()
+    }
+
+    function str_repeat(input, multiplier) {
+        return Array(multiplier + 1).join(input)
+    }
+
+    /**
+     * export to either browser or node.js
+     */
+    if (typeof exports !== "undefined") {
+        exports.sprintf = sprintf
+        exports.vsprintf = vsprintf
+    }
+    else {
+        window.sprintf = sprintf
+        window.vsprintf = vsprintf
+
+        if (typeof define === "function" && define.amd) {
+            define(function() {
+                return {
+                    sprintf: sprintf,
+                    vsprintf: vsprintf
+                }
+            })
+        }
+    }
+})(typeof window === "undefined" ? this : window);
+
+},{}],162:[function(require,module,exports){
 'use strict'
 
 module.exports = toSuperScript
@@ -30669,742 +33647,7 @@ function toSuperScript(x) {
   }).join('')
 }
 
-},{}],167:[function(require,module,exports){
-"use strict"
-
-var pool = require("typedarray-pool")
-
-module.exports = createSurfaceExtractor
-
-//Helper macros
-function array(i) {
-  return "a" + i
-}
-function data(i) {
-  return "d" + i
-}
-function cube(i,bitmask) {
-  return "c" + i + "_" + bitmask
-}
-function shape(i) {
-  return "s" + i
-}
-function stride(i,j) {
-  return "t" + i + "_" + j
-}
-function offset(i) {
-  return "o" + i
-}
-function scalar(i) {
-  return "x" + i
-}
-function pointer(i) {
-  return "p" + i
-}
-function delta(i,bitmask) {
-  return "d" + i + "_" + bitmask
-}
-function index(i) {
-  return "i" + i
-}
-function step(i,j) {
-  return "u" + i + "_" + j
-}
-function pcube(bitmask) {
-  return "b" + bitmask
-}
-function qcube(bitmask) {
-  return "y" + bitmask
-}
-function pdelta(bitmask) {
-  return "e" + bitmask
-}
-function vert(i) {
-  return "v" + i
-}
-var VERTEX_IDS = "V"
-var PHASES = "P"
-var VERTEX_COUNT = "N"
-var POOL_SIZE = "Q"
-var POINTER = "X"
-var TEMPORARY = "T"
-
-function permBitmask(dimension, mask, order) {
-  var r = 0
-  for(var i=0; i<dimension; ++i) {
-    if(mask & (1<<i)) {
-      r |= (1<<order[i])
-    }
-  }
-  return r
-}
-
-//Generates the surface procedure
-function compileSurfaceProcedure(vertexFunc, faceFunc, phaseFunc, scalarArgs, order, typesig) {
-  var arrayArgs = typesig.length
-  var dimension = order.length
-
-  if(dimension < 2) {
-    throw new Error("ndarray-extract-contour: Dimension must be at least 2")
-  }
-
-  var funcName = "extractContour" + order.join("_")
-  var code = []
-  var vars = []
-  var args = []
-
-  //Assemble arguments
-  for(var i=0; i<arrayArgs; ++i) {
-    args.push(array(i))  
-  }
-  for(var i=0; i<scalarArgs; ++i) {
-    args.push(scalar(i))
-  }
-
-  //Shape
-  for(var i=0; i<dimension; ++i) {
-    vars.push(shape(i) + "=" + array(0) + ".shape[" + i + "]|0")
-  }
-  //Data, stride, offset pointers
-  for(var i=0; i<arrayArgs; ++i) {
-    vars.push(data(i) + "=" + array(i) + ".data",
-              offset(i) + "=" + array(i) + ".offset|0")
-    for(var j=0; j<dimension; ++j) {
-      vars.push(stride(i,j) + "=" + array(i) + ".stride[" + j + "]|0")
-    }
-  }
-  //Pointer, delta and cube variables
-  for(var i=0; i<arrayArgs; ++i) {
-    vars.push(pointer(i) + "=" + offset(i))
-    vars.push(cube(i,0))
-    for(var j=1; j<(1<<dimension); ++j) {
-      var ptrStr = []
-      for(var k=0; k<dimension; ++k) {
-        if(j & (1<<k)) {
-          ptrStr.push("-" + stride(i,k))
-        }
-      }
-      vars.push(delta(i,j) + "=(" + ptrStr.join("") + ")|0")
-      vars.push(cube(i,j) + "=0")
-    }
-  }
-  //Create step variables
-  for(var i=0; i<arrayArgs; ++i) {
-    for(var j=0; j<dimension; ++j) {
-      var stepVal = [ stride(i,order[j]) ]
-      if(j > 0) {
-        stepVal.push(stride(i, order[j-1]) + "*" + shape(order[j-1]) )
-      }
-      vars.push(step(i,order[j]) + "=(" + stepVal.join("-") + ")|0")
-    }
-  }
-  //Create index variables
-  for(var i=0; i<dimension; ++i) {
-    vars.push(index(i) + "=0")
-  }
-  //Vertex count
-  vars.push(VERTEX_COUNT + "=0")
-  //Compute pool size, initialize pool step
-  var sizeVariable = ["2"]
-  for(var i=dimension-2; i>=0; --i) {
-    sizeVariable.push(shape(order[i]))
-  }
-  //Previous phases and vertex_ids
-  vars.push(POOL_SIZE + "=(" + sizeVariable.join("*") + ")|0",
-            PHASES + "=mallocUint32(" + POOL_SIZE + ")",
-            VERTEX_IDS + "=mallocUint32(" + POOL_SIZE + ")",
-            POINTER + "=0")
-  //Create cube variables for phases
-  vars.push(pcube(0) + "=0")
-  for(var j=1; j<(1<<dimension); ++j) {
-    var cubeDelta = []
-    var cubeStep = [ ]
-    for(var k=0; k<dimension; ++k) {
-      if(j & (1<<k)) {
-        if(cubeStep.length === 0) {
-          cubeDelta.push("1")
-        } else {
-          cubeDelta.unshift(cubeStep.join("*"))
-        }
-      }
-      cubeStep.push(shape(order[k]))
-    }
-    var signFlag = ""
-    if(cubeDelta[0].indexOf(shape(order[dimension-2])) < 0) {
-      signFlag = "-"
-    }
-    var jperm = permBitmask(dimension, j, order)
-    vars.push(pdelta(jperm) + "=(-" + cubeDelta.join("-") + ")|0",
-              qcube(jperm) + "=(" + signFlag + cubeDelta.join("-") + ")|0",
-              pcube(jperm) + "=0")
-  }
-  vars.push(vert(0) + "=0", TEMPORARY + "=0")
-
-  function forLoopBegin(i, start) {
-    code.push("for(", index(order[i]), "=", start, ";",
-      index(order[i]), "<", shape(order[i]), ";",
-      "++", index(order[i]), "){")
-  }
-
-  function forLoopEnd(i) {
-    for(var j=0; j<arrayArgs; ++j) {
-      code.push(pointer(j), "+=", step(j,order[i]), ";")
-    }
-    code.push("}")
-  }
-
-  function fillEmptySlice(k) {
-    for(var i=k-1; i>=0; --i) {
-      forLoopBegin(i, 0) 
-    }
-    var phaseFuncArgs = []
-    for(var i=0; i<arrayArgs; ++i) {
-      if(typesig[i]) {
-        phaseFuncArgs.push(data(i) + ".get(" + pointer(i) + ")")
-      } else {
-        phaseFuncArgs.push(data(i) + "[" + pointer(i) + "]")
-      }
-    }
-    for(var i=0; i<scalarArgs; ++i) {
-      phaseFuncArgs.push(scalar(i))
-    }
-    code.push(PHASES, "[", POINTER, "++]=phase(", phaseFuncArgs.join(), ");")
-    for(var i=0; i<k; ++i) {
-      forLoopEnd(i)
-    }
-    for(var j=0; j<arrayArgs; ++j) {
-      code.push(pointer(j), "+=", step(j,order[k]), ";")
-    }
-  }
-
-  function processGridCell(mask) {
-    //Read in local data
-    for(var i=0; i<arrayArgs; ++i) {
-      if(typesig[i]) {
-        code.push(cube(i,0), "=", data(i), ".get(", pointer(i), ");")
-      } else {
-        code.push(cube(i,0), "=", data(i), "[", pointer(i), "];")
-      }
-    }
-
-    //Read in phase
-    var phaseFuncArgs = []
-    for(var i=0; i<arrayArgs; ++i) {
-      phaseFuncArgs.push(cube(i,0))
-    }
-    for(var i=0; i<scalarArgs; ++i) {
-      phaseFuncArgs.push(scalar(i))
-    }
-    
-    code.push(pcube(0), "=", PHASES, "[", POINTER, "]=phase(", phaseFuncArgs.join(), ");")
-    
-    //Read in other cube data
-    for(var j=1; j<(1<<dimension); ++j) {
-      code.push(pcube(j), "=", PHASES, "[", POINTER, "+", pdelta(j), "];")
-    }
-
-    //Check for boundary crossing
-    var vertexPredicate = []
-    for(var j=1; j<(1<<dimension); ++j) {
-      vertexPredicate.push("(" + pcube(0) + "!==" + pcube(j) + ")")
-    }
-    code.push("if(", vertexPredicate.join("||"), "){")
-
-    //Read in boundary data
-    var vertexArgs = []
-    for(var i=0; i<dimension; ++i) {
-      vertexArgs.push(index(i))
-    }
-    for(var i=0; i<arrayArgs; ++i) {
-      vertexArgs.push(cube(i,0))
-      for(var j=1; j<(1<<dimension); ++j) {
-        if(typesig[i]) {
-          code.push(cube(i,j), "=", data(i), ".get(", pointer(i), "+", delta(i,j), ");")
-        } else {
-          code.push(cube(i,j), "=", data(i), "[", pointer(i), "+", delta(i,j), "];")
-        }
-        vertexArgs.push(cube(i,j))
-      }
-    }
-    for(var i=0; i<(1<<dimension); ++i) {
-      vertexArgs.push(pcube(i))
-    }
-    for(var i=0; i<scalarArgs; ++i) {
-      vertexArgs.push(scalar(i))
-    }
-
-    //Generate vertex
-    code.push("vertex(", vertexArgs.join(), ");",
-      vert(0), "=", VERTEX_IDS, "[", POINTER, "]=", VERTEX_COUNT, "++;")
-
-    //Check for face crossings
-    var base = (1<<dimension)-1
-    var corner = pcube(base)
-    for(var j=0; j<dimension; ++j) {
-      if((mask & ~(1<<j))===0) {
-        //Check face
-        var subset = base^(1<<j)
-        var edge = pcube(subset)
-        var faceArgs = [ ]
-        for(var k=subset; k>0; k=(k-1)&subset) {
-          faceArgs.push(VERTEX_IDS + "[" + POINTER + "+" + pdelta(k) + "]")
-        }
-        faceArgs.push(vert(0))
-        for(var k=0; k<arrayArgs; ++k) {
-          if(j&1) {
-            faceArgs.push(cube(k,base), cube(k,subset))
-          } else {
-            faceArgs.push(cube(k,subset), cube(k,base))
-          }
-        }
-        if(j&1) {
-          faceArgs.push(corner, edge)
-        } else {
-          faceArgs.push(edge, corner)
-        }
-        for(var k=0; k<scalarArgs; ++k) {
-          faceArgs.push(scalar(k))
-        }
-        code.push("if(", corner, "!==", edge, "){",
-          "face(", faceArgs.join(), ")}")
-      }
-    }
-    
-    //Increment pointer, close off if statement
-    code.push("}",
-      POINTER, "+=1;")
-  }
-
-  function flip() {
-    for(var j=1; j<(1<<dimension); ++j) {
-      code.push(TEMPORARY, "=", pdelta(j), ";",
-                pdelta(j), "=", qcube(j), ";",
-                qcube(j), "=", TEMPORARY, ";")
-    }
-  }
-
-  function createLoop(i, mask) {
-    if(i < 0) {
-      processGridCell(mask)
-      return
-    }
-    fillEmptySlice(i)
-    code.push("if(", shape(order[i]), ">0){",
-      index(order[i]), "=1;")
-    createLoop(i-1, mask|(1<<order[i]))
-
-    for(var j=0; j<arrayArgs; ++j) {
-      code.push(pointer(j), "+=", step(j,order[i]), ";")
-    }
-    if(i === dimension-1) {
-      code.push(POINTER, "=0;")
-      flip()
-    }
-    forLoopBegin(i, 2)
-    createLoop(i-1, mask)
-    if(i === dimension-1) {
-      code.push("if(", index(order[dimension-1]), "&1){",
-        POINTER, "=0;}")
-      flip()
-    }
-    forLoopEnd(i)
-    code.push("}")
-  }
-
-  createLoop(dimension-1, 0)
-
-  //Release scratch memory
-  code.push("freeUint32(", VERTEX_IDS, ");freeUint32(", PHASES, ");")
-
-  //Compile and link procedure
-  var procedureCode = [
-    "'use strict';",
-    "function ", funcName, "(", args.join(), "){",
-      "var ", vars.join(), ";",
-      code.join(""),
-    "}",
-    "return ", funcName ].join("")
-
-  var proc = new Function(
-    "vertex", 
-    "face", 
-    "phase", 
-    "mallocUint32", 
-    "freeUint32",
-    procedureCode)
-  return proc(
-    vertexFunc, 
-    faceFunc, 
-    phaseFunc, 
-    pool.mallocUint32, 
-    pool.freeUint32)
-}
-
-function createSurfaceExtractor(args) {
-  function error(msg) {
-    throw new Error("ndarray-extract-contour: " + msg)
-  }
-  if(typeof args !== "object") {
-    error("Must specify arguments")
-  }
-  var order = args.order
-  if(!Array.isArray(order)) {
-    error("Must specify order")
-  }
-  var arrays = args.arrayArguments||1
-  if(arrays < 1) {
-    error("Must have at least one array argument")
-  }
-  var scalars = args.scalarArguments||0
-  if(scalars < 0) {
-    error("Scalar arg count must be > 0")
-  }
-  if(typeof args.vertex !== "function") {
-    error("Must specify vertex creation function")
-  }
-  if(typeof args.cell !== "function") {
-    error("Must specify cell creation function")
-  }
-  if(typeof args.phase !== "function") {
-    error("Must specify phase function")
-  }
-  var getters = args.getters || []
-  var typesig = new Array(arrays)
-  for(var i=0; i<arrays; ++i) {
-    if(getters.indexOf(i) >= 0) {
-      typesig[i] = true
-    } else {
-      typesig[i] = false
-    }
-  }
-  return compileSurfaceProcedure(
-    args.vertex,
-    args.cell,
-    args.phase,
-    scalars,
-    order,
-    typesig)
-}
-},{"typedarray-pool":180}],168:[function(require,module,exports){
-// transliterated from the python snippet here:
-// http://en.wikipedia.org/wiki/Lanczos_approximation
-
-var g = 7;
-var p = [
-    0.99999999999980993,
-    676.5203681218851,
-    -1259.1392167224028,
-    771.32342877765313,
-    -176.61502916214059,
-    12.507343278686905,
-    -0.13857109526572012,
-    9.9843695780195716e-6,
-    1.5056327351493116e-7
-];
-
-var g_ln = 607/128;
-var p_ln = [
-    0.99999999999999709182,
-    57.156235665862923517,
-    -59.597960355475491248,
-    14.136097974741747174,
-    -0.49191381609762019978,
-    0.33994649984811888699e-4,
-    0.46523628927048575665e-4,
-    -0.98374475304879564677e-4,
-    0.15808870322491248884e-3,
-    -0.21026444172410488319e-3,
-    0.21743961811521264320e-3,
-    -0.16431810653676389022e-3,
-    0.84418223983852743293e-4,
-    -0.26190838401581408670e-4,
-    0.36899182659531622704e-5
-];
-
-// Spouge approximation (suitable for large arguments)
-function lngamma(z) {
-
-    if(z < 0) return Number('0/0');
-    var x = p_ln[0];
-    for(var i = p_ln.length - 1; i > 0; --i) x += p_ln[i] / (z + i);
-    var t = z + g_ln + 0.5;
-    return .5*Math.log(2*Math.PI)+(z+.5)*Math.log(t)-t+Math.log(x)-Math.log(z);
-}
-
-module.exports = function gamma (z) {
-    if (z < 0.5) {
-        return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
-    }
-    else if(z > 100) return Math.exp(lngamma(z));
-    else {
-        z -= 1;
-        var x = p[0];
-        for (var i = 1; i < g + 2; i++) {
-            x += p[i] / (z + i);
-        }
-        var t = z + g + 0.5;
-
-        return Math.sqrt(2 * Math.PI)
-            * Math.pow(t, z + 0.5)
-            * Math.exp(-t)
-            * x
-        ;
-    }
-};
-
-module.exports.log = lngamma;
-
-},{}],169:[function(require,module,exports){
-"use strict"
-
-module.exports = permutationSign
-
-var BRUTE_FORCE_CUTOFF = 32
-
-var pool = require("typedarray-pool")
-
-function permutationSign(p) {
-  var n = p.length
-  if(n < BRUTE_FORCE_CUTOFF) {
-    //Use quadratic algorithm for small n
-    var sgn = 1
-    for(var i=0; i<n; ++i) {
-      for(var j=0; j<i; ++j) {
-        if(p[i] < p[j]) {
-          sgn = -sgn
-        } else if(p[i] === p[j]) {
-          return 0
-        }
-      }
-    }
-    return sgn
-  } else {
-    //Otherwise use linear time algorithm
-    var visited = pool.mallocUint8(n)
-    for(var i=0; i<n; ++i) {
-      visited[i] = 0
-    }
-    var sgn = 1
-    for(var i=0; i<n; ++i) {
-      if(!visited[i]) {
-        var count = 1
-        visited[i] = 1
-        for(var j=p[i]; j!==i; j=p[j]) {
-          if(visited[j]) {
-            pool.freeUint8(visited)
-            return 0
-          }
-          count += 1
-          visited[j] = 1
-        }
-        if(!(count & 1)) {
-          sgn = -sgn
-        }
-      }
-    }
-    pool.freeUint8(visited)
-    return sgn
-  }
-}
-},{"typedarray-pool":180}],170:[function(require,module,exports){
-"use strict"
-
-var pool = require("typedarray-pool")
-var inverse = require("invert-permutation")
-
-function rank(permutation) {
-  var n = permutation.length
-  switch(n) {
-    case 0:
-    case 1:
-      return 0
-    case 2:
-      return permutation[1]
-    default:
-      break
-  }
-  var p = pool.mallocUint32(n)
-  var pinv = pool.mallocUint32(n)
-  var r = 0, s, t, i
-  inverse(permutation, pinv)
-  for(i=0; i<n; ++i) {
-    p[i] = permutation[i]
-  }
-  for(i=n-1; i>0; --i) {
-    t = pinv[i]
-    s = p[i]
-    p[i] = p[t]
-    p[t] = s
-    pinv[i] = pinv[s]
-    pinv[s] = t
-    r = (r + s) * i
-  }
-  pool.freeUint32(pinv)
-  pool.freeUint32(p)
-  return r
-}
-
-function unrank(n, r, p) {
-  switch(n) {
-    case 0:
-      if(p) { return p }
-      return []
-    case 1:
-      if(p) {
-        p[0] = 0
-        return p
-      } else {
-        return [0]
-      }
-    case 2:
-      if(p) {
-        if(r) {
-          p[0] = 0
-          p[1] = 1
-        } else {
-          p[0] = 1
-          p[1] = 0
-        }
-        return p
-      } else {
-        return r ? [0,1] : [1,0]
-      }
-    default:
-      break
-  }
-  p = p || new Array(n)
-  var s, t, i, nf=1
-  p[0] = 0
-  for(i=1; i<n; ++i) {
-    p[i] = i
-    nf = (nf*i)|0
-  }
-  for(i=n-1; i>0; --i) {
-    s = (r / nf)|0
-    r = (r - s * nf)|0
-    nf = (nf / i)|0
-    t = p[i]|0
-    p[i] = p[s]|0
-    p[s] = t|0
-  }
-  return p
-}
-
-exports.rank = rank
-exports.unrank = unrank
-
-},{"invert-permutation":171,"typedarray-pool":180}],171:[function(require,module,exports){
-"use strict"
-
-function invertPermutation(pi, result) {
-  result = result || new Array(pi.length)
-  for(var i=0; i<pi.length; ++i) {
-    result[pi[i]] = i
-  }
-  return result
-}
-
-module.exports = invertPermutation
-},{}],172:[function(require,module,exports){
-"use strict"
-
-module.exports = triangulateCube
-
-var perm = require("permutation-rank")
-var sgn = require("permutation-parity")
-var gamma = require("gamma")
-
-function triangulateCube(dimension) {
-  if(dimension < 0) {
-    return [ ]
-  }
-  if(dimension === 0) {
-    return [ [0] ]
-  }
-  var dfactorial = Math.round(gamma(dimension+1))|0
-  var result = []
-  for(var i=0; i<dfactorial; ++i) {
-    var p = perm.unrank(dimension, i)
-    var cell = [ 0 ]
-    var v = 0
-    for(var j=0; j<p.length; ++j) {
-      v += (1<<p[j])
-      cell.push(v)
-    }
-    if(sgn(p) < 1) {
-      cell[0] = v
-      cell[dimension] = 0
-    }
-    result.push(cell)
-  }
-  return result
-}
-},{"gamma":168,"permutation-parity":169,"permutation-rank":170}],173:[function(require,module,exports){
-module.exports = require('cwise-compiler')({
-    args: ['array', {
-        offset: [1],
-        array: 0
-    }, 'scalar', 'scalar', 'index'],
-    pre: {
-        "body": "{}",
-        "args": [],
-        "thisVars": [],
-        "localVars": []
-    },
-    post: {
-        "body": "{}",
-        "args": [],
-        "thisVars": [],
-        "localVars": []
-    },
-    body: {
-        "body": "{\n        var _inline_1_da = _inline_1_arg0_ - _inline_1_arg3_\n        var _inline_1_db = _inline_1_arg1_ - _inline_1_arg3_\n        if((_inline_1_da >= 0) !== (_inline_1_db >= 0)) {\n          _inline_1_arg2_.push(_inline_1_arg4_[0] + 0.5 + 0.5 * (_inline_1_da + _inline_1_db) / (_inline_1_da - _inline_1_db))\n        }\n      }",
-        "args": [{
-            "name": "_inline_1_arg0_",
-            "lvalue": false,
-            "rvalue": true,
-            "count": 1
-        }, {
-            "name": "_inline_1_arg1_",
-            "lvalue": false,
-            "rvalue": true,
-            "count": 1
-        }, {
-            "name": "_inline_1_arg2_",
-            "lvalue": false,
-            "rvalue": true,
-            "count": 1
-        }, {
-            "name": "_inline_1_arg3_",
-            "lvalue": false,
-            "rvalue": true,
-            "count": 2
-        }, {
-            "name": "_inline_1_arg4_",
-            "lvalue": false,
-            "rvalue": true,
-            "count": 1
-        }],
-        "thisVars": [],
-        "localVars": ["_inline_1_da", "_inline_1_db"]
-    },
-    funcName: 'zeroCrossings'
-})
-
-},{"cwise-compiler":59}],174:[function(require,module,exports){
-"use strict"
-
-module.exports = findZeroCrossings
-
-var core = require("./lib/zc-core")
-
-function findZeroCrossings(array, level) {
-  var cross = []
-  level = +level || 0.0
-  core(array.hi(array.shape[0]-1), cross, level)
-  return cross
-}
-},{"./lib/zc-core":173}],175:[function(require,module,exports){
+},{}],163:[function(require,module,exports){
 "use strict"
 
 module.exports = surfaceNets
@@ -31612,7 +33855,7 @@ function surfaceNets(array,level) {
   }
   return proc(array,level)
 }
-},{"ndarray-extract-contour":167,"triangulate-hypercube":172,"zero-crossings":174}],176:[function(require,module,exports){
+},{"ndarray-extract-contour":129,"triangulate-hypercube":167,"zero-crossings":179}],164:[function(require,module,exports){
 (function (process){
 'use strict'
 
@@ -31701,7 +33944,7 @@ function textGet(font, text) {
 }
 
 }).call(this,require('_process'))
-},{"_process":16,"vectorize-text":182}],177:[function(require,module,exports){
+},{"_process":141,"vectorize-text":173}],165:[function(require,module,exports){
 // TinyColor v1.3.0
 // https://github.com/bgrins/TinyColor
 // Brian Grinstead, MIT License
@@ -32869,7 +35112,102 @@ else {
 
 })();
 
-},{}],178:[function(require,module,exports){
+},{}],166:[function(require,module,exports){
+'use strict'
+
+var parseUnit = require('parse-unit')
+
+module.exports = toPX
+
+var PIXELS_PER_INCH = 96
+
+function getPropertyInPX(element, prop) {
+  var parts = parseUnit(getComputedStyle(element).getPropertyValue(prop))
+  return parts[0] * toPX(parts[1], element)
+}
+
+//This brutal hack is needed
+function getSizeBrutal(unit, element) {
+  var testDIV = document.createElement('div')
+  testDIV.style['font-size'] = '128' + unit
+  element.appendChild(testDIV)
+  var size = getPropertyInPX(testDIV, 'font-size') / 128
+  element.removeChild(testDIV)
+  return size
+}
+
+function toPX(str, element) {
+  element = element || document.body
+  str = (str || 'px').trim().toLowerCase()
+  if(element === window || element === document) {
+    element = document.body 
+  }
+  switch(str) {
+    case '%':  //Ambiguous, not sure if we should use width or height
+      return element.clientHeight / 100.0
+    case 'ch':
+    case 'ex':
+      return getSizeBrutal(str, element)
+    case 'em':
+      return getPropertyInPX(element, 'font-size')
+    case 'rem':
+      return getPropertyInPX(document.body, 'font-size')
+    case 'vw':
+      return window.innerWidth/100
+    case 'vh':
+      return window.innerHeight/100
+    case 'vmin':
+      return Math.min(window.innerWidth, window.innerHeight) / 100
+    case 'vmax':
+      return Math.max(window.innerWidth, window.innerHeight) / 100
+    case 'in':
+      return PIXELS_PER_INCH
+    case 'cm':
+      return PIXELS_PER_INCH / 2.54
+    case 'mm':
+      return PIXELS_PER_INCH / 25.4
+    case 'pt':
+      return PIXELS_PER_INCH / 72
+    case 'pc':
+      return PIXELS_PER_INCH / 6
+  }
+  return 1
+}
+},{"parse-unit":134}],167:[function(require,module,exports){
+"use strict"
+
+module.exports = triangulateCube
+
+var perm = require("permutation-rank")
+var sgn = require("permutation-parity")
+var gamma = require("gamma")
+
+function triangulateCube(dimension) {
+  if(dimension < 0) {
+    return [ ]
+  }
+  if(dimension === 0) {
+    return [ [0] ]
+  }
+  var dfactorial = Math.round(gamma(dimension+1))|0
+  var result = []
+  for(var i=0; i<dfactorial; ++i) {
+    var p = perm.unrank(dimension, i)
+    var cell = [ 0 ]
+    var v = 0
+    for(var j=0; j<p.length; ++j) {
+      v += (1<<p[j])
+      cell.push(v)
+    }
+    if(sgn(p) < 1) {
+      cell[0] = v
+      cell[dimension] = 0
+    }
+    result.push(cell)
+  }
+  return result
+}
+},{"gamma":63,"permutation-parity":135,"permutation-rank":136}],168:[function(require,module,exports){
 "use strict"
 
 module.exports = twoProduct
@@ -32903,7 +35241,7 @@ function twoProduct(a, b, result) {
 
   return [ y, x ]
 }
-},{}],179:[function(require,module,exports){
+},{}],169:[function(require,module,exports){
 "use strict"
 
 module.exports = fastTwoSum
@@ -32921,7 +35259,7 @@ function fastTwoSum(a, b, result) {
 	}
 	return [ar+br, x]
 }
-},{}],180:[function(require,module,exports){
+},{}],170:[function(require,module,exports){
 (function (global,Buffer){
 'use strict'
 
@@ -33138,7 +35476,70 @@ exports.clearCache = function clearCache() {
   }
 }
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"bit-twiddle":10,"buffer":11,"dup":64}],181:[function(require,module,exports){
+},{"bit-twiddle":30,"buffer":39,"dup":57}],171:[function(require,module,exports){
+"use strict"; "use restrict";
+
+module.exports = UnionFind;
+
+function UnionFind(count) {
+  this.roots = new Array(count);
+  this.ranks = new Array(count);
+  
+  for(var i=0; i<count; ++i) {
+    this.roots[i] = i;
+    this.ranks[i] = 0;
+  }
+}
+
+var proto = UnionFind.prototype
+
+Object.defineProperty(proto, "length", {
+  "get": function() {
+    return this.roots.length
+  }
+})
+
+proto.makeSet = function() {
+  var n = this.roots.length;
+  this.roots.push(n);
+  this.ranks.push(0);
+  return n;
+}
+
+proto.find = function(x) {
+  var x0 = x
+  var roots = this.roots;
+  while(roots[x] !== x) {
+    x = roots[x]
+  }
+  while(roots[x0] !== x) {
+    var y = roots[x0]
+    roots[x0] = x
+    x0 = y
+  }
+  return x;
+}
+
+proto.link = function(x, y) {
+  var xr = this.find(x)
+    , yr = this.find(y);
+  if(xr === yr) {
+    return;
+  }
+  var ranks = this.ranks
+    , roots = this.roots
+    , xd    = ranks[xr]
+    , yd    = ranks[yr];
+  if(xd < yd) {
+    roots[xr] = yr;
+  } else if(yd < xd) {
+    roots[yr] = xr;
+  } else {
+    roots[yr] = xr;
+    ++ranks[xr];
+  }
+}
+},{}],172:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -33197,7 +35598,7 @@ function unique(list, compare, sorted) {
 
 module.exports = unique
 
-},{}],182:[function(require,module,exports){
+},{}],173:[function(require,module,exports){
 "use strict"
 
 module.exports = createText
@@ -33224,7 +35625,7 @@ function createText(str, options) {
     options)
 }
 
-},{"./lib/vtext":183}],183:[function(require,module,exports){
+},{"./lib/vtext":174}],174:[function(require,module,exports){
 "use strict"
 
 module.exports = vectorizeText
@@ -33430,3137 +35831,141 @@ function vectorizeText(str, canvas, context, options) {
   return processPixels(pixels, options, size)
 }
 
-},{"cdt2d":17,"clean-pslg":24,"ndarray":160,"planar-graph-to-polyline":196,"simplify-planar-graph":200,"surface-nets":175}],184:[function(require,module,exports){
-'use strict'
+},{"cdt2d":41,"clean-pslg":47,"ndarray":131,"planar-graph-to-polyline":139,"simplify-planar-graph":158,"surface-nets":163}],175:[function(require,module,exports){
+var hiddenStore = require('./hidden-store.js');
 
-module.exports = trimLeaves
+module.exports = createStore;
 
-var e2a = require('edges-to-adjacency-list')
+function createStore() {
+    var key = {};
 
-function trimLeaves(edges, positions) {
-  var adj = e2a(edges, positions.length)
-  var live = new Array(positions.length)
-  var nbhd = new Array(positions.length)
+    return function (obj) {
+        if ((typeof obj !== 'object' || obj === null) &&
+            typeof obj !== 'function'
+        ) {
+            throw new Error('Weakmap-shim: Key must be object')
+        }
 
-  var dead = []
-  for(var i=0; i<positions.length; ++i) {
-    var count = adj[i].length
-    nbhd[i] = count
-    live[i] = true
-    if(count <= 1) {
-      dead.push(i)
-    }
-  }
-
-  while(dead.length > 0) {
-    var v = dead.pop()
-    live[v] = false
-    var n = adj[v]
-    for(var i=0; i<n.length; ++i) {
-      var u = n[i]
-      if(--nbhd[u] === 0) {
-        dead.push(u)
-      }
-    }
-  }
-
-  var newIndex = new Array(positions.length)
-  var npositions = []
-  for(var i=0; i<positions.length; ++i) {
-    if(live[i]) {
-      var v = npositions.length
-      newIndex[i] = v
-      npositions.push(positions[i])
-    } else {
-      newIndex[i] = -1
-    }
-  }
-
-  var nedges = []
-  for(var i=0; i<edges.length; ++i) {
-    var e = edges[i]
-    if(live[e[0]] && live[e[1]]) {
-      nedges.push([ newIndex[e[0]], newIndex[e[1]] ])
-    }
-  }
-  
-  return [ nedges, npositions ]
+        var store = obj.valueOf(key);
+        return store && store.identity === key ?
+            store : hiddenStore(obj, key);
+    };
 }
-},{"edges-to-adjacency-list":185}],185:[function(require,module,exports){
+
+},{"./hidden-store.js":176}],176:[function(require,module,exports){
+module.exports = hiddenStore;
+
+function hiddenStore(obj, key) {
+    var store = { identity: key };
+    var valueOf = obj.valueOf;
+
+    Object.defineProperty(obj, "valueOf", {
+        value: function (value) {
+            return value !== key ?
+                valueOf.apply(this, arguments) : store;
+        },
+        writable: true
+    });
+
+    return store;
+}
+
+},{}],177:[function(require,module,exports){
+// Original - @Gozola. 
+// https://gist.github.com/Gozala/1269991
+// This is a reimplemented version (with a few bug fixes).
+
+var createStore = require('./create-store.js');
+
+module.exports = weakMap;
+
+function weakMap() {
+    var privates = createStore();
+
+    return {
+        'get': function (key, fallback) {
+            var store = privates(key)
+            return store.hasOwnProperty('value') ?
+                store.value : fallback
+        },
+        'set': function (key, value) {
+            privates(key).value = value;
+        },
+        'has': function(key) {
+            return 'value' in privates(key);
+        },
+        'delete': function (key) {
+            return delete privates(key).value;
+        }
+    }
+}
+
+},{"./create-store.js":175}],178:[function(require,module,exports){
+module.exports = require('cwise-compiler')({
+    args: ['array', {
+        offset: [1],
+        array: 0
+    }, 'scalar', 'scalar', 'index'],
+    pre: {
+        "body": "{}",
+        "args": [],
+        "thisVars": [],
+        "localVars": []
+    },
+    post: {
+        "body": "{}",
+        "args": [],
+        "thisVars": [],
+        "localVars": []
+    },
+    body: {
+        "body": "{\n        var _inline_1_da = _inline_1_arg0_ - _inline_1_arg3_\n        var _inline_1_db = _inline_1_arg1_ - _inline_1_arg3_\n        if((_inline_1_da >= 0) !== (_inline_1_db >= 0)) {\n          _inline_1_arg2_.push(_inline_1_arg4_[0] + 0.5 + 0.5 * (_inline_1_da + _inline_1_db) / (_inline_1_da - _inline_1_db))\n        }\n      }",
+        "args": [{
+            "name": "_inline_1_arg0_",
+            "lvalue": false,
+            "rvalue": true,
+            "count": 1
+        }, {
+            "name": "_inline_1_arg1_",
+            "lvalue": false,
+            "rvalue": true,
+            "count": 1
+        }, {
+            "name": "_inline_1_arg2_",
+            "lvalue": false,
+            "rvalue": true,
+            "count": 1
+        }, {
+            "name": "_inline_1_arg3_",
+            "lvalue": false,
+            "rvalue": true,
+            "count": 2
+        }, {
+            "name": "_inline_1_arg4_",
+            "lvalue": false,
+            "rvalue": true,
+            "count": 1
+        }],
+        "thisVars": [],
+        "localVars": ["_inline_1_da", "_inline_1_db"]
+    },
+    funcName: 'zeroCrossings'
+})
+
+},{"cwise-compiler":51}],179:[function(require,module,exports){
 "use strict"
 
-module.exports = edgeToAdjacency
+module.exports = findZeroCrossings
 
-var uniq = require("uniq")
+var core = require("./lib/zc-core")
 
-function edgeToAdjacency(edges, numVertices) {
-  var numEdges = edges.length
-  if(typeof numVertices !== "number") {
-    numVertices = 0
-    for(var i=0; i<numEdges; ++i) {
-      var e = edges[i]
-      numVertices = Math.max(numVertices, e[0], e[1])
-    }
-    numVertices = (numVertices|0) + 1
-  }
-  numVertices = numVertices|0
-  var adj = new Array(numVertices)
-  for(var i=0; i<numVertices; ++i) {
-    adj[i] = []
-  }
-  for(var i=0; i<numEdges; ++i) {
-    var e = edges[i]
-    adj[e[0]].push(e[1])
-    adj[e[1]].push(e[0])
-  }
-  for(var j=0; j<numVertices; ++j) {
-    uniq(adj[j], function(a, b) {
-      return a - b
-    })
-  }
-  return adj
+function findZeroCrossings(array, level) {
+  var cross = []
+  level = +level || 0.0
+  core(array.hi(array.shape[0]-1), cross, level)
+  return cross
 }
-},{"uniq":181}],186:[function(require,module,exports){
-"use strict"
-
-module.exports = planarDual
-
-var compareAngle = require("compare-angle")
-
-function planarDual(cells, positions) {
-
-  var numVertices = positions.length|0
-  var numEdges = cells.length
-  var adj = [new Array(numVertices), new Array(numVertices)]
-  for(var i=0; i<numVertices; ++i) {
-    adj[0][i] = []
-    adj[1][i] = []
-  }
-  for(var i=0; i<numEdges; ++i) {
-    var c = cells[i]
-    adj[0][c[0]].push(c)
-    adj[1][c[1]].push(c)
-  }
-
-  var cycles = []
-
-  //Add isolated vertices as trivial case
-  for(var i=0; i<numVertices; ++i) {
-    if(adj[0][i].length + adj[1][i].length === 0) {
-      cycles.push( [i] )
-    }
-  }
-
-  //Remove a half edge
-  function cut(c, i) {
-    var a = adj[i][c[i]]
-    a.splice(a.indexOf(c), 1)
-  }
-
-  //Find next vertex and cut edge
-  function next(a, b, noCut) {
-    var nextCell, nextVertex, nextDir
-    for(var i=0; i<2; ++i) {
-      if(adj[i][b].length > 0) {
-        nextCell = adj[i][b][0]
-        nextDir = i
-        break
-      }
-    }
-    nextVertex = nextCell[nextDir^1]
-
-    for(var dir=0; dir<2; ++dir) {
-      var nbhd = adj[dir][b]
-      for(var k=0; k<nbhd.length; ++k) {
-        var e = nbhd[k]
-        var p = e[dir^1]
-        var cmp = compareAngle(
-            positions[a], 
-            positions[b], 
-            positions[nextVertex],
-            positions[p])
-        if(cmp > 0) {
-          nextCell = e
-          nextVertex = p
-          nextDir = dir
-        }
-      }
-    }
-    if(noCut) {
-      return nextVertex
-    }
-    if(nextCell) {
-      cut(nextCell, nextDir)
-    }
-    return nextVertex
-  }
-
-  function extractCycle(v, dir) {
-    var e0 = adj[dir][v][0]
-    var cycle = [v]
-    cut(e0, dir)
-    var u = e0[dir^1]
-    var d0 = dir
-    while(true) {
-      while(u !== v) {
-        cycle.push(u)
-        u = next(cycle[cycle.length-2], u, false)
-      }
-      if(adj[0][v].length + adj[1][v].length === 0) {
-        break
-      }
-      var a = cycle[cycle.length-1]
-      var b = v
-      var c = cycle[1]
-      var d = next(a, b, true)
-      if(compareAngle(positions[a], positions[b], positions[c], positions[d]) < 0) {
-        break
-      }
-      cycle.push(v)
-      u = next(a, b)
-    }
-    return cycle
-  }
-
-  function shouldGlue(pcycle, ncycle) {
-    return (ncycle[1] === ncycle[ncycle.length-1])
-  }
-
-  for(var i=0; i<numVertices; ++i) {
-    for(var j=0; j<2; ++j) {
-      var pcycle = []
-      while(adj[j][i].length > 0) {
-        var ni = adj[0][i].length
-        var ncycle = extractCycle(i,j)
-        if(shouldGlue(pcycle, ncycle)) {
-          //Glue together trivial cycles
-          pcycle.push.apply(pcycle, ncycle)
-        } else {
-          if(pcycle.length > 0) {
-            cycles.push(pcycle)
-          }
-          pcycle = ncycle
-        }
-      }
-      if(pcycle.length > 0) {
-        cycles.push(pcycle)
-      }
-    }
-  }
-
-  //Combine paths and loops together
-  return cycles
-}
-},{"compare-angle":187}],187:[function(require,module,exports){
-"use strict"
-
-module.exports = compareAngle
-
-var orient = require("robust-orientation")
-var sgn = require("signum")
-var twoSum = require("two-sum")
-var robustProduct = require("robust-product")
-var robustSum = require("robust-sum")
-
-function testInterior(a, b, c) {
-  var x0 = twoSum(a[0], -b[0])
-  var y0 = twoSum(a[1], -b[1])
-  var x1 = twoSum(c[0], -b[0])
-  var y1 = twoSum(c[1], -b[1])
-
-  var d = robustSum(
-    robustProduct(x0, x1),
-    robustProduct(y0, y1))
-
-  return d[d.length-1] >= 0
-}
-
-function compareAngle(a, b, c, d) {
-  var bcd = orient(b, c, d)
-  if(bcd === 0) {
-    //Handle degenerate cases
-    var sabc = sgn(orient(a, b, c))
-    var sabd = sgn(orient(a, b, d))
-    if(sabc === sabd) {
-      if(sabc === 0) {
-        var ic = testInterior(a, b, c)
-        var id = testInterior(a, b, d)
-        if(ic === id) {
-          return 0
-        } else if(ic) {
-          return 1
-        } else {
-          return -1
-        }
-      }
-      return 0
-    } else if(sabd === 0) {
-      if(sabc > 0) {
-        return -1
-      } else if(testInterior(a, b, d)) {
-        return -1
-      } else {
-        return 1
-      }
-    } else if(sabc === 0) {
-      if(sabd > 0) {
-        return 1
-      } else if(testInterior(a, b, c)) {
-        return 1
-      } else {
-        return -1
-      }
-    }
-    return sgn(sabd - sabc)
-  }
-  var abc = orient(a, b, c)
-  if(abc > 0) {
-    if(bcd > 0 && orient(a, b, d) > 0) {
-      return 1
-    }
-    return -1
-  } else if(abc < 0) {
-    if(bcd > 0 || orient(a, b, d) > 0) {
-      return 1
-    }
-    return -1
-  } else {
-    var abd = orient(a, b, d)
-    if(abd > 0) {
-      return 1
-    } else {
-      if(testInterior(a, b, c)) {
-        return 1
-      } else {
-        return -1
-      }
-    }
-  }
-}
-},{"robust-orientation":162,"robust-product":188,"robust-sum":165,"signum":189,"two-sum":179}],188:[function(require,module,exports){
-"use strict"
-
-var robustSum = require("robust-sum")
-var robustScale = require("robust-scale")
-
-module.exports = robustProduct
-
-function robustProduct(a, b) {
-  if(a.length === 1) {
-    return robustScale(b, a[0])
-  }
-  if(b.length === 1) {
-    return robustScale(a, b[0])
-  }
-  if(a.length === 0 || b.length === 0) {
-    return [0]
-  }
-  var r = [0]
-  if(a.length < b.length) {
-    for(var i=0; i<a.length; ++i) {
-      r = robustSum(r, robustScale(b, a[i]))
-    }
-  } else {
-    for(var i=0; i<b.length; ++i) {
-      r = robustSum(r, robustScale(a, b[i]))
-    }    
-  }
-  return r
-}
-},{"robust-scale":163,"robust-sum":165}],189:[function(require,module,exports){
-"use strict"
-
-module.exports = function signum(x) {
-  if(x < 0) { return -1 }
-  if(x > 0) { return 1 }
-  return 0.0
-}
-},{}],190:[function(require,module,exports){
-"use strict"
-
-function compileSearch(funcName, predicate, reversed, extraArgs, useNdarray, earlyOut) {
-  var code = [
-    "function ", funcName, "(a,l,h,", extraArgs.join(","),  "){",
-earlyOut ? "" : "var i=", (reversed ? "l-1" : "h+1"),
-";while(l<=h){\
-var m=(l+h)>>>1,x=a", useNdarray ? ".get(m)" : "[m]"]
-  if(earlyOut) {
-    if(predicate.indexOf("c") < 0) {
-      code.push(";if(x===y){return m}else if(x<=y){")
-    } else {
-      code.push(";var p=c(x,y);if(p===0){return m}else if(p<=0){")
-    }
-  } else {
-    code.push(";if(", predicate, "){i=m;")
-  }
-  if(reversed) {
-    code.push("l=m+1}else{h=m-1}")
-  } else {
-    code.push("h=m-1}else{l=m+1}")
-  }
-  code.push("}")
-  if(earlyOut) {
-    code.push("return -1};")
-  } else {
-    code.push("return i};")
-  }
-  return code.join("")
-}
-
-function compileBoundsSearch(predicate, reversed, suffix, earlyOut) {
-  var result = new Function([
-  compileSearch("A", "x" + predicate + "y", reversed, ["y"], false, earlyOut),
-  compileSearch("B", "x" + predicate + "y", reversed, ["y"], true, earlyOut),
-  compileSearch("P", "c(x,y)" + predicate + "0", reversed, ["y", "c"], false, earlyOut),
-  compileSearch("Q", "c(x,y)" + predicate + "0", reversed, ["y", "c"], true, earlyOut),
-"function dispatchBsearch", suffix, "(a,y,c,l,h){\
-if(a.shape){\
-if(typeof(c)==='function'){\
-return Q(a,(l===undefined)?0:l|0,(h===undefined)?a.shape[0]-1:h|0,y,c)\
-}else{\
-return B(a,(c===undefined)?0:c|0,(l===undefined)?a.shape[0]-1:l|0,y)\
-}}else{\
-if(typeof(c)==='function'){\
-return P(a,(l===undefined)?0:l|0,(h===undefined)?a.length-1:h|0,y,c)\
-}else{\
-return A(a,(c===undefined)?0:c|0,(l===undefined)?a.length-1:l|0,y)\
-}}}\
-return dispatchBsearch", suffix].join(""))
-  return result()
-}
-
-module.exports = {
-  ge: compileBoundsSearch(">=", false, "GE"),
-  gt: compileBoundsSearch(">", false, "GT"),
-  lt: compileBoundsSearch("<", true, "LT"),
-  le: compileBoundsSearch("<=", true, "LE"),
-  eq: compileBoundsSearch("-", true, "EQ", true)
-}
-
-},{}],191:[function(require,module,exports){
-"use strict"
-
-var bounds = require("binary-search-bounds")
-
-var NOT_FOUND = 0
-var SUCCESS = 1
-var EMPTY = 2
-
-module.exports = createWrapper
-
-function IntervalTreeNode(mid, left, right, leftPoints, rightPoints) {
-  this.mid = mid
-  this.left = left
-  this.right = right
-  this.leftPoints = leftPoints
-  this.rightPoints = rightPoints
-  this.count = (left ? left.count : 0) + (right ? right.count : 0) + leftPoints.length
-}
-
-var proto = IntervalTreeNode.prototype
-
-function copy(a, b) {
-  a.mid = b.mid
-  a.left = b.left
-  a.right = b.right
-  a.leftPoints = b.leftPoints
-  a.rightPoints = b.rightPoints
-  a.count = b.count
-}
-
-function rebuild(node, intervals) {
-  var ntree = createIntervalTree(intervals)
-  node.mid = ntree.mid
-  node.left = ntree.left
-  node.right = ntree.right
-  node.leftPoints = ntree.leftPoints
-  node.rightPoints = ntree.rightPoints
-  node.count = ntree.count
-}
-
-function rebuildWithInterval(node, interval) {
-  var intervals = node.intervals([])
-  intervals.push(interval)
-  rebuild(node, intervals)    
-}
-
-function rebuildWithoutInterval(node, interval) {
-  var intervals = node.intervals([])
-  var idx = intervals.indexOf(interval)
-  if(idx < 0) {
-    return NOT_FOUND
-  }
-  intervals.splice(idx, 1)
-  rebuild(node, intervals)
-  return SUCCESS
-}
-
-proto.intervals = function(result) {
-  result.push.apply(result, this.leftPoints)
-  if(this.left) {
-    this.left.intervals(result)
-  }
-  if(this.right) {
-    this.right.intervals(result)
-  }
-  return result
-}
-
-proto.insert = function(interval) {
-  var weight = this.count - this.leftPoints.length
-  this.count += 1
-  if(interval[1] < this.mid) {
-    if(this.left) {
-      if(4*(this.left.count+1) > 3*(weight+1)) {
-        rebuildWithInterval(this, interval)
-      } else {
-        this.left.insert(interval)
-      }
-    } else {
-      this.left = createIntervalTree([interval])
-    }
-  } else if(interval[0] > this.mid) {
-    if(this.right) {
-      if(4*(this.right.count+1) > 3*(weight+1)) {
-        rebuildWithInterval(this, interval)
-      } else {
-        this.right.insert(interval)
-      }
-    } else {
-      this.right = createIntervalTree([interval])
-    }
-  } else {
-    var l = bounds.ge(this.leftPoints, interval, compareBegin)
-    var r = bounds.ge(this.rightPoints, interval, compareEnd)
-    this.leftPoints.splice(l, 0, interval)
-    this.rightPoints.splice(r, 0, interval)
-  }
-}
-
-proto.remove = function(interval) {
-  var weight = this.count - this.leftPoints
-  if(interval[1] < this.mid) {
-    if(!this.left) {
-      return NOT_FOUND
-    }
-    var rw = this.right ? this.right.count : 0
-    if(4 * rw > 3 * (weight-1)) {
-      return rebuildWithoutInterval(this, interval)
-    }
-    var r = this.left.remove(interval)
-    if(r === EMPTY) {
-      this.left = null
-      this.count -= 1
-      return SUCCESS
-    } else if(r === SUCCESS) {
-      this.count -= 1
-    }
-    return r
-  } else if(interval[0] > this.mid) {
-    if(!this.right) {
-      return NOT_FOUND
-    }
-    var lw = this.left ? this.left.count : 0
-    if(4 * lw > 3 * (weight-1)) {
-      return rebuildWithoutInterval(this, interval)
-    }
-    var r = this.right.remove(interval)
-    if(r === EMPTY) {
-      this.right = null
-      this.count -= 1
-      return SUCCESS
-    } else if(r === SUCCESS) {
-      this.count -= 1
-    }
-    return r
-  } else {
-    if(this.count === 1) {
-      if(this.leftPoints[0] === interval) {
-        return EMPTY
-      } else {
-        return NOT_FOUND
-      }
-    }
-    if(this.leftPoints.length === 1 && this.leftPoints[0] === interval) {
-      if(this.left && this.right) {
-        var p = this
-        var n = this.left
-        while(n.right) {
-          p = n
-          n = n.right
-        }
-        if(p === this) {
-          n.right = this.right
-        } else {
-          var l = this.left
-          var r = this.right
-          p.count -= n.count
-          p.right = n.left
-          n.left = l
-          n.right = r
-        }
-        copy(this, n)
-        this.count = (this.left?this.left.count:0) + (this.right?this.right.count:0) + this.leftPoints.length
-      } else if(this.left) {
-        copy(this, this.left)
-      } else {
-        copy(this, this.right)
-      }
-      return SUCCESS
-    }
-    for(var l = bounds.ge(this.leftPoints, interval, compareBegin); l<this.leftPoints.length; ++l) {
-      if(this.leftPoints[l][0] !== interval[0]) {
-        break
-      }
-      if(this.leftPoints[l] === interval) {
-        this.count -= 1
-        this.leftPoints.splice(l, 1)
-        for(var r = bounds.ge(this.rightPoints, interval, compareEnd); r<this.rightPoints.length; ++r) {
-          if(this.rightPoints[r][1] !== interval[1]) {
-            break
-          } else if(this.rightPoints[r] === interval) {
-            this.rightPoints.splice(r, 1)
-            return SUCCESS
-          }
-        }
-      }
-    }
-    return NOT_FOUND
-  }
-}
-
-function reportLeftRange(arr, hi, cb) {
-  for(var i=0; i<arr.length && arr[i][0] <= hi; ++i) {
-    var r = cb(arr[i])
-    if(r) { return r }
-  }
-}
-
-function reportRightRange(arr, lo, cb) {
-  for(var i=arr.length-1; i>=0 && arr[i][1] >= lo; --i) {
-    var r = cb(arr[i])
-    if(r) { return r }
-  }
-}
-
-function reportRange(arr, cb) {
-  for(var i=0; i<arr.length; ++i) {
-    var r = cb(arr[i])
-    if(r) { return r }
-  }
-}
-
-proto.queryPoint = function(x, cb) {
-  if(x < this.mid) {
-    if(this.left) {
-      var r = this.left.queryPoint(x, cb)
-      if(r) { return r }
-    }
-    return reportLeftRange(this.leftPoints, x, cb)
-  } else if(x > this.mid) {
-    if(this.right) {
-      var r = this.right.queryPoint(x, cb)
-      if(r) { return r }
-    }
-    return reportRightRange(this.rightPoints, x, cb)
-  } else {
-    return reportRange(this.leftPoints, cb)
-  }
-}
-
-proto.queryInterval = function(lo, hi, cb) {
-  if(lo < this.mid && this.left) {
-    var r = this.left.queryInterval(lo, hi, cb)
-    if(r) { return r }
-  }
-  if(hi > this.mid && this.right) {
-    var r = this.right.queryInterval(lo, hi, cb)
-    if(r) { return r }
-  }
-  if(hi < this.mid) {
-    return reportLeftRange(this.leftPoints, hi, cb)
-  } else if(lo > this.mid) {
-    return reportRightRange(this.rightPoints, lo, cb)
-  } else {
-    return reportRange(this.leftPoints, cb)
-  }
-}
-
-function compareNumbers(a, b) {
-  return a - b
-}
-
-function compareBegin(a, b) {
-  var d = a[0] - b[0]
-  if(d) { return d }
-  return a[1] - b[1]
-}
-
-function compareEnd(a, b) {
-  var d = a[1] - b[1]
-  if(d) { return d }
-  return a[0] - b[0]
-}
-
-function createIntervalTree(intervals) {
-  if(intervals.length === 0) {
-    return null
-  }
-  var pts = []
-  for(var i=0; i<intervals.length; ++i) {
-    pts.push(intervals[i][0], intervals[i][1])
-  }
-  pts.sort(compareNumbers)
-
-  var mid = pts[pts.length>>1]
-
-  var leftIntervals = []
-  var rightIntervals = []
-  var centerIntervals = []
-  for(var i=0; i<intervals.length; ++i) {
-    var s = intervals[i]
-    if(s[1] < mid) {
-      leftIntervals.push(s)
-    } else if(mid < s[0]) {
-      rightIntervals.push(s)
-    } else {
-      centerIntervals.push(s)
-    }
-  }
-
-  //Split center intervals
-  var leftPoints = centerIntervals
-  var rightPoints = centerIntervals.slice()
-  leftPoints.sort(compareBegin)
-  rightPoints.sort(compareEnd)
-
-  return new IntervalTreeNode(mid, 
-    createIntervalTree(leftIntervals),
-    createIntervalTree(rightIntervals),
-    leftPoints,
-    rightPoints)
-}
-
-//User friendly wrapper that makes it possible to support empty trees
-function IntervalTree(root) {
-  this.root = root
-}
-
-var tproto = IntervalTree.prototype
-
-tproto.insert = function(interval) {
-  if(this.root) {
-    this.root.insert(interval)
-  } else {
-    this.root = new IntervalTreeNode(interval[0], null, null, [interval], [interval])
-  }
-}
-
-tproto.remove = function(interval) {
-  if(this.root) {
-    var r = this.root.remove(interval)
-    if(r === EMPTY) {
-      this.root = null
-    }
-    return r !== NOT_FOUND
-  }
-  return false
-}
-
-tproto.queryPoint = function(p, cb) {
-  if(this.root) {
-    return this.root.queryPoint(p, cb)
-  }
-}
-
-tproto.queryInterval = function(lo, hi, cb) {
-  if(lo <= hi && this.root) {
-    return this.root.queryInterval(lo, hi, cb)
-  }
-}
-
-Object.defineProperty(tproto, "count", {
-  get: function() {
-    if(this.root) {
-      return this.root.count
-    }
-    return 0
-  }
-})
-
-Object.defineProperty(tproto, "intervals", {
-  get: function() {
-    if(this.root) {
-      return this.root.intervals([])
-    }
-    return []
-  }
-})
-
-function createWrapper(intervals) {
-  if(!intervals || intervals.length === 0) {
-    return new IntervalTree(null)
-  }
-  return new IntervalTree(createIntervalTree(intervals))
-}
-
-},{"binary-search-bounds":190}],192:[function(require,module,exports){
-"use strict"
-
-module.exports = orderSegments
-
-var orient = require("robust-orientation")
-
-function horizontalOrder(a, b) {
-  var bl, br
-  if(b[0][0] < b[1][0]) {
-    bl = b[0]
-    br = b[1]
-  } else if(b[0][0] > b[1][0]) {
-    bl = b[1]
-    br = b[0]
-  } else {
-    var alo = Math.min(a[0][1], a[1][1])
-    var ahi = Math.max(a[0][1], a[1][1])
-    var blo = Math.min(b[0][1], b[1][1])
-    var bhi = Math.max(b[0][1], b[1][1])
-    if(ahi < blo) {
-      return ahi - blo
-    }
-    if(alo > bhi) {
-      return alo - bhi
-    }
-    return ahi - bhi
-  }
-  var al, ar
-  if(a[0][1] < a[1][1]) {
-    al = a[0]
-    ar = a[1]
-  } else {
-    al = a[1]
-    ar = a[0]
-  }
-  var d = orient(br, bl, al)
-  if(d) {
-    return d
-  }
-  d = orient(br, bl, ar)
-  if(d) {
-    return d
-  }
-  return ar - br
-}
-
-function orderSegments(b, a) {
-  var al, ar
-  if(a[0][0] < a[1][0]) {
-    al = a[0]
-    ar = a[1]
-  } else if(a[0][0] > a[1][0]) {
-    al = a[1]
-    ar = a[0]
-  } else {
-    return horizontalOrder(a, b)
-  }
-  var bl, br
-  if(b[0][0] < b[1][0]) {
-    bl = b[0]
-    br = b[1]
-  } else if(b[0][0] > b[1][0]) {
-    bl = b[1]
-    br = b[0]
-  } else {
-    return -horizontalOrder(b, a)
-  }
-  var d1 = orient(al, ar, br)
-  var d2 = orient(al, ar, bl)
-  if(d1 < 0) {
-    if(d2 <= 0) {
-      return d1
-    }
-  } else if(d1 > 0) {
-    if(d2 >= 0) {
-      return d1
-    }
-  } else if(d2) {
-    return d2
-  }
-  d1 = orient(br, bl, ar)
-  d2 = orient(br, bl, al)
-  if(d1 < 0) {
-    if(d2 <= 0) {
-      return d1
-    }
-  } else if(d1 > 0) {
-    if(d2 >= 0) {
-      return d1
-    }
-  } else if(d2) {
-    return d2
-  }
-  return ar[0] - br[0]
-}
-},{"robust-orientation":162}],193:[function(require,module,exports){
-"use strict"
-
-module.exports = createRBTree
-
-var RED   = 0
-var BLACK = 1
-
-function RBNode(color, key, value, left, right, count) {
-  this._color = color
-  this.key = key
-  this.value = value
-  this.left = left
-  this.right = right
-  this._count = count
-}
-
-function cloneNode(node) {
-  return new RBNode(node._color, node.key, node.value, node.left, node.right, node._count)
-}
-
-function repaint(color, node) {
-  return new RBNode(color, node.key, node.value, node.left, node.right, node._count)
-}
-
-function recount(node) {
-  node._count = 1 + (node.left ? node.left._count : 0) + (node.right ? node.right._count : 0)
-}
-
-function RedBlackTree(compare, root) {
-  this._compare = compare
-  this.root = root
-}
-
-var proto = RedBlackTree.prototype
-
-Object.defineProperty(proto, "keys", {
-  get: function() {
-    var result = []
-    this.forEach(function(k,v) {
-      result.push(k)
-    })
-    return result
-  }
-})
-
-Object.defineProperty(proto, "values", {
-  get: function() {
-    var result = []
-    this.forEach(function(k,v) {
-      result.push(v)
-    })
-    return result
-  }
-})
-
-//Returns the number of nodes in the tree
-Object.defineProperty(proto, "length", {
-  get: function() {
-    if(this.root) {
-      return this.root._count
-    }
-    return 0
-  }
-})
-
-//Insert a new item into the tree
-proto.insert = function(key, value) {
-  var cmp = this._compare
-  //Find point to insert new node at
-  var n = this.root
-  var n_stack = []
-  var d_stack = []
-  while(n) {
-    var d = cmp(key, n.key)
-    n_stack.push(n)
-    d_stack.push(d)
-    if(d <= 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  //Rebuild path to leaf node
-  n_stack.push(new RBNode(RED, key, value, null, null, 1))
-  for(var s=n_stack.length-2; s>=0; --s) {
-    var n = n_stack[s]
-    if(d_stack[s] <= 0) {
-      n_stack[s] = new RBNode(n._color, n.key, n.value, n_stack[s+1], n.right, n._count+1)
-    } else {
-      n_stack[s] = new RBNode(n._color, n.key, n.value, n.left, n_stack[s+1], n._count+1)
-    }
-  }
-  //Rebalance tree using rotations
-  //console.log("start insert", key, d_stack)
-  for(var s=n_stack.length-1; s>1; --s) {
-    var p = n_stack[s-1]
-    var n = n_stack[s]
-    if(p._color === BLACK || n._color === BLACK) {
-      break
-    }
-    var pp = n_stack[s-2]
-    if(pp.left === p) {
-      if(p.left === n) {
-        var y = pp.right
-        if(y && y._color === RED) {
-          //console.log("LLr")
-          p._color = BLACK
-          pp.right = repaint(BLACK, y)
-          pp._color = RED
-          s -= 1
-        } else {
-          //console.log("LLb")
-          pp._color = RED
-          pp.left = p.right
-          p._color = BLACK
-          p.right = pp
-          n_stack[s-2] = p
-          n_stack[s-1] = n
-          recount(pp)
-          recount(p)
-          if(s >= 3) {
-            var ppp = n_stack[s-3]
-            if(ppp.left === pp) {
-              ppp.left = p
-            } else {
-              ppp.right = p
-            }
-          }
-          break
-        }
-      } else {
-        var y = pp.right
-        if(y && y._color === RED) {
-          //console.log("LRr")
-          p._color = BLACK
-          pp.right = repaint(BLACK, y)
-          pp._color = RED
-          s -= 1
-        } else {
-          //console.log("LRb")
-          p.right = n.left
-          pp._color = RED
-          pp.left = n.right
-          n._color = BLACK
-          n.left = p
-          n.right = pp
-          n_stack[s-2] = n
-          n_stack[s-1] = p
-          recount(pp)
-          recount(p)
-          recount(n)
-          if(s >= 3) {
-            var ppp = n_stack[s-3]
-            if(ppp.left === pp) {
-              ppp.left = n
-            } else {
-              ppp.right = n
-            }
-          }
-          break
-        }
-      }
-    } else {
-      if(p.right === n) {
-        var y = pp.left
-        if(y && y._color === RED) {
-          //console.log("RRr", y.key)
-          p._color = BLACK
-          pp.left = repaint(BLACK, y)
-          pp._color = RED
-          s -= 1
-        } else {
-          //console.log("RRb")
-          pp._color = RED
-          pp.right = p.left
-          p._color = BLACK
-          p.left = pp
-          n_stack[s-2] = p
-          n_stack[s-1] = n
-          recount(pp)
-          recount(p)
-          if(s >= 3) {
-            var ppp = n_stack[s-3]
-            if(ppp.right === pp) {
-              ppp.right = p
-            } else {
-              ppp.left = p
-            }
-          }
-          break
-        }
-      } else {
-        var y = pp.left
-        if(y && y._color === RED) {
-          //console.log("RLr")
-          p._color = BLACK
-          pp.left = repaint(BLACK, y)
-          pp._color = RED
-          s -= 1
-        } else {
-          //console.log("RLb")
-          p.left = n.right
-          pp._color = RED
-          pp.right = n.left
-          n._color = BLACK
-          n.right = p
-          n.left = pp
-          n_stack[s-2] = n
-          n_stack[s-1] = p
-          recount(pp)
-          recount(p)
-          recount(n)
-          if(s >= 3) {
-            var ppp = n_stack[s-3]
-            if(ppp.right === pp) {
-              ppp.right = n
-            } else {
-              ppp.left = n
-            }
-          }
-          break
-        }
-      }
-    }
-  }
-  //Return new tree
-  n_stack[0]._color = BLACK
-  return new RedBlackTree(cmp, n_stack[0])
-}
-
-
-//Visit all nodes inorder
-function doVisitFull(visit, node) {
-  if(node.left) {
-    var v = doVisitFull(visit, node.left)
-    if(v) { return v }
-  }
-  var v = visit(node.key, node.value)
-  if(v) { return v }
-  if(node.right) {
-    return doVisitFull(visit, node.right)
-  }
-}
-
-//Visit half nodes in order
-function doVisitHalf(lo, compare, visit, node) {
-  var l = compare(lo, node.key)
-  if(l <= 0) {
-    if(node.left) {
-      var v = doVisitHalf(lo, compare, visit, node.left)
-      if(v) { return v }
-    }
-    var v = visit(node.key, node.value)
-    if(v) { return v }
-  }
-  if(node.right) {
-    return doVisitHalf(lo, compare, visit, node.right)
-  }
-}
-
-//Visit all nodes within a range
-function doVisit(lo, hi, compare, visit, node) {
-  var l = compare(lo, node.key)
-  var h = compare(hi, node.key)
-  var v
-  if(l <= 0) {
-    if(node.left) {
-      v = doVisit(lo, hi, compare, visit, node.left)
-      if(v) { return v }
-    }
-    if(h > 0) {
-      v = visit(node.key, node.value)
-      if(v) { return v }
-    }
-  }
-  if(h > 0 && node.right) {
-    return doVisit(lo, hi, compare, visit, node.right)
-  }
-}
-
-
-proto.forEach = function rbTreeForEach(visit, lo, hi) {
-  if(!this.root) {
-    return
-  }
-  switch(arguments.length) {
-    case 1:
-      return doVisitFull(visit, this.root)
-    break
-
-    case 2:
-      return doVisitHalf(lo, this._compare, visit, this.root)
-    break
-
-    case 3:
-      if(this._compare(lo, hi) >= 0) {
-        return
-      }
-      return doVisit(lo, hi, this._compare, visit, this.root)
-    break
-  }
-}
-
-//First item in list
-Object.defineProperty(proto, "begin", {
-  get: function() {
-    var stack = []
-    var n = this.root
-    while(n) {
-      stack.push(n)
-      n = n.left
-    }
-    return new RedBlackTreeIterator(this, stack)
-  }
-})
-
-//Last item in list
-Object.defineProperty(proto, "end", {
-  get: function() {
-    var stack = []
-    var n = this.root
-    while(n) {
-      stack.push(n)
-      n = n.right
-    }
-    return new RedBlackTreeIterator(this, stack)
-  }
-})
-
-//Find the ith item in the tree
-proto.at = function(idx) {
-  if(idx < 0) {
-    return new RedBlackTreeIterator(this, [])
-  }
-  var n = this.root
-  var stack = []
-  while(true) {
-    stack.push(n)
-    if(n.left) {
-      if(idx < n.left._count) {
-        n = n.left
-        continue
-      }
-      idx -= n.left._count
-    }
-    if(!idx) {
-      return new RedBlackTreeIterator(this, stack)
-    }
-    idx -= 1
-    if(n.right) {
-      if(idx >= n.right._count) {
-        break
-      }
-      n = n.right
-    } else {
-      break
-    }
-  }
-  return new RedBlackTreeIterator(this, [])
-}
-
-proto.ge = function(key) {
-  var cmp = this._compare
-  var n = this.root
-  var stack = []
-  var last_ptr = 0
-  while(n) {
-    var d = cmp(key, n.key)
-    stack.push(n)
-    if(d <= 0) {
-      last_ptr = stack.length
-    }
-    if(d <= 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  stack.length = last_ptr
-  return new RedBlackTreeIterator(this, stack)
-}
-
-proto.gt = function(key) {
-  var cmp = this._compare
-  var n = this.root
-  var stack = []
-  var last_ptr = 0
-  while(n) {
-    var d = cmp(key, n.key)
-    stack.push(n)
-    if(d < 0) {
-      last_ptr = stack.length
-    }
-    if(d < 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  stack.length = last_ptr
-  return new RedBlackTreeIterator(this, stack)
-}
-
-proto.lt = function(key) {
-  var cmp = this._compare
-  var n = this.root
-  var stack = []
-  var last_ptr = 0
-  while(n) {
-    var d = cmp(key, n.key)
-    stack.push(n)
-    if(d > 0) {
-      last_ptr = stack.length
-    }
-    if(d <= 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  stack.length = last_ptr
-  return new RedBlackTreeIterator(this, stack)
-}
-
-proto.le = function(key) {
-  var cmp = this._compare
-  var n = this.root
-  var stack = []
-  var last_ptr = 0
-  while(n) {
-    var d = cmp(key, n.key)
-    stack.push(n)
-    if(d >= 0) {
-      last_ptr = stack.length
-    }
-    if(d < 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  stack.length = last_ptr
-  return new RedBlackTreeIterator(this, stack)
-}
-
-//Finds the item with key if it exists
-proto.find = function(key) {
-  var cmp = this._compare
-  var n = this.root
-  var stack = []
-  while(n) {
-    var d = cmp(key, n.key)
-    stack.push(n)
-    if(d === 0) {
-      return new RedBlackTreeIterator(this, stack)
-    }
-    if(d <= 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  return new RedBlackTreeIterator(this, [])
-}
-
-//Removes item with key from tree
-proto.remove = function(key) {
-  var iter = this.find(key)
-  if(iter) {
-    return iter.remove()
-  }
-  return this
-}
-
-//Returns the item at `key`
-proto.get = function(key) {
-  var cmp = this._compare
-  var n = this.root
-  while(n) {
-    var d = cmp(key, n.key)
-    if(d === 0) {
-      return n.value
-    }
-    if(d <= 0) {
-      n = n.left
-    } else {
-      n = n.right
-    }
-  }
-  return
-}
-
-//Iterator for red black tree
-function RedBlackTreeIterator(tree, stack) {
-  this.tree = tree
-  this._stack = stack
-}
-
-var iproto = RedBlackTreeIterator.prototype
-
-//Test if iterator is valid
-Object.defineProperty(iproto, "valid", {
-  get: function() {
-    return this._stack.length > 0
-  }
-})
-
-//Node of the iterator
-Object.defineProperty(iproto, "node", {
-  get: function() {
-    if(this._stack.length > 0) {
-      return this._stack[this._stack.length-1]
-    }
-    return null
-  },
-  enumerable: true
-})
-
-//Makes a copy of an iterator
-iproto.clone = function() {
-  return new RedBlackTreeIterator(this.tree, this._stack.slice())
-}
-
-//Swaps two nodes
-function swapNode(n, v) {
-  n.key = v.key
-  n.value = v.value
-  n.left = v.left
-  n.right = v.right
-  n._color = v._color
-  n._count = v._count
-}
-
-//Fix up a double black node in a tree
-function fixDoubleBlack(stack) {
-  var n, p, s, z
-  for(var i=stack.length-1; i>=0; --i) {
-    n = stack[i]
-    if(i === 0) {
-      n._color = BLACK
-      return
-    }
-    //console.log("visit node:", n.key, i, stack[i].key, stack[i-1].key)
-    p = stack[i-1]
-    if(p.left === n) {
-      //console.log("left child")
-      s = p.right
-      if(s.right && s.right._color === RED) {
-        //console.log("case 1: right sibling child red")
-        s = p.right = cloneNode(s)
-        z = s.right = cloneNode(s.right)
-        p.right = s.left
-        s.left = p
-        s.right = z
-        s._color = p._color
-        n._color = BLACK
-        p._color = BLACK
-        z._color = BLACK
-        recount(p)
-        recount(s)
-        if(i > 1) {
-          var pp = stack[i-2]
-          if(pp.left === p) {
-            pp.left = s
-          } else {
-            pp.right = s
-          }
-        }
-        stack[i-1] = s
-        return
-      } else if(s.left && s.left._color === RED) {
-        //console.log("case 1: left sibling child red")
-        s = p.right = cloneNode(s)
-        z = s.left = cloneNode(s.left)
-        p.right = z.left
-        s.left = z.right
-        z.left = p
-        z.right = s
-        z._color = p._color
-        p._color = BLACK
-        s._color = BLACK
-        n._color = BLACK
-        recount(p)
-        recount(s)
-        recount(z)
-        if(i > 1) {
-          var pp = stack[i-2]
-          if(pp.left === p) {
-            pp.left = z
-          } else {
-            pp.right = z
-          }
-        }
-        stack[i-1] = z
-        return
-      }
-      if(s._color === BLACK) {
-        if(p._color === RED) {
-          //console.log("case 2: black sibling, red parent", p.right.value)
-          p._color = BLACK
-          p.right = repaint(RED, s)
-          return
-        } else {
-          //console.log("case 2: black sibling, black parent", p.right.value)
-          p.right = repaint(RED, s)
-          continue  
-        }
-      } else {
-        //console.log("case 3: red sibling")
-        s = cloneNode(s)
-        p.right = s.left
-        s.left = p
-        s._color = p._color
-        p._color = RED
-        recount(p)
-        recount(s)
-        if(i > 1) {
-          var pp = stack[i-2]
-          if(pp.left === p) {
-            pp.left = s
-          } else {
-            pp.right = s
-          }
-        }
-        stack[i-1] = s
-        stack[i] = p
-        if(i+1 < stack.length) {
-          stack[i+1] = n
-        } else {
-          stack.push(n)
-        }
-        i = i+2
-      }
-    } else {
-      //console.log("right child")
-      s = p.left
-      if(s.left && s.left._color === RED) {
-        //console.log("case 1: left sibling child red", p.value, p._color)
-        s = p.left = cloneNode(s)
-        z = s.left = cloneNode(s.left)
-        p.left = s.right
-        s.right = p
-        s.left = z
-        s._color = p._color
-        n._color = BLACK
-        p._color = BLACK
-        z._color = BLACK
-        recount(p)
-        recount(s)
-        if(i > 1) {
-          var pp = stack[i-2]
-          if(pp.right === p) {
-            pp.right = s
-          } else {
-            pp.left = s
-          }
-        }
-        stack[i-1] = s
-        return
-      } else if(s.right && s.right._color === RED) {
-        //console.log("case 1: right sibling child red")
-        s = p.left = cloneNode(s)
-        z = s.right = cloneNode(s.right)
-        p.left = z.right
-        s.right = z.left
-        z.right = p
-        z.left = s
-        z._color = p._color
-        p._color = BLACK
-        s._color = BLACK
-        n._color = BLACK
-        recount(p)
-        recount(s)
-        recount(z)
-        if(i > 1) {
-          var pp = stack[i-2]
-          if(pp.right === p) {
-            pp.right = z
-          } else {
-            pp.left = z
-          }
-        }
-        stack[i-1] = z
-        return
-      }
-      if(s._color === BLACK) {
-        if(p._color === RED) {
-          //console.log("case 2: black sibling, red parent")
-          p._color = BLACK
-          p.left = repaint(RED, s)
-          return
-        } else {
-          //console.log("case 2: black sibling, black parent")
-          p.left = repaint(RED, s)
-          continue  
-        }
-      } else {
-        //console.log("case 3: red sibling")
-        s = cloneNode(s)
-        p.left = s.right
-        s.right = p
-        s._color = p._color
-        p._color = RED
-        recount(p)
-        recount(s)
-        if(i > 1) {
-          var pp = stack[i-2]
-          if(pp.right === p) {
-            pp.right = s
-          } else {
-            pp.left = s
-          }
-        }
-        stack[i-1] = s
-        stack[i] = p
-        if(i+1 < stack.length) {
-          stack[i+1] = n
-        } else {
-          stack.push(n)
-        }
-        i = i+2
-      }
-    }
-  }
-}
-
-//Removes item at iterator from tree
-iproto.remove = function() {
-  var stack = this._stack
-  if(stack.length === 0) {
-    return this.tree
-  }
-  //First copy path to node
-  var cstack = new Array(stack.length)
-  var n = stack[stack.length-1]
-  cstack[cstack.length-1] = new RBNode(n._color, n.key, n.value, n.left, n.right, n._count)
-  for(var i=stack.length-2; i>=0; --i) {
-    var n = stack[i]
-    if(n.left === stack[i+1]) {
-      cstack[i] = new RBNode(n._color, n.key, n.value, cstack[i+1], n.right, n._count)
-    } else {
-      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
-    }
-  }
-
-  //Get node
-  n = cstack[cstack.length-1]
-  //console.log("start remove: ", n.value)
-
-  //If not leaf, then swap with previous node
-  if(n.left && n.right) {
-    //console.log("moving to leaf")
-
-    //First walk to previous leaf
-    var split = cstack.length
-    n = n.left
-    while(n.right) {
-      cstack.push(n)
-      n = n.right
-    }
-    //Copy path to leaf
-    var v = cstack[split-1]
-    cstack.push(new RBNode(n._color, v.key, v.value, n.left, n.right, n._count))
-    cstack[split-1].key = n.key
-    cstack[split-1].value = n.value
-
-    //Fix up stack
-    for(var i=cstack.length-2; i>=split; --i) {
-      n = cstack[i]
-      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
-    }
-    cstack[split-1].left = cstack[split]
-  }
-  //console.log("stack=", cstack.map(function(v) { return v.value }))
-
-  //Remove leaf node
-  n = cstack[cstack.length-1]
-  if(n._color === RED) {
-    //Easy case: removing red leaf
-    //console.log("RED leaf")
-    var p = cstack[cstack.length-2]
-    if(p.left === n) {
-      p.left = null
-    } else if(p.right === n) {
-      p.right = null
-    }
-    cstack.pop()
-    for(var i=0; i<cstack.length; ++i) {
-      cstack[i]._count--
-    }
-    return new RedBlackTree(this.tree._compare, cstack[0])
-  } else {
-    if(n.left || n.right) {
-      //Second easy case:  Single child black parent
-      //console.log("BLACK single child")
-      if(n.left) {
-        swapNode(n, n.left)
-      } else if(n.right) {
-        swapNode(n, n.right)
-      }
-      //Child must be red, so repaint it black to balance color
-      n._color = BLACK
-      for(var i=0; i<cstack.length-1; ++i) {
-        cstack[i]._count--
-      }
-      return new RedBlackTree(this.tree._compare, cstack[0])
-    } else if(cstack.length === 1) {
-      //Third easy case: root
-      //console.log("ROOT")
-      return new RedBlackTree(this.tree._compare, null)
-    } else {
-      //Hard case: Repaint n, and then do some nasty stuff
-      //console.log("BLACK leaf no children")
-      for(var i=0; i<cstack.length; ++i) {
-        cstack[i]._count--
-      }
-      var parent = cstack[cstack.length-2]
-      fixDoubleBlack(cstack)
-      //Fix up links
-      if(parent.left === n) {
-        parent.left = null
-      } else {
-        parent.right = null
-      }
-    }
-  }
-  return new RedBlackTree(this.tree._compare, cstack[0])
-}
-
-//Returns key
-Object.defineProperty(iproto, "key", {
-  get: function() {
-    if(this._stack.length > 0) {
-      return this._stack[this._stack.length-1].key
-    }
-    return
-  },
-  enumerable: true
-})
-
-//Returns value
-Object.defineProperty(iproto, "value", {
-  get: function() {
-    if(this._stack.length > 0) {
-      return this._stack[this._stack.length-1].value
-    }
-    return
-  },
-  enumerable: true
-})
-
-
-//Returns the position of this iterator in the sorted list
-Object.defineProperty(iproto, "index", {
-  get: function() {
-    var idx = 0
-    var stack = this._stack
-    if(stack.length === 0) {
-      var r = this.tree.root
-      if(r) {
-        return r._count
-      }
-      return 0
-    } else if(stack[stack.length-1].left) {
-      idx = stack[stack.length-1].left._count
-    }
-    for(var s=stack.length-2; s>=0; --s) {
-      if(stack[s+1] === stack[s].right) {
-        ++idx
-        if(stack[s].left) {
-          idx += stack[s].left._count
-        }
-      }
-    }
-    return idx
-  },
-  enumerable: true
-})
-
-//Advances iterator to next element in list
-iproto.next = function() {
-  var stack = this._stack
-  if(stack.length === 0) {
-    return
-  }
-  var n = stack[stack.length-1]
-  if(n.right) {
-    n = n.right
-    while(n) {
-      stack.push(n)
-      n = n.left
-    }
-  } else {
-    stack.pop()
-    while(stack.length > 0 && stack[stack.length-1].right === n) {
-      n = stack[stack.length-1]
-      stack.pop()
-    }
-  }
-}
-
-//Checks if iterator is at end of tree
-Object.defineProperty(iproto, "hasNext", {
-  get: function() {
-    var stack = this._stack
-    if(stack.length === 0) {
-      return false
-    }
-    if(stack[stack.length-1].right) {
-      return true
-    }
-    for(var s=stack.length-1; s>0; --s) {
-      if(stack[s-1].left === stack[s]) {
-        return true
-      }
-    }
-    return false
-  }
-})
-
-//Update value
-iproto.update = function(value) {
-  var stack = this._stack
-  if(stack.length === 0) {
-    throw new Error("Can't update empty node!")
-  }
-  var cstack = new Array(stack.length)
-  var n = stack[stack.length-1]
-  cstack[cstack.length-1] = new RBNode(n._color, n.key, value, n.left, n.right, n._count)
-  for(var i=stack.length-2; i>=0; --i) {
-    n = stack[i]
-    if(n.left === stack[i+1]) {
-      cstack[i] = new RBNode(n._color, n.key, n.value, cstack[i+1], n.right, n._count)
-    } else {
-      cstack[i] = new RBNode(n._color, n.key, n.value, n.left, cstack[i+1], n._count)
-    }
-  }
-  return new RedBlackTree(this.tree._compare, cstack[0])
-}
-
-//Moves iterator backward one element
-iproto.prev = function() {
-  var stack = this._stack
-  if(stack.length === 0) {
-    return
-  }
-  var n = stack[stack.length-1]
-  if(n.left) {
-    n = n.left
-    while(n) {
-      stack.push(n)
-      n = n.right
-    }
-  } else {
-    stack.pop()
-    while(stack.length > 0 && stack[stack.length-1].left === n) {
-      n = stack[stack.length-1]
-      stack.pop()
-    }
-  }
-}
-
-//Checks if iterator is at start of tree
-Object.defineProperty(iproto, "hasPrev", {
-  get: function() {
-    var stack = this._stack
-    if(stack.length === 0) {
-      return false
-    }
-    if(stack[stack.length-1].left) {
-      return true
-    }
-    for(var s=stack.length-1; s>0; --s) {
-      if(stack[s-1].right === stack[s]) {
-        return true
-      }
-    }
-    return false
-  }
-})
-
-//Default comparison function
-function defaultCompare(a, b) {
-  if(a < b) {
-    return -1
-  }
-  if(a > b) {
-    return 1
-  }
-  return 0
-}
-
-//Build a tree
-function createRBTree(compare) {
-  return new RedBlackTree(compare || defaultCompare, null)
-}
-},{}],194:[function(require,module,exports){
-"use strict"
-
-module.exports = createSlabDecomposition
-
-var bounds = require("binary-search-bounds")
-var createRBTree = require("functional-red-black-tree")
-var orient = require("robust-orientation")
-var orderSegments = require("./lib/order-segments")
-
-function SlabDecomposition(slabs, coordinates, horizontal) {
-  this.slabs = slabs
-  this.coordinates = coordinates
-  this.horizontal = horizontal
-}
-
-var proto = SlabDecomposition.prototype
-
-function compareHorizontal(e, y) {
-  return e.y - y
-}
-
-function searchBucket(root, p) {
-  var lastNode = null
-  while(root) {
-    var seg = root.key
-    var l, r
-    if(seg[0][0] < seg[1][0]) {
-      l = seg[0]
-      r = seg[1]
-    } else {
-      l = seg[1]
-      r = seg[0]
-    }
-    var o = orient(l, r, p)
-    if(o < 0) {
-      root = root.left
-    } else if(o > 0) {
-      if(p[0] !== seg[1][0]) {
-        lastNode = root
-        root = root.right
-      } else {
-        var val = searchBucket(root.right, p)
-        if(val) {
-          return val
-        }
-        root = root.left
-      }
-    } else {
-      if(p[0] !== seg[1][0]) {
-        return root
-      } else {
-        var val = searchBucket(root.right, p)
-        if(val) {
-          return val
-        }
-        root = root.left
-      }
-    }
-  }
-  return lastNode
-}
-
-proto.castUp = function(p) {
-  var bucket = bounds.le(this.coordinates, p[0])
-  if(bucket < 0) {
-    return -1
-  }
-  var root = this.slabs[bucket]
-  var hitNode = searchBucket(this.slabs[bucket], p)
-  var lastHit = -1
-  if(hitNode) {
-    lastHit = hitNode.value
-  }
-  //Edge case: need to handle horizontal segments (sucks)
-  if(this.coordinates[bucket] === p[0]) {
-    var lastSegment = null
-    if(hitNode) {
-      lastSegment = hitNode.key
-    }
-    if(bucket > 0) {
-      var otherHitNode = searchBucket(this.slabs[bucket-1], p)
-      if(otherHitNode) {
-        if(lastSegment) {
-          if(orderSegments(otherHitNode.key, lastSegment) > 0) {
-            lastSegment = otherHitNode.key
-            lastHit = otherHitNode.value
-          }
-        } else {
-          lastHit = otherHitNode.value
-          lastSegment = otherHitNode.key
-        }
-      }
-    }
-    var horiz = this.horizontal[bucket]
-    if(horiz.length > 0) {
-      var hbucket = bounds.ge(horiz, p[1], compareHorizontal)
-      if(hbucket < horiz.length) {
-        var e = horiz[hbucket]
-        if(p[1] === e.y) {
-          if(e.closed) {
-            return e.index
-          } else {
-            while(hbucket < horiz.length-1 && horiz[hbucket+1].y === p[1]) {
-              hbucket = hbucket+1
-              e = horiz[hbucket]
-              if(e.closed) {
-                return e.index
-              }
-            }
-            if(e.y === p[1] && !e.start) {
-              hbucket = hbucket+1
-              if(hbucket >= horiz.length) {
-                return lastHit
-              }
-              e = horiz[hbucket]
-            }
-          }
-        }
-        //Check if e is above/below last segment
-        if(e.start) {
-          if(lastSegment) {
-            var o = orient(lastSegment[0], lastSegment[1], [p[0], e.y])
-            if(lastSegment[0][0] > lastSegment[1][0]) {
-              o = -o
-            }
-            if(o > 0) {
-              lastHit = e.index
-            }
-          } else {
-            lastHit = e.index
-          }
-        } else if(e.y !== p[1]) {
-          lastHit = e.index
-        }
-      }
-    }
-  }
-  return lastHit
-}
-
-function IntervalSegment(y, index, start, closed) {
-  this.y = y
-  this.index = index
-  this.start = start
-  this.closed = closed
-}
-
-function Event(x, segment, create, index) {
-  this.x = x
-  this.segment = segment
-  this.create = create
-  this.index = index
-}
-
-
-function createSlabDecomposition(segments) {
-  var numSegments = segments.length
-  var numEvents = 2 * numSegments
-  var events = new Array(numEvents)
-  for(var i=0; i<numSegments; ++i) {
-    var s = segments[i]
-    var f = s[0][0] < s[1][0]
-    events[2*i] = new Event(s[0][0], s, f, i)
-    events[2*i+1] = new Event(s[1][0], s, !f, i)
-  }
-  events.sort(function(a,b) {
-    var d = a.x - b.x
-    if(d) {
-      return d
-    }
-    d = a.create - b.create
-    if(d) {
-      return d
-    }
-    return Math.min(a.segment[0][1], a.segment[1][1]) - Math.min(b.segment[0][1], b.segment[1][1])
-  })
-  var tree = createRBTree(orderSegments)
-  var slabs = []
-  var lines = []
-  var horizontal = []
-  var lastX = -Infinity
-  for(var i=0; i<numEvents; ) {
-    var x = events[i].x
-    var horiz = []
-    while(i < numEvents) {
-      var e = events[i]
-      if(e.x !== x) {
-        break
-      }
-      i += 1
-      if(e.segment[0][0] === e.x && e.segment[1][0] === e.x) {
-        if(e.create) {
-          if(e.segment[0][1] < e.segment[1][1]) {
-            horiz.push(new IntervalSegment(
-                e.segment[0][1],
-                e.index,
-                true,
-                true))
-            horiz.push(new IntervalSegment(
-                e.segment[1][1],
-                e.index,
-                false,
-                false))
-          } else {
-            horiz.push(new IntervalSegment(
-                e.segment[1][1],
-                e.index,
-                true,
-                false))
-            horiz.push(new IntervalSegment(
-                e.segment[0][1],
-                e.index,
-                false,
-                true))
-          }
-        }
-      } else {
-        if(e.create) {
-          tree = tree.insert(e.segment, e.index)
-        } else {
-          tree = tree.remove(e.segment)
-        }
-      }
-    }
-    slabs.push(tree.root)
-    lines.push(x)
-    horizontal.push(horiz)
-  }
-  return new SlabDecomposition(slabs, lines, horizontal)
-}
-},{"./lib/order-segments":192,"binary-search-bounds":190,"functional-red-black-tree":193,"robust-orientation":162}],195:[function(require,module,exports){
-module.exports = preprocessPolygon
-
-var orient = require('robust-orientation')[3]
-var makeSlabs = require('slab-decomposition')
-var makeIntervalTree = require('interval-tree-1d')
-var bsearch = require('binary-search-bounds')
-
-function visitInterval() {
-  return true
-}
-
-function intervalSearch(table) {
-  return function(x, y) {
-    var tree = table[x]
-    if(tree) {
-      return !!tree.queryPoint(y, visitInterval)
-    }
-    return false
-  }
-}
-
-function buildVerticalIndex(segments) {
-  var table = {}
-  for(var i=0; i<segments.length; ++i) {
-    var s = segments[i]
-    var x = s[0][0]
-    var y0 = s[0][1]
-    var y1 = s[1][1]
-    var p = [ Math.min(y0, y1), Math.max(y0, y1) ]
-    if(x in table) {
-      table[x].push(p)
-    } else {
-      table[x] = [ p ]
-    }
-  }
-  var intervalTable = {}
-  var keys = Object.keys(table)
-  for(var i=0; i<keys.length; ++i) {
-    var segs = table[keys[i]]
-    intervalTable[keys[i]] = makeIntervalTree(segs)
-  }
-  return intervalSearch(intervalTable)
-}
-
-function buildSlabSearch(slabs, coordinates) {
-  return function(p) {
-    var bucket = bsearch.le(coordinates, p[0])
-    if(bucket < 0) {
-      return 1
-    }
-    var root = slabs[bucket]
-    if(!root) {
-      if(bucket > 0 && coordinates[bucket] === p[0]) {
-        root = slabs[bucket-1]
-      } else {
-        return 1
-      }
-    }
-    var lastOrientation = 1
-    while(root) {
-      var s = root.key
-      var o = orient(p, s[0], s[1])
-      if(s[0][0] < s[1][0]) {
-        if(o < 0) {
-          root = root.left
-        } else if(o > 0) {
-          lastOrientation = -1
-          root = root.right
-        } else {
-          return 0
-        }
-      } else {
-        if(o > 0) {
-          root = root.left
-        } else if(o < 0) {
-          lastOrientation = 1
-          root = root.right
-        } else {
-          return 0
-        }
-      }
-    }
-    return lastOrientation
-  }
-}
-
-function classifyEmpty(p) {
-  return 1
-}
-
-function createClassifyVertical(testVertical) {
-  return function classify(p) {
-    if(testVertical(p[0], p[1])) {
-      return 0
-    }
-    return 1
-  }
-}
-
-function createClassifyPointDegen(testVertical, testNormal) {
-  return function classify(p) {
-    if(testVertical(p[0], p[1])) {
-      return 0
-    }
-    return testNormal(p)
-  }
-}
-
-function preprocessPolygon(loops) {
-  //Compute number of loops
-  var numLoops = loops.length
-
-  //Unpack segments
-  var segments = []
-  var vsegments = []
-  var ptr = 0
-  for(var i=0; i<numLoops; ++i) {
-    var loop = loops[i]
-    var numVertices = loop.length
-    for(var s=numVertices-1,t=0; t<numVertices; s=(t++)) {
-      var a = loop[s]
-      var b = loop[t]
-      if(a[0] === b[0]) {
-        vsegments.push([a,b])
-      } else {
-        segments.push([a,b])
-      }
-    }
-  }
-
-  //Degenerate case: All loops are empty
-  if(segments.length === 0) {
-    if(vsegments.length === 0) {
-      return classifyEmpty
-    } else {
-      return createClassifyVertical(buildVerticalIndex(vsegments))
-    }
-  }
-
-  //Build slab decomposition
-  var slabs = makeSlabs(segments)
-  var testSlab = buildSlabSearch(slabs.slabs, slabs.coordinates)
-
-  if(vsegments.length === 0) {
-    return testSlab
-  } else {
-    return createClassifyPointDegen(
-      buildVerticalIndex(vsegments),
-      testSlab)
-  }
-}
-},{"binary-search-bounds":190,"interval-tree-1d":191,"robust-orientation":162,"slab-decomposition":194}],196:[function(require,module,exports){
-'use strict'
-
-module.exports = planarGraphToPolyline
-
-var e2a = require('edges-to-adjacency-list')
-var planarDual = require('planar-dual')
-var preprocessPolygon = require('point-in-big-polygon')
-var twoProduct = require('two-product')
-var robustSum = require('robust-sum')
-var uniq = require('uniq')
-var trimLeaves = require('./lib/trim-leaves')
-
-function makeArray(length, fill) {
-  var result = new Array(length)
-  for(var i=0; i<length; ++i) {
-    result[i] = fill
-  }
-  return result
-}
-
-function makeArrayOfArrays(length) {
-  var result = new Array(length)
-  for(var i=0; i<length; ++i) {
-    result[i] = []
-  }
-  return result
-}
-
-
-function planarGraphToPolyline(edges, positions) {
-
-  //Trim leaves
-  var result = trimLeaves(edges, positions)
-  edges = result[0]
-  positions = result[1]
-
-  var numVertices = positions.length
-  var numEdges = edges.length
-
-  //Calculate adjacency list, check manifold
-  var adj = e2a(edges, positions.length)
-  for(var i=0; i<numVertices; ++i) {
-    if(adj[i].length % 2 === 1) {
-      throw new Error('planar-graph-to-polyline: graph must be manifold')
-    }
-  }
-
-  //Get faces
-  var faces = planarDual(edges, positions)
-
-  //Check orientation of a polygon using exact arithmetic
-  function ccw(c) {
-    var n = c.length
-    var area = [0]
-    for(var j=0; j<n; ++j) {
-      var a = positions[c[j]]
-      var b = positions[c[(j+1)%n]]
-      var t00 = twoProduct(-a[0], a[1])
-      var t01 = twoProduct(-a[0], b[1])
-      var t10 = twoProduct( b[0], a[1])
-      var t11 = twoProduct( b[0], b[1])
-      area = robustSum(area, robustSum(robustSum(t00, t01), robustSum(t10, t11)))
-    }
-    return area[area.length-1] > 0
-  }
-
-  //Extract all clockwise faces
-  faces = faces.filter(ccw)
-
-  //Detect which loops are contained in one another to handle parent-of relation
-  var numFaces = faces.length
-  var parent = new Array(numFaces)
-  var containment = new Array(numFaces)
-  for(var i=0; i<numFaces; ++i) {
-    parent[i] = i
-    var row = new Array(numFaces)
-    var loopVertices = faces[i].map(function(v) {
-      return positions[v]
-    })
-    var pmc = preprocessPolygon([loopVertices])
-    var count = 0
-    outer:
-    for(var j=0; j<numFaces; ++j) {
-      row[j] = 0
-      if(i === j) {
-        continue
-      }
-      var c = faces[j]
-      var n = c.length
-      for(var k=0; k<n; ++k) {
-        var d = pmc(positions[c[k]])
-        if(d !== 0) {
-          if(d < 0) {
-            row[j] = 1
-            count += 1
-          }
-          continue outer
-        }
-      }
-      row[j] = 1
-      count += 1
-    }
-    containment[i] = [count, i, row]
-  }
-  containment.sort(function(a,b) {
-    return b[0] - a[0]
-  })
-  for(var i=0; i<numFaces; ++i) {
-    var row = containment[i]
-    var idx = row[1]
-    var children = row[2]
-    for(var j=0; j<numFaces; ++j) {
-      if(children[j]) {
-        parent[j] = idx
-      }
-    }
-  }
-
-  //Initialize face adjacency list
-  var fadj = makeArrayOfArrays(numFaces)
-  for(var i=0; i<numFaces; ++i) {
-    fadj[i].push(parent[i])
-    fadj[parent[i]].push(i)
-  }
-
-  //Build adjacency matrix for edges
-  var edgeAdjacency = {}
-  var internalVertices = makeArray(numVertices, false)
-  for(var i=0; i<numFaces; ++i) {
-    var c = faces[i]
-    var n = c.length
-    for(var j=0; j<n; ++j) {
-      var a = c[j]
-      var b = c[(j+1)%n]
-      var key = Math.min(a,b) + ":" + Math.max(a,b)
-      if(key in edgeAdjacency) {
-        var neighbor = edgeAdjacency[key]
-        fadj[neighbor].push(i)
-        fadj[i].push(neighbor)
-        internalVertices[a] = internalVertices[b] = true
-      } else {
-        edgeAdjacency[key] = i
-      }
-    }
-  }
-
-  function sharedBoundary(c) {
-    var n = c.length
-    for(var i=0; i<n; ++i) {
-      if(!internalVertices[c[i]]) {
-        return false
-      }
-    }
-    return true
-  }
-
-  var toVisit = []
-  var parity = makeArray(numFaces, -1)
-  for(var i=0; i<numFaces; ++i) {
-    if(parent[i] === i && !sharedBoundary(faces[i])) {
-      toVisit.push(i)
-      parity[i] = 0
-    } else {
-      parity[i] = -1
-    }
-  }
-
-  //Using face adjacency, classify faces as in/out
-  var result = []
-  while(toVisit.length > 0) {
-    var top = toVisit.pop()
-    var nbhd = fadj[top]
-    uniq(nbhd, function(a,b) {
-      return a-b
-    })
-    var nnbhr = nbhd.length
-    var p = parity[top]
-    var polyline
-    if(p === 0) {
-      var c = faces[top]
-      polyline = [c]
-    }
-    for(var i=0; i<nnbhr; ++i) {
-      var f = nbhd[i]
-      if(parity[f] >= 0) {
-        continue
-      }
-      parity[f] = p^1
-      toVisit.push(f)
-      if(p === 0) {
-        var c = faces[f]
-        if(!sharedBoundary(c)) {
-          c.reverse()
-          polyline.push(c)
-        }
-      }
-    }
-    if(p === 0) {
-      result.push(polyline)
-    }
-  }
-
-  return result
-}
-},{"./lib/trim-leaves":184,"edges-to-adjacency-list":185,"planar-dual":186,"point-in-big-polygon":195,"robust-sum":165,"two-product":178,"uniq":181}],197:[function(require,module,exports){
-arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],198:[function(require,module,exports){
-"use strict"; "use restrict";
-
-module.exports = UnionFind;
-
-function UnionFind(count) {
-  this.roots = new Array(count);
-  this.ranks = new Array(count);
-  
-  for(var i=0; i<count; ++i) {
-    this.roots[i] = i;
-    this.ranks[i] = 0;
-  }
-}
-
-UnionFind.prototype.length = function() {
-  return this.roots.length;
-}
-
-UnionFind.prototype.makeSet = function() {
-  var n = this.roots.length;
-  this.roots.push(n);
-  this.ranks.push(0);
-  return n;
-}
-
-UnionFind.prototype.find = function(x) {
-  var roots = this.roots;
-  while(roots[x] !== x) {
-    var y = roots[x];
-    roots[x] = roots[y];
-    x = y;
-  }
-  return x;
-}
-
-UnionFind.prototype.link = function(x, y) {
-  var xr = this.find(x)
-    , yr = this.find(y);
-  if(xr === yr) {
-    return;
-  }
-  var ranks = this.ranks
-    , roots = this.roots
-    , xd    = ranks[xr]
-    , yd    = ranks[yr];
-  if(xd < yd) {
-    roots[xr] = yr;
-  } else if(yd < xd) {
-    roots[yr] = xr;
-  } else {
-    roots[yr] = xr;
-    ++ranks[xr];
-  }
-}
-
-
-},{}],199:[function(require,module,exports){
-"use strict"; "use restrict";
-
-var bits      = require("bit-twiddle")
-  , UnionFind = require("union-find")
-
-//Returns the dimension of a cell complex
-function dimension(cells) {
-  var d = 0
-    , max = Math.max
-  for(var i=0, il=cells.length; i<il; ++i) {
-    d = max(d, cells[i].length)
-  }
-  return d-1
-}
-exports.dimension = dimension
-
-//Counts the number of vertices in faces
-function countVertices(cells) {
-  var vc = -1
-    , max = Math.max
-  for(var i=0, il=cells.length; i<il; ++i) {
-    var c = cells[i]
-    for(var j=0, jl=c.length; j<jl; ++j) {
-      vc = max(vc, c[j])
-    }
-  }
-  return vc+1
-}
-exports.countVertices = countVertices
-
-//Returns a deep copy of cells
-function cloneCells(cells) {
-  var ncells = new Array(cells.length)
-  for(var i=0, il=cells.length; i<il; ++i) {
-    ncells[i] = cells[i].slice(0)
-  }
-  return ncells
-}
-exports.cloneCells = cloneCells
-
-//Ranks a pair of cells up to permutation
-function compareCells(a, b) {
-  var n = a.length
-    , t = a.length - b.length
-    , min = Math.min
-  if(t) {
-    return t
-  }
-  switch(n) {
-    case 0:
-      return 0;
-    case 1:
-      return a[0] - b[0];
-    case 2:
-      var d = a[0]+a[1]-b[0]-b[1]
-      if(d) {
-        return d
-      }
-      return min(a[0],a[1]) - min(b[0],b[1])
-    case 3:
-      var l1 = a[0]+a[1]
-        , m1 = b[0]+b[1]
-      d = l1+a[2] - (m1+b[2])
-      if(d) {
-        return d
-      }
-      var l0 = min(a[0], a[1])
-        , m0 = min(b[0], b[1])
-        , d  = min(l0, a[2]) - min(m0, b[2])
-      if(d) {
-        return d
-      }
-      return min(l0+a[2], l1) - min(m0+b[2], m1)
-    
-    //TODO: Maybe optimize n=4 as well?
-    
-    default:
-      var as = a.slice(0)
-      as.sort()
-      var bs = b.slice(0)
-      bs.sort()
-      for(var i=0; i<n; ++i) {
-        t = as[i] - bs[i]
-        if(t) {
-          return t
-        }
-      }
-      return 0
-  }
-}
-exports.compareCells = compareCells
-
-function compareZipped(a, b) {
-  return compareCells(a[0], b[0])
-}
-
-//Puts a cell complex into normal order for the purposes of findCell queries
-function normalize(cells, attr) {
-  if(attr) {
-    var len = cells.length
-    var zipped = new Array(len)
-    for(var i=0; i<len; ++i) {
-      zipped[i] = [cells[i], attr[i]]
-    }
-    zipped.sort(compareZipped)
-    for(var i=0; i<len; ++i) {
-      cells[i] = zipped[i][0]
-      attr[i] = zipped[i][1]
-    }
-    return cells
-  } else {
-    cells.sort(compareCells)
-    return cells
-  }
-}
-exports.normalize = normalize
-
-//Removes all duplicate cells in the complex
-function unique(cells) {
-  if(cells.length === 0) {
-    return []
-  }
-  var ptr = 1
-    , len = cells.length
-  for(var i=1; i<len; ++i) {
-    var a = cells[i]
-    if(compareCells(a, cells[i-1])) {
-      if(i === ptr) {
-        ptr++
-        continue
-      }
-      cells[ptr++] = a
-    }
-  }
-  cells.length = ptr
-  return cells
-}
-exports.unique = unique;
-
-//Finds a cell in a normalized cell complex
-function findCell(cells, c) {
-  var lo = 0
-    , hi = cells.length-1
-    , r  = -1
-  while (lo <= hi) {
-    var mid = (lo + hi) >> 1
-      , s   = compareCells(cells[mid], c)
-    if(s <= 0) {
-      if(s === 0) {
-        r = mid
-      }
-      lo = mid + 1
-    } else if(s > 0) {
-      hi = mid - 1
-    }
-  }
-  return r
-}
-exports.findCell = findCell;
-
-//Builds an index for an n-cell.  This is more general than dual, but less efficient
-function incidence(from_cells, to_cells) {
-  var index = new Array(from_cells.length)
-  for(var i=0, il=index.length; i<il; ++i) {
-    index[i] = []
-  }
-  var b = []
-  for(var i=0, n=to_cells.length; i<n; ++i) {
-    var c = to_cells[i]
-    var cl = c.length
-    for(var k=1, kn=(1<<cl); k<kn; ++k) {
-      b.length = bits.popCount(k)
-      var l = 0
-      for(var j=0; j<cl; ++j) {
-        if(k & (1<<j)) {
-          b[l++] = c[j]
-        }
-      }
-      var idx=findCell(from_cells, b)
-      if(idx < 0) {
-        continue
-      }
-      while(true) {
-        index[idx++].push(i)
-        if(idx >= from_cells.length || compareCells(from_cells[idx], b) !== 0) {
-          break
-        }
-      }
-    }
-  }
-  return index
-}
-exports.incidence = incidence
-
-//Computes the dual of the mesh.  This is basically an optimized version of buildIndex for the situation where from_cells is just the list of vertices
-function dual(cells, vertex_count) {
-  if(!vertex_count) {
-    return incidence(unique(skeleton(cells, 0)), cells, 0)
-  }
-  var res = new Array(vertex_count)
-  for(var i=0; i<vertex_count; ++i) {
-    res[i] = []
-  }
-  for(var i=0, len=cells.length; i<len; ++i) {
-    var c = cells[i]
-    for(var j=0, cl=c.length; j<cl; ++j) {
-      res[c[j]].push(i)
-    }
-  }
-  return res
-}
-exports.dual = dual
-
-//Enumerates all cells in the complex
-function explode(cells) {
-  var result = []
-  for(var i=0, il=cells.length; i<il; ++i) {
-    var c = cells[i]
-      , cl = c.length|0
-    for(var j=1, jl=(1<<cl); j<jl; ++j) {
-      var b = []
-      for(var k=0; k<cl; ++k) {
-        if((j >>> k) & 1) {
-          b.push(c[k])
-        }
-      }
-      result.push(b)
-    }
-  }
-  return normalize(result)
-}
-exports.explode = explode
-
-//Enumerates all of the n-cells of a cell complex
-function skeleton(cells, n) {
-  if(n < 0) {
-    return []
-  }
-  var result = []
-    , k0     = (1<<(n+1))-1
-  for(var i=0; i<cells.length; ++i) {
-    var c = cells[i]
-    for(var k=k0; k<(1<<c.length); k=bits.nextCombination(k)) {
-      var b = new Array(n+1)
-        , l = 0
-      for(var j=0; j<c.length; ++j) {
-        if(k & (1<<j)) {
-          b[l++] = c[j]
-        }
-      }
-      result.push(b)
-    }
-  }
-  return normalize(result)
-}
-exports.skeleton = skeleton;
-
-//Computes the boundary of all cells, does not remove duplicates
-function boundary(cells) {
-  var res = []
-  for(var i=0,il=cells.length; i<il; ++i) {
-    var c = cells[i]
-    for(var j=0,cl=c.length; j<cl; ++j) {
-      var b = new Array(c.length-1)
-      for(var k=0, l=0; k<cl; ++k) {
-        if(k !== j) {
-          b[l++] = c[k]
-        }
-      }
-      res.push(b)
-    }
-  }
-  return normalize(res)
-}
-exports.boundary = boundary;
-
-//Computes connected components for a dense cell complex
-function connectedComponents_dense(cells, vertex_count) {
-  var labels = new UnionFind(vertex_count)
-  for(var i=0; i<cells.length; ++i) {
-    var c = cells[i]
-    for(var j=0; j<c.length; ++j) {
-      for(var k=j+1; k<c.length; ++k) {
-        labels.link(c[j], c[k])
-      }
-    }
-  }
-  var components = []
-    , component_labels = labels.ranks
-  for(var i=0; i<component_labels.length; ++i) {
-    component_labels[i] = -1
-  }
-  for(var i=0; i<cells.length; ++i) {
-    var l = labels.find(cells[i][0])
-    if(component_labels[l] < 0) {
-      component_labels[l] = components.length
-      components.push([cells[i].slice(0)])
-    } else {
-      components[component_labels[l]].push(cells[i].slice(0))
-    }
-  }
-  return components
-}
-
-//Computes connected components for a sparse graph
-function connectedComponents_sparse(cells) {
-  var vertices  = unique(normalize(skeleton(cells, 0)))
-    , labels    = new UnionFind(vertices.length)
-  for(var i=0; i<cells.length; ++i) {
-    var c = cells[i]
-    for(var j=0; j<c.length; ++j) {
-      var vj = findCell(vertices, [c[j]])
-      for(var k=j+1; k<c.length; ++k) {
-        labels.link(vj, findCell(vertices, [c[k]]))
-      }
-    }
-  }
-  var components        = []
-    , component_labels  = labels.ranks
-  for(var i=0; i<component_labels.length; ++i) {
-    component_labels[i] = -1
-  }
-  for(var i=0; i<cells.length; ++i) {
-    var l = labels.find(findCell(vertices, [cells[i][0]]));
-    if(component_labels[l] < 0) {
-      component_labels[l] = components.length
-      components.push([cells[i].slice(0)])
-    } else {
-      components[component_labels[l]].push(cells[i].slice(0))
-    }
-  }
-  return components
-}
-
-//Computes connected components for a cell complex
-function connectedComponents(cells, vertex_count) {
-  if(vertex_count) {
-    return connectedComponents_dense(cells, vertex_count)
-  }
-  return connectedComponents_sparse(cells)
-}
-exports.connectedComponents = connectedComponents
-
-},{"bit-twiddle":197,"union-find":198}],200:[function(require,module,exports){
-"use strict"
-
-module.exports = simplifyPolygon
-
-var orient = require("robust-orientation")
-var sc = require("simplicial-complex")
-
-function errorWeight(base, a, b) {
-  var area = Math.abs(orient(base, a, b))
-  var perim = Math.sqrt(Math.pow(a[0] - b[0], 2) + Math.pow(a[1]-b[1], 2))
-  return area / perim
-}
-
-function simplifyPolygon(cells, positions, minArea) {
-
-  var n = positions.length
-  var nc = cells.length
-  var inv = new Array(n)
-  var outv = new Array(n)
-  var weights = new Array(n)
-  var dead = new Array(n)
-  
-  //Initialize tables
-  for(var i=0; i<n; ++i) {
-    inv[i] = outv[i] = -1
-    weights[i] = Infinity
-    dead[i] = false
-  }
-
-  //Compute neighbors
-  for(var i=0; i<nc; ++i) {
-    var c = cells[i]
-    if(c.length !== 2) {
-      throw new Error("Input must be a graph")
-    }
-    var s = c[1]
-    var t = c[0]
-    if(outv[t] !== -1) {
-      outv[t] = -2
-    } else {
-      outv[t] = s
-    }
-    if(inv[s] !== -1) {
-      inv[s] = -2
-    } else {
-      inv[s] = t
-    }
-  }
-
-  //Updates the weight for vertex i
-  function computeWeight(i) {
-    if(dead[i]) {
-      return Infinity
-    }
-    //TODO: Check that the line segment doesn't cross once simplified
-    var s = inv[i]
-    var t = outv[i]
-    if((s<0) || (t<0)) {
-      return Infinity
-    } else {
-      return errorWeight(positions[i], positions[s], positions[t])
-    }
-  }
-
-  //Swaps two nodes on the heap (i,j) are the index of the nodes
-  function heapSwap(i,j) {
-    var a = heap[i]
-    var b = heap[j]
-    heap[i] = b
-    heap[j] = a
-    index[a] = j
-    index[b] = i
-  }
-
-  //Returns the weight of node i on the heap
-  function heapWeight(i) {
-    return weights[heap[i]]
-  }
-
-  function heapParent(i) {
-    if(i & 1) {
-      return (i - 1) >> 1
-    }
-    return (i >> 1) - 1
-  }
-
-  //Bubble element i down the heap
-  function heapDown(i) {
-    var w = heapWeight(i)
-    while(true) {
-      var tw = w
-      var left  = 2*i + 1
-      var right = 2*(i + 1)
-      var next = i
-      if(left < heapCount) {
-        var lw = heapWeight(left)
-        if(lw < tw) {
-          next = left
-          tw = lw
-        }
-      }
-      if(right < heapCount) {
-        var rw = heapWeight(right)
-        if(rw < tw) {
-          next = right
-        }
-      }
-      if(next === i) {
-        return i
-      }
-      heapSwap(i, next)
-      i = next      
-    }
-  }
-
-  //Bubbles element i up the heap
-  function heapUp(i) {
-    var w = heapWeight(i)
-    while(i > 0) {
-      var parent = heapParent(i)
-      if(parent >= 0) {
-        var pw = heapWeight(parent)
-        if(w < pw) {
-          heapSwap(i, parent)
-          i = parent
-          continue
-        }
-      }
-      return i
-    }
-  }
-
-  //Pop minimum element
-  function heapPop() {
-    if(heapCount > 0) {
-      var head = heap[0]
-      heapSwap(0, heapCount-1)
-      heapCount -= 1
-      heapDown(0)
-      return head
-    }
-    return -1
-  }
-
-  //Update heap item i
-  function heapUpdate(i, w) {
-    var a = heap[i]
-    if(weights[a] === w) {
-      return i
-    }
-    weights[a] = -Infinity
-    heapUp(i)
-    heapPop()
-    weights[a] = w
-    heapCount += 1
-    return heapUp(heapCount-1)
-  }
-
-  //Kills a vertex (assume vertex already removed from heap)
-  function kill(i) {
-    if(dead[i]) {
-      return
-    }
-    //Kill vertex
-    dead[i] = true
-    //Fixup topology
-    var s = inv[i]
-    var t = outv[i]
-    if(inv[t] >= 0) {
-      inv[t] = s
-    }
-    if(outv[s] >= 0) {
-      outv[s] = t
-    }
-
-    //Update weights on s and t
-    if(index[s] >= 0) {
-      heapUpdate(index[s], computeWeight(s))
-    }
-    if(index[t] >= 0) {
-      heapUpdate(index[t], computeWeight(t))
-    }
-  }
-
-  //Initialize weights and heap
-  var heap = []
-  var index = new Array(n)
-  for(var i=0; i<n; ++i) {
-    var w = weights[i] = computeWeight(i)
-    if(w < Infinity) {
-      index[i] = heap.length
-      heap.push(i)
-    } else {
-      index[i] = -1
-    }
-  }
-  var heapCount = heap.length
-  for(var i=heapCount>>1; i>=0; --i) {
-    heapDown(i)
-  }
-  
-  //Kill vertices
-  while(true) {
-    var hmin = heapPop()
-    if((hmin < 0) || (weights[hmin] > minArea)) {
-      break
-    }
-    kill(hmin)
-  }
-
-  //Build collapsed vertex table
-  var npositions = []
-  for(var i=0; i<n; ++i) {
-    if(!dead[i]) {
-      index[i] = npositions.length
-      npositions.push(positions[i].slice())
-    }
-  }
-  var nv = npositions.length
-
-  function tortoiseHare(seq, start) {
-    if(seq[start] < 0) {
-      return start
-    }
-    var t = start
-    var h = start
-    do {
-      //Walk two steps with h
-      var nh = seq[h]
-      if(!dead[h] || nh < 0 || nh === h) {
-        break
-      }
-      h = nh
-      nh = seq[h]
-      if(!dead[h] || nh < 0 || nh === h) {
-        break
-      }
-      h = nh
-
-      //Walk one step with t
-      t = seq[t]
-    } while(t !== h)
-    //Compress cycles
-    for(var v=start; v!==h; v = seq[v]) {
-      seq[v] = h
-    }
-    return h
-  }
-
-  var ncells = []
-  cells.forEach(function(c) {
-    var tin = tortoiseHare(inv, c[0])
-    var tout = tortoiseHare(outv, c[1])
-    if(tin >= 0 && tout >= 0 && tin !== tout) {
-      var cin = index[tin]
-      var cout = index[tout]
-      if(cin !== cout) {
-        ncells.push([ cin, cout ])
-      }
-    }
-  })
-
-  //Normalize result
-  sc.unique(sc.normalize(ncells))
-
-  //Return final list of cells
-  return {
-    positions: npositions,
-    edges: ncells
-  }
-}
-},{"robust-orientation":162,"simplicial-complex":199}],201:[function(require,module,exports){
+},{"./lib/zc-core":178}],180:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -36665,7 +36070,7 @@ module.exports = function handleAnnotationDefaults(annIn, fullLayout) {
     return annOut;
 };
 
-},{"../../lib":299,"../../plots/cartesian/axes":327,"../color":210,"./attributes":203}],202:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/axes":310,"../color":189,"./attributes":182}],181:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -36727,7 +36132,7 @@ module.exports = [
     }
 ];
 
-},{}],203:[function(require,module,exports){
+},{}],182:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -36920,7 +36325,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../../plots/cartesian/constants":332,"../../plots/font_attributes":346,"./arrow_paths":202}],204:[function(require,module,exports){
+},{"../../lib/extend":278,"../../plots/cartesian/constants":315,"../../plots/font_attributes":329,"./arrow_paths":181}],183:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -37007,7 +36412,7 @@ function annAutorange(gd) {
     });
 }
 
-},{"../../lib":299,"../../plots/cartesian/axes":327,"./draw":206}],205:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/axes":310,"./draw":185}],184:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -37034,7 +36439,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut) {
     }
 };
 
-},{"./annotation_defaults":201}],206:[function(require,module,exports){
+},{"./annotation_defaults":180}],185:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -37789,7 +37194,7 @@ function lineIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
     return {x: x1 + a * t, y: y1 + d * t};
 }
 
-},{"../../lib":299,"../../lib/setcursor":309,"../../lib/svg_text_utils":313,"../../plotly":323,"../../plots/cartesian/axes":327,"../../plots/plots":353,"../color":210,"../dragelement":231,"../drawing":233,"./annotation_defaults":201,"./defaults":205,"./draw_arrow_head":207,"d3":63,"fast-isnumeric":66}],207:[function(require,module,exports){
+},{"../../lib":282,"../../lib/setcursor":292,"../../lib/svg_text_utils":296,"../../plotly":306,"../../plots/cartesian/axes":310,"../../plots/plots":337,"../color":189,"../dragelement":210,"../drawing":212,"./annotation_defaults":180,"./defaults":184,"./draw_arrow_head":186,"d3":55,"fast-isnumeric":61}],186:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -37908,7 +37313,7 @@ module.exports = function drawArrowHead(el3, style, ends, mag) {
     if(doEnd) drawhead(end, endRot);
 };
 
-},{"../color":210,"../drawing":233,"./arrow_paths":202,"d3":63,"fast-isnumeric":66}],208:[function(require,module,exports){
+},{"../color":189,"../drawing":212,"./arrow_paths":181,"d3":55,"fast-isnumeric":61}],187:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -37946,7 +37351,7 @@ exports.add = function(gd) {
     Plotly.relayout(gd, 'annotations[' + nextAnn + ']', 'add');
 };
 
-},{"../../plotly":323,"./arrow_paths":202,"./attributes":203,"./calc_autorange":204,"./defaults":205,"./draw":206,"./draw_arrow_head":207}],209:[function(require,module,exports){
+},{"../../plotly":306,"./arrow_paths":181,"./attributes":182,"./calc_autorange":183,"./defaults":184,"./draw":185,"./draw_arrow_head":186}],188:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -37986,7 +37391,7 @@ exports.borderLine = '#BEC8D9';
 // gives back exactly lightLine if the other colors are defaults.
 exports.lightFraction = 100 * (0xe - 0x4) / (0xf - 0x4);
 
-},{}],210:[function(require,module,exports){
+},{}],189:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -38143,7 +37548,7 @@ function cleanOne(val) {
     return 'rgb(' + rgbStr + ')';
 }
 
-},{"./attributes":209,"fast-isnumeric":66,"tinycolor2":177}],211:[function(require,module,exports){
+},{"./attributes":188,"fast-isnumeric":61,"tinycolor2":165}],190:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -38299,7 +37704,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../../plots/cartesian/layout_attributes":336,"../../plots/font_attributes":346}],212:[function(require,module,exports){
+},{"../../lib/extend":278,"../../plots/cartesian/layout_attributes":319,"../../plots/font_attributes":329}],191:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -38366,7 +37771,7 @@ module.exports = function colorbarDefaults(containerIn, containerOut, layout) {
     coerce('titleside');
 };
 
-},{"../../lib":299,"../../plots/cartesian/tick_label_defaults":342,"../../plots/cartesian/tick_mark_defaults":343,"../../plots/cartesian/tick_value_defaults":344,"./attributes":211}],213:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/tick_label_defaults":325,"../../plots/cartesian/tick_mark_defaults":326,"../../plots/cartesian/tick_value_defaults":327,"./attributes":190}],192:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -38998,7 +38403,7 @@ module.exports = function draw(gd, id) {
     return component;
 };
 
-},{"../../lib":299,"../../lib/extend":295,"../../lib/setcursor":309,"../../plotly":323,"../../plots/cartesian/axes":327,"../../plots/cartesian/axis_defaults":328,"../../plots/cartesian/layout_attributes":336,"../../plots/cartesian/position_defaults":339,"../../plots/plots":353,"../../registry":360,"../color":210,"../dragelement":231,"../drawing":233,"../titles":280,"./attributes":211,"d3":63,"tinycolor2":177}],214:[function(require,module,exports){
+},{"../../lib":282,"../../lib/extend":278,"../../lib/setcursor":292,"../../plotly":306,"../../plots/cartesian/axes":310,"../../plots/cartesian/axis_defaults":311,"../../plots/cartesian/layout_attributes":319,"../../plots/cartesian/position_defaults":322,"../../plots/plots":337,"../../registry":344,"../color":189,"../dragelement":210,"../drawing":212,"../titles":263,"./attributes":190,"d3":55,"tinycolor2":165}],193:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39017,7 +38422,7 @@ module.exports = function hasColorbar(container) {
     return Lib.isPlainObject(container.colorbar);
 };
 
-},{"../../lib":299}],215:[function(require,module,exports){
+},{"../../lib":282}],194:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39038,7 +38443,7 @@ exports.draw = require('./draw');
 
 exports.hasColorbar = require('./has_colorbar');
 
-},{"./attributes":211,"./defaults":212,"./draw":213,"./has_colorbar":214}],216:[function(require,module,exports){
+},{"./attributes":190,"./defaults":191,"./draw":192,"./has_colorbar":193}],195:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39093,7 +38498,7 @@ module.exports = {
     }
 };
 
-},{}],217:[function(require,module,exports){
+},{}],196:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39159,7 +38564,7 @@ module.exports = function calc(trace, vals, containerStr, cLetter) {
     }
 };
 
-},{"../../lib":299,"./flip_scale":221,"./scales":228}],218:[function(require,module,exports){
+},{"../../lib":282,"./flip_scale":200,"./scales":207}],197:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39203,7 +38608,7 @@ module.exports = function makeColorScaleAttributes(context) {
     };
 };
 
-},{"../../lib/extend":295,"./attributes":216,"./scales.js":228}],219:[function(require,module,exports){
+},{"../../lib/extend":278,"./attributes":195,"./scales.js":207}],198:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39219,7 +38624,7 @@ var scales = require('./scales');
 
 module.exports = scales.RdBu;
 
-},{"./scales":228}],220:[function(require,module,exports){
+},{"./scales":207}],199:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39283,7 +38688,7 @@ module.exports = function colorScaleDefaults(traceIn, traceOut, layout, coerce, 
     if(showScale) colorbarDefaults(containerIn, containerOut, layout);
 };
 
-},{"../../lib":299,"../colorbar/defaults":212,"../colorbar/has_colorbar":214,"./flip_scale":221,"./is_valid_scale":225,"fast-isnumeric":66}],221:[function(require,module,exports){
+},{"../../lib":282,"../colorbar/defaults":191,"../colorbar/has_colorbar":193,"./flip_scale":200,"./is_valid_scale":204,"fast-isnumeric":61}],200:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39308,7 +38713,7 @@ module.exports = function flipScale(scl) {
     return sclNew;
 };
 
-},{}],222:[function(require,module,exports){
+},{}],201:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39348,7 +38753,7 @@ module.exports = function getScale(scl, dflt) {
     return scl;
 };
 
-},{"./default_scale":219,"./is_valid_scale_array":226,"./scales":228}],223:[function(require,module,exports){
+},{"./default_scale":198,"./is_valid_scale_array":205,"./scales":207}],202:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39394,7 +38799,7 @@ module.exports = function hasColorscale(trace, containerStr) {
     );
 };
 
-},{"../../lib":299,"./is_valid_scale":225,"fast-isnumeric":66}],224:[function(require,module,exports){
+},{"../../lib":282,"./is_valid_scale":204,"fast-isnumeric":61}],203:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39426,7 +38831,7 @@ exports.flipScale = require('./flip_scale');
 
 exports.makeScaleFunction = require('./make_scale_function');
 
-},{"./attributes":216,"./calc":217,"./default_scale":219,"./defaults":220,"./flip_scale":221,"./get_scale":222,"./has_colorscale":223,"./is_valid_scale":225,"./make_scale_function":227,"./scales":228}],225:[function(require,module,exports){
+},{"./attributes":195,"./calc":196,"./default_scale":198,"./defaults":199,"./flip_scale":200,"./get_scale":201,"./has_colorscale":202,"./is_valid_scale":204,"./make_scale_function":206,"./scales":207}],204:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39447,7 +38852,7 @@ module.exports = function isValidScale(scl) {
     else return isValidScaleArray(scl);
 };
 
-},{"./is_valid_scale_array":226,"./scales":228}],226:[function(require,module,exports){
+},{"./is_valid_scale_array":205,"./scales":207}],205:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39484,7 +38889,7 @@ module.exports = function isValidScaleArray(scl) {
     return true;
 };
 
-},{"tinycolor2":177}],227:[function(require,module,exports){
+},{"tinycolor2":165}],206:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39533,7 +38938,7 @@ module.exports = function makeScaleFunction(scl, cmin, cmax) {
     };
 };
 
-},{"../../lib":299,"../color":210,"d3":63,"fast-isnumeric":66,"tinycolor2":177}],228:[function(require,module,exports){
+},{"../../lib":282,"../color":189,"d3":55,"fast-isnumeric":61,"tinycolor2":165}],207:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39664,7 +39069,7 @@ module.exports = {
     ]
 };
 
-},{}],229:[function(require,module,exports){
+},{}],208:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39697,7 +39102,7 @@ module.exports = function align(v, dv, v0, v1, anchor) {
     return vc;
 };
 
-},{}],230:[function(require,module,exports){
+},{}],209:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39735,7 +39140,7 @@ module.exports = function getCursor(x, y, xanchor, yanchor) {
     return cursorset[y][x];
 };
 
-},{"../../lib":299}],231:[function(require,module,exports){
+},{"../../lib":282}],210:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39915,12 +39320,14 @@ function coverSlip() {
     return cover;
 }
 
+dragElement.coverSlip = coverSlip;
+
 function finishDrag(gd) {
     gd._dragging = false;
     if(gd._replotPending) Plotly.plot(gd);
 }
 
-},{"../../lib":299,"../../plotly":323,"../../plots/cartesian/constants":332,"./align":229,"./cursor":230,"./unhover":232}],232:[function(require,module,exports){
+},{"../../lib":282,"../../plotly":306,"../../plots/cartesian/constants":315,"./align":208,"./cursor":209,"./unhover":211}],211:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -39971,7 +39378,7 @@ unhover.raw = function unhoverRaw(gd, evt) {
     gd._hoverdata = undefined;
 };
 
-},{"../../lib/events":294}],233:[function(require,module,exports){
+},{"../../lib/events":277}],212:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -40317,6 +39724,7 @@ drawing.textPointStyle = function(s, trace) {
     s.each(function(d) {
         var p = d3.select(this),
             text = d.tx || trace.text;
+
         if(!text || Array.isArray(text)) {
             // isArray test handles the case of (intentionally) missing
             // or empty text within a text array
@@ -40571,7 +39979,7 @@ drawing.setClipUrl = function(s, localId) {
     s.attr('clip-path', 'url(' + url + ')');
 };
 
-},{"../../constants/xmlns_namespaces":289,"../../lib":299,"../../lib/svg_text_utils":313,"../../registry":360,"../../traces/scatter/make_bubble_size_func":413,"../../traces/scatter/subtypes":418,"../color":210,"../colorscale":224,"./symbol_defs":234,"d3":63,"fast-isnumeric":66}],234:[function(require,module,exports){
+},{"../../constants/xmlns_namespaces":272,"../../lib":282,"../../lib/svg_text_utils":296,"../../registry":344,"../../traces/scatter/make_bubble_size_func":397,"../../traces/scatter/subtypes":402,"../color":189,"../colorscale":203,"./symbol_defs":213,"d3":55,"fast-isnumeric":61}],213:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41047,7 +40455,7 @@ module.exports = {
     }
 };
 
-},{"d3":63}],235:[function(require,module,exports){
+},{"d3":55}],214:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41146,7 +40554,7 @@ module.exports = {
     }
 };
 
-},{}],236:[function(require,module,exports){
+},{}],215:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41209,7 +40617,7 @@ function calcOneAxis(calcTrace, trace, axis, coord) {
     Axes.expand(axis, vals, {padded: true});
 }
 
-},{"../../plots/cartesian/axes":327,"../../registry":360,"./compute_error":237,"fast-isnumeric":66}],237:[function(require,module,exports){
+},{"../../plots/cartesian/axes":310,"../../registry":344,"./compute_error":216,"fast-isnumeric":61}],216:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41305,7 +40713,7 @@ function makeComputeErrorValue(type, value) {
     }
 }
 
-},{}],238:[function(require,module,exports){
+},{}],217:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41382,7 +40790,7 @@ module.exports = function(traceIn, traceOut, defaultColor, opts) {
     }
 };
 
-},{"../../lib":299,"../../registry":360,"./attributes":235,"fast-isnumeric":66}],239:[function(require,module,exports){
+},{"../../lib":282,"../../registry":344,"./attributes":214,"fast-isnumeric":61}],218:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41441,7 +40849,7 @@ errorBars.hoverInfo = function(calcPoint, trace, hoverPoint) {
     }
 };
 
-},{"./attributes":235,"./calc":236,"./defaults":238,"./plot":240,"./style":241}],240:[function(require,module,exports){
+},{"./attributes":214,"./calc":215,"./defaults":217,"./plot":219,"./style":220}],219:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41460,8 +40868,9 @@ var subTypes = require('../../traces/scatter/subtypes');
 
 module.exports = function plot(traces, plotinfo, transitionOpts) {
     var isNew;
-    var xa = plotinfo.x(),
-        ya = plotinfo.y();
+
+    var xa = plotinfo.xaxis,
+        ya = plotinfo.yaxis;
 
     var hasAnimation = transitionOpts && transitionOpts.duration > 0;
 
@@ -41604,7 +41013,7 @@ function errorCoords(d, xa, ya) {
     return out;
 }
 
-},{"../../traces/scatter/subtypes":418,"d3":63,"fast-isnumeric":66}],241:[function(require,module,exports){
+},{"../../traces/scatter/subtypes":402,"d3":55,"fast-isnumeric":61}],220:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41641,7 +41050,7 @@ module.exports = function style(traces) {
     });
 };
 
-},{"../color":210,"d3":63}],242:[function(require,module,exports){
+},{"../color":189,"d3":55}],221:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41756,7 +41165,7 @@ module.exports = {
     }
 };
 
-},{"../../plots/cartesian/constants":332}],243:[function(require,module,exports){
+},{"../../plots/cartesian/constants":315}],222:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41822,7 +41231,7 @@ function imageDefaults(imageIn, imageOut, fullLayout) {
     return imageOut;
 }
 
-},{"../../lib":299,"../../plots/cartesian/axes":327,"./attributes":242}],244:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/axes":310,"./attributes":221}],223:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -41998,7 +41407,7 @@ module.exports = function draw(gd) {
     imagesAbove.each(applyAttributes);
 };
 
-},{"../../constants/xmlns_namespaces":289,"../../plots/cartesian/axes":327,"../drawing":233,"d3":63}],245:[function(require,module,exports){
+},{"../../constants/xmlns_namespaces":272,"../../plots/cartesian/axes":310,"../drawing":212,"d3":55}],224:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -42023,7 +41432,7 @@ module.exports = {
     supplyLayoutDefaults: supplyLayoutDefaults
 };
 
-},{"./attributes":242,"./defaults":243,"./draw":244}],246:[function(require,module,exports){
+},{"./attributes":221,"./defaults":222,"./draw":223}],225:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -42072,7 +41481,7 @@ exports.isMiddleAnchor = function isMiddleAnchor(opts) {
     );
 };
 
-},{}],247:[function(require,module,exports){
+},{}],226:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -42114,6 +41523,13 @@ module.exports = {
         valType: 'enumerated',
         values: ['v', 'h'],
         dflt: 'v',
+        
+        
+    },
+    horizontalspacing: {
+        valType: 'enumerated',
+        values: ['column', 'wrapped'],
+        dflt: ['column'],
         
         
     },
@@ -42163,7 +41579,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../../plots/font_attributes":346,"../color/attributes":209}],248:[function(require,module,exports){
+},{"../../lib/extend":278,"../../plots/font_attributes":329,"../color/attributes":188}],227:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -42181,7 +41597,7 @@ module.exports = {
     scrollBarMargin: 4
 };
 
-},{}],249:[function(require,module,exports){
+},{}],228:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -42207,6 +41623,7 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
 
     var visibleTraces = 0,
         defaultOrder = 'normal',
+        defaultHorizontalSpacing = 'column',
         defaultX,
         defaultY,
         defaultXAnchor,
@@ -42271,10 +41688,11 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     coerce('xanchor', defaultXAnchor);
     coerce('y', defaultY);
     coerce('yanchor', defaultYAnchor);
+    coerce('horizontalspacing', defaultHorizontalSpacing);
     Lib.noneOrAll(containerIn, containerOut, ['x', 'y']);
 };
 
-},{"../../lib":299,"../../plots/layout_attributes":352,"../../registry":360,"./attributes":247,"./helpers":252}],250:[function(require,module,exports){
+},{"../../lib":282,"../../plots/layout_attributes":335,"../../registry":344,"./attributes":226,"./helpers":231}],229:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -42750,7 +42168,8 @@ function computeLegendDimensions(gd, groups, traces) {
     var fullLayout = gd._fullLayout,
         opts = fullLayout.legend,
         borderwidth = opts.borderwidth,
-        isGrouped = helpers.isGrouped(opts);
+        isGrouped = helpers.isGrouped(opts),
+        isHorizontalColumn = helpers.isHorizontalColumn(opts);
 
     if(helpers.isVertical(opts)) {
         if(isGrouped) {
@@ -42867,14 +42286,14 @@ function computeLegendDimensions(gd, groups, traces) {
             maxTraceWidth = 0,
             offsetX = 0;
 
-        // calculate largest width for traces and use for width of all legend items
+        // calculate largest width for traces and use for width of all legend items (if horizontalspacing mode is 'column')
         traces.each(function(d) {
             maxTraceWidth = Math.max(40 + d[0].width, maxTraceWidth);
         });
 
         traces.each(function(d) {
             var legendItem = d[0],
-                traceWidth = maxTraceWidth,
+                traceWidth = isHorizontalColumn ? maxTraceWidth : 40 + d[0].width,
                 traceGap = opts.tracegroupgap || 5;
 
             if((borderwidth + offsetX + traceGap + traceWidth) > (fullLayout.width - (fullLayout.margin.r + fullLayout.margin.l))) {
@@ -42972,7 +42391,7 @@ function expandHorizontalMargin(gd) {
     });
 }
 
-},{"../../lib":299,"../../lib/svg_text_utils":313,"../../plotly":323,"../../plots/plots":353,"../../registry":360,"../color":210,"../dragelement":231,"../drawing":233,"./anchor_utils":246,"./constants":248,"./get_legend_data":251,"./helpers":252,"./style":254,"d3":63}],251:[function(require,module,exports){
+},{"../../lib":282,"../../lib/svg_text_utils":296,"../../plotly":306,"../../plots/plots":337,"../../registry":344,"../color":189,"../dragelement":210,"../drawing":212,"./anchor_utils":225,"./constants":227,"./get_legend_data":230,"./helpers":231,"./style":233,"d3":55}],230:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -43077,7 +42496,7 @@ module.exports = function getLegendData(calcdata, opts) {
     return legendData;
 };
 
-},{"../../registry":360,"./helpers":252}],252:[function(require,module,exports){
+},{"../../registry":344,"./helpers":231}],231:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -43108,7 +42527,10 @@ exports.isReversed = function isReversed(legendLayout) {
     return (legendLayout.traceorder || '').indexOf('reversed') !== -1;
 };
 
-},{"../../registry":360}],253:[function(require,module,exports){
+exports.isHorizontalColumn = function isHorizontalColumn(legendLayout) {
+    return legendLayout.horizontalspacing === 'column';
+}
+},{"../../registry":344}],232:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -43136,7 +42558,7 @@ legend.draw = require('./draw');
 
 legend.style = require('./style');
 
-},{"./attributes":247,"./defaults":249,"./draw":250,"./style":254}],254:[function(require,module,exports){
+},{"./attributes":226,"./defaults":228,"./draw":229,"./style":233}],233:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -43358,7 +42780,7 @@ function stylePies(d) {
     if(pts.size()) pts.call(stylePie, d[0], trace);
 }
 
-},{"../../lib":299,"../../registry":360,"../../traces/pie/style_one":392,"../../traces/scatter/subtypes":418,"../color":210,"../drawing":233,"d3":63}],255:[function(require,module,exports){
+},{"../../lib":282,"../../registry":344,"../../traces/pie/style_one":376,"../../traces/scatter/subtypes":402,"../color":189,"../drawing":212,"d3":55}],234:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -43781,7 +43203,7 @@ function handleGeo(gd, ev) {
         geoIds = Plots.getSubplotIds(fullLayout, 'geo');
 
     for(var i = 0; i < geoIds.length; i++) {
-        var geo = fullLayout[geoIds[i]]._geo;
+        var geo = fullLayout[geoIds[i]]._subplot;
 
         if(attr === 'zoom') {
             var scale = geo.projection.scale();
@@ -43868,7 +43290,7 @@ modeBarButtons.resetViews = {
     }
 };
 
-},{"../../../build/ploticon":2,"../../lib":299,"../../plotly":323,"../../plots/cartesian/axes":327,"../../plots/plots":353,"../../snapshot/download":362}],256:[function(require,module,exports){
+},{"../../../build/ploticon":2,"../../lib":282,"../../plotly":306,"../../plots/cartesian/axes":310,"../../plots/plots":337,"../../snapshot/download":346}],235:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -43882,7 +43304,7 @@ modeBarButtons.resetViews = {
 
 exports.manage = require('./manage');
 
-},{"./manage":257}],257:[function(require,module,exports){
+},{"./manage":236}],236:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44110,7 +43532,7 @@ function fillCustomButton(customButtons) {
     return customButtons;
 }
 
-},{"../../plots/cartesian/axes":327,"../../traces/scatter/subtypes":418,"./buttons":255,"./modebar":258}],258:[function(require,module,exports){
+},{"../../plots/cartesian/axes":310,"../../traces/scatter/subtypes":402,"./buttons":234,"./modebar":237}],237:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44400,7 +43822,7 @@ function createModeBar(gd, buttons) {
 
 module.exports = createModeBar;
 
-},{"../../../build/ploticon":2,"../../lib":299,"d3":63}],259:[function(require,module,exports){
+},{"../../../build/ploticon":2,"../../lib":282,"d3":55}],238:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44489,7 +43911,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../../plots/font_attributes":346,"../color/attributes":209,"./button_attributes":260}],260:[function(require,module,exports){
+},{"../../lib/extend":278,"../../plots/font_attributes":329,"../color/attributes":188,"./button_attributes":239}],239:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44530,7 +43952,7 @@ module.exports = {
     }
 };
 
-},{}],261:[function(require,module,exports){
+},{}],240:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44559,7 +43981,7 @@ module.exports = {
     darkAmount: 10
 };
 
-},{}],262:[function(require,module,exports){
+},{}],241:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44652,7 +44074,7 @@ function getPosDflt(containerOut, layout, counterAxes) {
     return [containerOut.domain[0], posY + constants.yPad];
 }
 
-},{"../../lib":299,"../color":210,"./attributes":259,"./button_attributes":260,"./constants":261}],263:[function(require,module,exports){
+},{"../../lib":282,"../color":189,"./attributes":238,"./button_attributes":239,"./constants":240}],242:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44927,7 +44349,7 @@ function reposition(gd, buttons, opts, axName) {
     });
 }
 
-},{"../../lib/svg_text_utils":313,"../../plotly":323,"../../plots/cartesian/axis_ids":329,"../../plots/plots":353,"../color":210,"../drawing":233,"../legend/anchor_utils":246,"./constants":261,"./get_update_object":264,"d3":63}],264:[function(require,module,exports){
+},{"../../lib/svg_text_utils":296,"../../plotly":306,"../../plots/cartesian/axis_ids":312,"../../plots/plots":337,"../color":189,"../drawing":212,"../legend/anchor_utils":225,"./constants":240,"./get_update_object":243,"d3":55}],243:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -44985,7 +44407,7 @@ function getXRange(axisLayout, buttonLayout) {
     return [range0, range1];
 }
 
-},{"d3":63}],265:[function(require,module,exports){
+},{"d3":55}],244:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45007,7 +44429,7 @@ exports.handleDefaults = require('./defaults');
 
 exports.draw = require('./draw');
 
-},{"./attributes":259,"./defaults":262,"./draw":263}],266:[function(require,module,exports){
+},{"./attributes":238,"./defaults":241,"./draw":242}],245:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45065,7 +44487,7 @@ module.exports = {
     }
 };
 
-},{"../color/attributes":209}],267:[function(require,module,exports){
+},{"../color/attributes":188}],246:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45076,285 +44498,49 @@ module.exports = {
 
 'use strict';
 
+module.exports = {
 
-var Plotly = require('../../plotly');
-var Axes = require('../../plots/cartesian/axes');
-var Lib = require('../../lib');
+    // attribute container name
+    name: 'rangeslider',
 
-var svgNS = require('../../constants/xmlns_namespaces').svg;
+    // class names
 
-var helpers = require('./helpers');
-var rangePlot = require('./range_plot');
+    containerClassName: 'rangeslider-container',
+    bgClassName: 'rangeslider-bg',
+    rangePlotClassName: 'rangeslider-rangeplot',
 
+    maskMinClassName: 'rangeslider-mask-min',
+    maskMaxClassName: 'rangeslider-mask-max',
+    slideBoxClassName: 'rangeslider-slidebox',
 
-module.exports = function createSlider(gd) {
-    var fullLayout = gd._fullLayout,
-        sliderContainer = fullLayout._infolayer.selectAll('g.range-slider'),
-        options = fullLayout.xaxis.rangeslider,
-        width = fullLayout._size.w,
-        height = (fullLayout.height - fullLayout.margin.b - fullLayout.margin.t) * options.thickness,
-        handleWidth = 2,
-        offsetShift = Math.floor(options.borderwidth / 2),
-        x = fullLayout.margin.l,
-        y = fullLayout.height - height - fullLayout.margin.b;
+    grabberMinClassName: 'rangeslider-grabber-min',
+    grabAreaMinClassName: 'rangeslider-grabarea-min',
+    handleMinClassName: 'rangeslider-handle-min',
 
-    var minStart = 0,
-        maxStart = width;
+    grabberMaxClassName: 'rangeslider-grabber-max',
+    grabAreaMaxClassName: 'rangeslider-grabarea-max',
+    handleMaxClassName: 'rangeslider-handle-max',
 
-    var slider = document.createElementNS(svgNS, 'g');
-    helpers.setAttributes(slider, {
-        'class': 'range-slider',
-        'data-min': minStart,
-        'data-max': maxStart,
-        'pointer-events': 'all',
-        'transform': 'translate(' + x + ',' + y + ')'
-    });
+    // style constants
 
+    maskColor: 'rgba(0,0,0,0.4)',
 
-    var sliderBg = document.createElementNS(svgNS, 'rect'),
-        borderCorrect = options.borderwidth % 2 === 0 ? options.borderwidth : options.borderwidth - 1;
-    helpers.setAttributes(sliderBg, {
-        'fill': options.bgcolor,
-        'stroke': options.bordercolor,
-        'stroke-width': options.borderwidth,
-        'height': height + borderCorrect,
-        'width': width + borderCorrect,
-        'transform': 'translate(-' + offsetShift + ', -' + offsetShift + ')',
-        'shape-rendering': 'crispEdges'
-    });
+    slideBoxFill: 'transparent',
+    slideBoxCursor: 'ew-resize',
 
+    grabAreaFill: 'transparent',
+    grabAreaCursor: 'col-resize',
+    grabAreaWidth: 10,
+    grabAreaMinOffset: -6,
+    grabAreaMaxOffset: -2,
 
-    var maskMin = document.createElementNS(svgNS, 'rect');
-    helpers.setAttributes(maskMin, {
-        'x': 0,
-        'width': minStart,
-        'height': height,
-        'fill': 'rgba(0,0,0,0.4)'
-    });
-
-
-    var maskMax = document.createElementNS(svgNS, 'rect');
-    helpers.setAttributes(maskMax, {
-        'x': maxStart,
-        'width': width - maxStart,
-        'height': height,
-        'fill': 'rgba(0,0,0,0.4)'
-    });
-
-
-    var grabberMin = document.createElementNS(svgNS, 'g'),
-        grabAreaMin = document.createElementNS(svgNS, 'rect'),
-        handleMin = document.createElementNS(svgNS, 'rect');
-    helpers.setAttributes(grabberMin, { 'transform': 'translate(' + (minStart - handleWidth - 1) + ')' });
-    helpers.setAttributes(grabAreaMin, {
-        'width': 10,
-        'height': height,
-        'x': -6,
-        'fill': 'transparent',
-        'cursor': 'col-resize'
-    });
-    helpers.setAttributes(handleMin, {
-        'width': handleWidth,
-        'height': height / 2,
-        'y': height / 4,
-        'rx': 1,
-        'fill': 'white',
-        'stroke': '#666',
-        'shape-rendering': 'crispEdges'
-    });
-    helpers.appendChildren(grabberMin, [handleMin, grabAreaMin]);
-
-
-    var grabberMax = document.createElementNS(svgNS, 'g'),
-        grabAreaMax = document.createElementNS(svgNS, 'rect'),
-        handleMax = document.createElementNS(svgNS, 'rect');
-    helpers.setAttributes(grabberMax, { 'transform': 'translate(' + maxStart + ')' });
-    helpers.setAttributes(grabAreaMax, {
-        'width': 10,
-        'height': height,
-        'x': -2,
-        'fill': 'transparent',
-        'cursor': 'col-resize'
-    });
-    helpers.setAttributes(handleMax, {
-        'width': handleWidth,
-        'height': height / 2,
-        'y': height / 4,
-        'rx': 1,
-        'fill': 'white',
-        'stroke': '#666',
-        'shape-rendering': 'crispEdges'
-    });
-    helpers.appendChildren(grabberMax, [handleMax, grabAreaMax]);
-
-
-    var slideBox = document.createElementNS(svgNS, 'rect');
-    helpers.setAttributes(slideBox, {
-        'x': minStart,
-        'width': maxStart - minStart,
-        'height': height,
-        'cursor': 'ew-resize',
-        'fill': 'transparent'
-    });
-
-
-    slider.addEventListener('mousedown', function(event) {
-        var target = event.target,
-            startX = event.clientX,
-            offsetX = startX - slider.getBoundingClientRect().left,
-            minVal = slider.getAttribute('data-min'),
-            maxVal = slider.getAttribute('data-max');
-
-        window.addEventListener('mousemove', mouseMove);
-        window.addEventListener('mouseup', mouseUp);
-
-        function mouseMove(e) {
-            var delta = +e.clientX - startX,
-                pixelMin,
-                pixelMax;
-
-            switch(target) {
-                case slideBox:
-                    slider.style.cursor = 'ew-resize';
-
-                    pixelMin = +minVal + delta;
-                    pixelMax = +maxVal + delta;
-
-                    setPixelRange(pixelMin, pixelMax);
-                    setDataRange(pixelToData(pixelMin), pixelToData(pixelMax));
-                    break;
-
-                case grabAreaMin:
-                    slider.style.cursor = 'col-resize';
-
-                    pixelMin = +minVal + delta;
-                    pixelMax = +maxVal;
-
-                    setPixelRange(pixelMin, pixelMax);
-                    setDataRange(pixelToData(pixelMin), pixelToData(pixelMax));
-                    break;
-
-                case grabAreaMax:
-                    slider.style.cursor = 'col-resize';
-
-                    pixelMin = +minVal;
-                    pixelMax = +maxVal + delta;
-
-                    setPixelRange(pixelMin, pixelMax);
-                    setDataRange(pixelToData(pixelMin), pixelToData(pixelMax));
-                    break;
-
-                default:
-                    slider.style.cursor = 'ew-resize';
-
-                    pixelMin = offsetX;
-                    pixelMax = offsetX + delta;
-
-                    setPixelRange(pixelMin, pixelMax);
-                    setDataRange(pixelToData(pixelMin), pixelToData(pixelMax));
-                    break;
-            }
-        }
-
-        function mouseUp() {
-            window.removeEventListener('mousemove', mouseMove);
-            window.removeEventListener('mouseup', mouseUp);
-            slider.style.cursor = 'auto';
-        }
-    });
-
-    function pixelToData(pixel) {
-        var rangeMin = options.range[0],
-            rangeMax = options.range[1],
-            range = rangeMax - rangeMin,
-            dataValue = pixel / width * range + rangeMin;
-
-        dataValue = Lib.constrain(dataValue, rangeMin, rangeMax);
-
-        return dataValue;
-    }
-
-
-    function setRange(min, max) {
-        min = min || -Infinity;
-        max = max || Infinity;
-
-        var rangeMin = options.range[0],
-            rangeMax = options.range[1],
-            range = rangeMax - rangeMin,
-            pixelMin = (min - rangeMin) / range * width,
-            pixelMax = (max - rangeMin) / range * width;
-
-        setPixelRange(pixelMin, pixelMax);
-    }
-
-    function setDataRange(dataMin, dataMax) {
-        window.requestAnimationFrame(function() {
-            Plotly.relayout(gd, 'xaxis.range', [dataMin, dataMax]);
-        });
-    }
-
-
-    function setPixelRange(pixelMin, pixelMax) {
-
-        pixelMin = Lib.constrain(pixelMin, 0, width);
-        pixelMax = Lib.constrain(pixelMax, 0, width);
-
-        if(pixelMax < pixelMin) {
-            var temp = pixelMax;
-            pixelMax = pixelMin;
-            pixelMin = temp;
-        }
-
-        helpers.setAttributes(slider, {
-            'data-min': pixelMin,
-            'data-max': pixelMax
-        });
-
-        helpers.setAttributes(slideBox, {
-            'x': pixelMin,
-            'width': pixelMax - pixelMin
-        });
-
-        helpers.setAttributes(maskMin, { 'width': pixelMin });
-        helpers.setAttributes(maskMax, {
-            'x': pixelMax,
-            'width': width - pixelMax
-        });
-
-        helpers.setAttributes(grabberMin, { 'transform': 'translate(' + (pixelMin - handleWidth - 1) + ')' });
-        helpers.setAttributes(grabberMax, { 'transform': 'translate(' + pixelMax + ')' });
-    }
-
-
-    // Set slider range using axis autorange if necessary.
-    if(!options.range) {
-        options.range = Axes.getAutoRange(fullLayout.xaxis);
-    }
-
-    var rangePlots = rangePlot(gd, width, height);
-
-    helpers.appendChildren(slider, [
-        sliderBg,
-        rangePlots,
-        maskMin,
-        maskMax,
-        slideBox,
-        grabberMin,
-        grabberMax
-    ]);
-
-    // Set initially selected range
-    setRange(fullLayout.xaxis.range[0], fullLayout.xaxis.range[1]);
-
-    sliderContainer.data([0])
-        .enter().append(function() {
-            options.setRange = setRange;
-            return slider;
-        });
+    handleWidth: 2,
+    handleRadius: 1,
+    handleFill: '#fff',
+    handleStroke: '#666',
 };
 
-},{"../../constants/xmlns_namespaces":289,"../../lib":299,"../../plotly":323,"../../plots/cartesian/axes":327,"./helpers":269,"./range_plot":271}],268:[function(require,module,exports){
+},{}],247:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45372,15 +44558,19 @@ var attributes = require('./attributes');
 module.exports = function handleDefaults(layoutIn, layoutOut, axName, counterAxes) {
     if(!layoutIn[axName].rangeslider) return;
 
-    var containerIn = Lib.isPlainObject(layoutIn[axName].rangeslider) ?
-            layoutIn[axName].rangeslider : {},
+    // not super proud of this (maybe store _ in axis object instead
+    if(!Lib.isPlainObject(layoutIn[axName].rangeslider)) {
+        layoutIn[axName].rangeslider = {};
+    }
+
+    var containerIn = layoutIn[axName].rangeslider,
         containerOut = layoutOut[axName].rangeslider = {};
 
     function coerce(attr, dflt) {
         return Lib.coerce(containerIn, containerOut, attributes, attr, dflt);
     }
 
-    coerce('bgcolor');
+    coerce('bgcolor', layoutOut.plot_bgcolor);
     coerce('bordercolor');
     coerce('borderwidth');
     coerce('thickness');
@@ -45405,96 +44595,12 @@ module.exports = function handleDefaults(layoutIn, layoutOut, axName, counterAxe
             layoutOut[ax] = opposing;
         });
     }
+
+    // to map back range slider (auto) range
+    containerOut._input = containerIn;
 };
 
-},{"../../lib":299,"./attributes":266}],269:[function(require,module,exports){
-/**
-* Copyright 2012-2016, Plotly, Inc.
-* All rights reserved.
-*
-* This source code is licensed under the MIT license found in the
-* LICENSE file in the root directory of this source tree.
-*/
-
-'use strict';
-
-exports.setAttributes = function setAttributes(el, attributes) {
-    for(var key in attributes) {
-        el.setAttribute(key, attributes[key]);
-    }
-};
-
-
-exports.appendChildren = function appendChildren(el, children) {
-    for(var i = 0; i < children.length; i++) {
-        if(children[i]) {
-            el.appendChild(children[i]);
-        }
-    }
-};
-
-},{}],270:[function(require,module,exports){
-/**
-* Copyright 2012-2016, Plotly, Inc.
-* All rights reserved.
-*
-* This source code is licensed under the MIT license found in the
-* LICENSE file in the root directory of this source tree.
-*/
-
-'use strict';
-
-
-var Plots = require('../../plots/plots');
-
-var createSlider = require('./create_slider');
-var layoutAttributes = require('./attributes');
-var handleDefaults = require('./defaults');
-
-
-module.exports = {
-    moduleType: 'component',
-    name: 'rangeslider',
-    layoutAttributes: layoutAttributes,
-    handleDefaults: handleDefaults,
-    draw: draw
-};
-
-function draw(gd) {
-    if(!gd._fullLayout.xaxis) return;
-
-    var fullLayout = gd._fullLayout,
-        sliderContainer = fullLayout._infolayer.selectAll('g.range-slider'),
-        options = fullLayout.xaxis.rangeslider;
-
-
-    if(!options || !options.visible) {
-        sliderContainer.data([])
-            .exit().remove();
-
-        Plots.autoMargin(gd, 'range-slider');
-
-        return;
-    }
-
-
-    var height = (fullLayout.height - fullLayout.margin.b - fullLayout.margin.t) * options.thickness,
-        offsetShift = Math.floor(options.borderwidth / 2);
-
-    if(sliderContainer[0].length === 0 && !fullLayout._has('gl2d')) createSlider(gd);
-
-    // Need to default to 0 for when making gl plots
-    var bb = fullLayout.xaxis._boundingBox ?
-        fullLayout.xaxis._boundingBox.height : 0;
-
-    Plots.autoMargin(gd, 'range-slider', {
-        x: 0, y: 0, l: 0, r: 0, t: 0,
-        b: height + fullLayout.margin.b + bb,
-        pad: 15 + offsetShift * 2
-    });
-}
-
-},{"../../plots/plots":353,"./attributes":266,"./create_slider":267,"./defaults":268}],271:[function(require,module,exports){
+},{"../../lib":282,"./attributes":245}],248:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45507,175 +44613,535 @@ function draw(gd) {
 
 var d3 = require('d3');
 
+var Plotly = require('../../plotly');
+var Plots = require('../../plots/plots');
+
 var Lib = require('../../lib');
-var Symbols = require('../drawing/symbol_defs');
 var Drawing = require('../drawing');
+var Color = require('../color');
 
-var helpers = require('./helpers');
-var svgNS = require('../../constants/xmlns_namespaces').svg;
+var Cartesian = require('../../plots/cartesian');
+var Axes = require('../../plots/cartesian/axes');
 
-module.exports = function rangePlot(gd, w, h) {
+var dragElement = require('../dragelement');
+var setCursor = require('../../lib/setcursor');
 
+var constants = require('./constants');
+
+
+module.exports = function(gd) {
     var fullLayout = gd._fullLayout,
-        traces = gd._fullData,
-        xaxis = fullLayout.xaxis,
-        yaxis = fullLayout.yaxis,
-        minX = xaxis.rangeslider.range[0],
-        maxX = xaxis.rangeslider.range[1],
-        minY = yaxis.range[0],
-        maxY = yaxis.range[1];
+        rangeSliderData = makeRangeSliderData(fullLayout);
 
+    /*
+     * <g container />
+     *  <rect bg />
+     *  < .... range plot />
+     *  <rect mask-min />
+     *  <rect mask-max />
+     *  <rect slidebox />
+     *  <g grabber-min />
+     *      <rect handle-min />
+     *      <rect grabare-min />
+     *  <g grabber-max />
+     *      <rect handle-max />
+     *      <rect grabare-max />
+     *
+     *  ...
+     */
 
-    // create elements for plot and its clip
-    var clipPath = document.createElementNS(svgNS, 'path');
-    clipPath.setAttribute('d', ['M0,0', w + ',0', w + ',' + h, '0,' + h, 'Z'].join(' '));
-
-    var clip = document.createElementNS(svgNS, 'clipPath');
-    clip.setAttribute('id', 'range-clip-path');
-    clip.appendChild(clipPath);
-
-    var clipDefs = document.createElementNS(svgNS, 'defs');
-    clipDefs.appendChild(clip);
-
-    var rangePlot = document.createElementNS(svgNS, 'g');
-    d3.select(rangePlot).call(Drawing.setClipUrl, 'range-clip-path');
-    rangePlot.appendChild(clipDefs);
-
-
-    // for now, only scatter traces are supported
-    var allowedTypes = ['scatter'];
-
-    for(var i = 0; i < traces.length; i++) {
-
-        var trace = traces[i],
-            pointPairs = [];
-
-        if(allowedTypes.indexOf(trace.type) < 0) {
-            Lib.warn('Trace type ' + trace.type + ' not supported for range slider!');
-            continue;
-        }
-
-        var x = makeLinearData(trace, xaxis),
-            y = makeLinearData(trace, yaxis);
-
-        for(var k = 0; k < x.length; k++) {
-
-            var posX = w * (x[k] - minX) / (maxX - minX),
-                posY = h * (1 - (y[k] - minY) / (maxY - minY));
-
-            if(!isNaN(posX) && !isNaN(posY)) {
-                pointPairs.push([posX, posY]);
-            }
-        }
-
-        // more trace type range plots can be added here
-        helpers.appendChildren(rangePlot, makeScatter(trace, pointPairs, w, h));
+    function keyFunction(axisOpts) {
+        return axisOpts._name;
     }
 
+    var rangeSliders = fullLayout._infolayer
+        .selectAll('g.' + constants.containerClassName)
+        .data(rangeSliderData, keyFunction);
 
-    return rangePlot;
+    rangeSliders.enter().append('g')
+        .classed(constants.containerClassName, true)
+        .attr('pointer-events', 'all');
+
+    // remove exiting sliders and their corresponding clip paths
+    rangeSliders.exit().each(function(axisOpts) {
+        var rangeSlider = d3.select(this),
+            opts = axisOpts[constants.name];
+
+        rangeSlider.remove();
+        fullLayout._topdefs.select('#' + opts._clipId).remove();
+    });
+
+    // remove push margin object(s)
+    if(rangeSliders.exit().size()) clearPushMargins(gd);
+
+    // return early if no range slider is visible
+    if(rangeSliderData.length === 0) return;
+
+    // for all present range sliders
+    rangeSliders.each(function(axisOpts) {
+        var rangeSlider = d3.select(this),
+            opts = axisOpts[constants.name];
+
+        // compute new slider range using axis autorange if necessary
+        // copy back range to input range slider container to skip
+        // this step in subsequent draw calls
+        if(!opts.range) {
+            opts._input.range = opts.range = Axes.getAutoRange(axisOpts);
+        }
+
+        // update range slider dimensions
+
+        var margin = fullLayout.margin,
+            graphSize = fullLayout._size,
+            domain = axisOpts.domain;
+
+        opts._id = constants.name + axisOpts._id;
+        opts._clipId = opts._id + '-' + fullLayout._uid;
+
+        opts._width = graphSize.w * (domain[1] - domain[0]);
+        opts._height = (fullLayout.height - margin.b - margin.t) * opts.thickness;
+        opts._offsetShift = Math.floor(opts.borderwidth / 2);
+
+        var x = margin.l + (graphSize.w * domain[0]),
+            y = fullLayout.height - opts._height - margin.b;
+
+        rangeSlider.attr('transform', 'translate(' + x + ',' + y + ')');
+
+        // update inner nodes
+
+        rangeSlider
+            .call(drawBg, gd, axisOpts, opts)
+            .call(addClipPath, gd, axisOpts, opts)
+            .call(drawRangePlot, gd, axisOpts, opts)
+            .call(drawMasks, gd, axisOpts, opts)
+            .call(drawSlideBox, gd, axisOpts, opts)
+            .call(drawGrabbers, gd, axisOpts, opts);
+
+        // update data <--> pixel coordinate conversion methods
+
+        var range0 = opts.range[0],
+            range1 = opts.range[1],
+            dist = range1 - range0;
+
+        opts.p2d = function(v) {
+            return (v / opts._width) * dist + range0;
+        };
+
+        opts.d2p = function(v) {
+            return (v - range0) / dist * opts._width;
+        };
+
+        // setup drag element
+        setupDragElement(rangeSlider, gd, axisOpts, opts);
+
+        // update current range
+        setPixelRange(rangeSlider, gd, axisOpts, opts);
+
+        // update margins
+
+        var bb = axisOpts._boundingBox ? axisOpts._boundingBox.height : 0;
+
+        Plots.autoMargin(gd, opts._id, {
+            x: 0, y: 0, l: 0, r: 0, t: 0,
+            b: opts._height + fullLayout.margin.b + bb,
+            pad: 15 + opts._offsetShift * 2
+        });
+    });
 };
 
-function makeLinearData(trace, axis) {
-    var data = axis.makeCalcdata(trace || [], axis._id[0]);
+function makeRangeSliderData(fullLayout) {
+    if(!fullLayout.xaxis) return [];
+    if(!fullLayout.xaxis[constants.name]) return [];
+    if(!fullLayout.xaxis[constants.name].visible) return [];
+    if(fullLayout._has('gl2d')) return [];
 
-    for(var i = 0; i < data.length; i++) {
-        data[i] = axis.c2l(data[i]);
-    }
-
-    return data;
+    return [fullLayout.xaxis];
 }
 
+function setupDragElement(rangeSlider, gd, axisOpts, opts) {
+    var slideBox = rangeSlider.select('rect.' + constants.slideBoxClassName).node(),
+        grabAreaMin = rangeSlider.select('rect.' + constants.grabAreaMinClassName).node(),
+        grabAreaMax = rangeSlider.select('rect.' + constants.grabAreaMaxClassName).node();
 
-function makeScatter(trace, pointPairs, w, h) {
+    rangeSlider.on('mousedown', function() {
+        var event = d3.event,
+            target = event.target,
+            startX = event.clientX,
+            offsetX = startX - rangeSlider.node().getBoundingClientRect().left,
+            minVal = opts.d2p(axisOpts.range[0]),
+            maxVal = opts.d2p(axisOpts.range[1]);
 
-    // create the line
-    var line, markers, fill;
+        var dragCover = dragElement.coverSlip();
 
-    if(trace.line) {
-        line = document.createElementNS(svgNS, 'path');
+        dragCover.addEventListener('mousemove', mouseMove);
+        dragCover.addEventListener('mouseup', mouseUp);
 
-        var linePath = Drawing.smoothopen(pointPairs, trace.line.smoothing || 0);
+        function mouseMove(e) {
+            var delta = +e.clientX - startX;
+            var pixelMin, pixelMax, cursor;
 
-        helpers.setAttributes(line, {
-            'd': linePath,
-            'fill': 'none',
-            'stroke': trace.line ? trace.line.color : 'transparent',
-            'stroke-width': trace.line.width / 2 || 1,
-            'opacity': 1
-        });
-    }
+            switch(target) {
+                case slideBox:
+                    cursor = 'ew-resize';
+                    pixelMin = minVal + delta;
+                    pixelMax = maxVal + delta;
+                    break;
 
-    // create points if there's markers
-    if(trace.marker) {
-        markers = document.createElementNS(svgNS, 'g');
+                case grabAreaMin:
+                    cursor = 'col-resize';
+                    pixelMin = minVal + delta;
+                    pixelMax = maxVal;
+                    break;
 
-        var points = pointPairs.map(function(p, i) {
-            var point = document.createElementNS(svgNS, 'g'),
-                symbol = document.createElementNS(svgNS, 'path'),
-                size;
+                case grabAreaMax:
+                    cursor = 'col-resize';
+                    pixelMin = minVal;
+                    pixelMax = maxVal + delta;
+                    break;
 
-            if(Array.isArray(trace.marker.size)) {
-                size = typeof trace.marker.size[i] === 'number' ?
-                    Math.max(trace.marker.size[i] / (trace.marker.sizeref || 1) / 15, 0) :
-                    0;
-            } else {
-                size = Math.max(trace.marker.size / 15, 2);
+                default:
+                    cursor = 'ew-resize';
+                    pixelMin = offsetX;
+                    pixelMax = offsetX + delta;
+                    break;
             }
 
-            helpers.setAttributes(symbol, {
-                'd': Symbols[trace.marker.symbol].f(size),
-                'fill': trace.marker.color,
-                'stroke': trace.marker.line.color,
-                'stroke-width': trace.marker.line.width,
-                'opacity': trace.marker.opacity
-            });
+            if(pixelMax < pixelMin) {
+                var tmp = pixelMax;
+                pixelMax = pixelMin;
+                pixelMin = tmp;
+            }
 
-            helpers.setAttributes(point, {
-                'transform': 'translate(' + p[0] + ',' + p[1] + ')'
-            });
+            opts._pixelMin = pixelMin;
+            opts._pixelMax = pixelMax;
 
-            point.appendChild(symbol);
-
-            return point;
-        });
-
-        helpers.appendChildren(markers, points);
-    }
-
-
-    // create fill if set
-    if(trace.fill !== 'none') {
-        fill = document.createElementNS(svgNS, 'path');
-
-        switch(trace.fill) {
-            case 'tozeroy':
-                pointPairs.unshift([pointPairs[0][0], h]);
-                pointPairs.push([pointPairs[pointPairs.length - 1][0], h]);
-                break;
-
-            case 'tozerox':
-                pointPairs.unshift([0, pointPairs[pointPairs.length - 1][1]]);
-                break;
-
-            default:
-                Lib.warn('Fill type ' + trace.fill + ' not supported for range slider! (yet...)');
-                break;
+            setCursor(d3.select(dragCover), cursor);
+            setDataRange(rangeSlider, gd, axisOpts, opts);
         }
 
-        var fillPath = Drawing.smoothopen(pointPairs, trace.line.smoothing || 0);
-
-        helpers.setAttributes(fill, {
-            'd': fillPath,
-            'fill': trace.fillcolor || 'transparent'
-        });
-    }
-
-
-    return [line, markers, fill];
+        function mouseUp() {
+            dragCover.removeEventListener('mousemove', mouseMove);
+            dragCover.removeEventListener('mouseup', mouseUp);
+            Lib.removeElement(dragCover);
+        }
+    });
 }
 
-},{"../../constants/xmlns_namespaces":289,"../../lib":299,"../drawing":233,"../drawing/symbol_defs":234,"./helpers":269,"d3":63}],272:[function(require,module,exports){
+function setDataRange(rangeSlider, gd, axisOpts, opts) {
+
+    function clamp(v) {
+        return Lib.constrain(v, opts.range[0], opts.range[1]);
+    }
+
+    var dataMin = clamp(opts.p2d(opts._pixelMin)),
+        dataMax = clamp(opts.p2d(opts._pixelMax));
+
+    window.requestAnimationFrame(function() {
+        Plotly.relayout(gd, 'xaxis.range', [dataMin, dataMax]);
+    });
+}
+
+function setPixelRange(rangeSlider, gd, axisOpts, opts) {
+
+    function clamp(v) {
+        return Lib.constrain(v, 0, opts._width);
+    }
+
+    var pixelMin = clamp(opts.d2p(axisOpts.range[0])),
+        pixelMax = clamp(opts.d2p(axisOpts.range[1]));
+
+    rangeSlider.select('rect.' + constants.slideBoxClassName)
+        .attr('x', pixelMin)
+        .attr('width', pixelMax - pixelMin);
+
+    rangeSlider.select('rect.' + constants.maskMinClassName)
+        .attr('width', pixelMin);
+
+    rangeSlider.select('rect.' + constants.maskMaxClassName)
+        .attr('x', pixelMax)
+        .attr('width', opts._width - pixelMax);
+
+    rangeSlider.select('g.' + constants.grabberMinClassName)
+        .attr('transform', 'translate(' + (pixelMin - constants.handleWidth - 1) + ',0)');
+
+    rangeSlider.select('g.' + constants.grabberMaxClassName)
+        .attr('transform', 'translate(' + pixelMax + ',0)');
+}
+
+function drawBg(rangeSlider, gd, axisOpts, opts) {
+    var bg = rangeSlider.selectAll('rect.' + constants.bgClassName)
+        .data([0]);
+
+    bg.enter().append('rect')
+        .classed(constants.bgClassName, true)
+        .attr({
+            x: 0,
+            y: 0,
+            'shape-rendering': 'crispEdges'
+        });
+
+    var borderCorrect = (opts.borderwidth % 2) === 0 ?
+            opts.borderwidth :
+            opts.borderwidth - 1;
+
+    var offsetShift = -opts._offsetShift;
+
+    bg.attr({
+        width: opts._width + borderCorrect,
+        height: opts._height + borderCorrect,
+        transform: 'translate(' + offsetShift + ',' + offsetShift + ')',
+        fill: opts.bgcolor,
+        stroke: opts.bordercolor,
+        'stroke-width': opts.borderwidth,
+    });
+}
+
+function addClipPath(rangeSlider, gd, axisOpts, opts) {
+    var fullLayout = gd._fullLayout;
+
+    var clipPath = fullLayout._topdefs.selectAll('#' + opts._clipId)
+        .data([0]);
+
+    clipPath.enter().append('clipPath')
+        .attr('id', opts._clipId)
+        .append('rect')
+        .attr({ x: 0, y: 0 });
+
+    clipPath.select('rect').attr({
+        width: opts._width,
+        height: opts._height
+    });
+}
+
+function drawRangePlot(rangeSlider, gd, axisOpts, opts) {
+    var subplotData = Axes.getSubplots(gd, axisOpts),
+        calcData = gd.calcdata;
+
+    var rangePlots = rangeSlider.selectAll('g.' + constants.rangePlotClassName)
+        .data(subplotData, Lib.identity);
+
+    rangePlots.enter().append('g')
+        .attr('class', function(id) { return constants.rangePlotClassName + ' ' + id; })
+        .call(Drawing.setClipUrl, opts._clipId);
+
+    rangePlots.order();
+
+    rangePlots.exit().remove();
+
+    var mainplotinfo;
+
+    rangePlots.each(function(id, i) {
+        var plotgroup = d3.select(this),
+            isMainPlot = (i === 0);
+
+        var oppAxisOpts = Axes.getFromId(gd, id, 'y'),
+            oppAxisName = oppAxisOpts._name;
+
+        var mockFigure = {
+            data: [],
+            layout: {
+                xaxis: {
+                    domain: [0, 1],
+                    range: opts.range.slice()
+                },
+                width: opts._width,
+                height: opts._height,
+                margin: { t: 0, b: 0, l: 0, r: 0 }
+            }
+        };
+
+        mockFigure.layout[oppAxisName] = {
+            domain: [0, 1],
+            range: oppAxisOpts.range.slice()
+        };
+
+        Plots.supplyDefaults(mockFigure);
+
+        var xa = mockFigure._fullLayout.xaxis,
+            ya = mockFigure._fullLayout[oppAxisName];
+
+        var plotinfo = {
+            id: id,
+            plotgroup: plotgroup,
+            xaxis: xa,
+            yaxis: ya
+        };
+
+        if(isMainPlot) mainplotinfo = plotinfo;
+        else {
+            plotinfo.mainplot = 'xy';
+            plotinfo.mainplotinfo = mainplotinfo;
+        }
+
+        Cartesian.rangePlot(gd, plotinfo, filterRangePlotCalcData(calcData, id));
+
+        if(isMainPlot) plotinfo.bg.call(Color.fill, opts.bgcolor);
+    });
+}
+
+function filterRangePlotCalcData(calcData, subplotId) {
+    var out = [];
+
+    for(var i = 0; i < calcData.length; i++) {
+        var calcTrace = calcData[i],
+            trace = calcTrace[0].trace;
+
+        if(trace.xaxis + trace.yaxis === subplotId) {
+            out.push(calcTrace);
+        }
+    }
+
+    return out;
+}
+
+function drawMasks(rangeSlider, gd, axisOpts, opts) {
+    var maskMin = rangeSlider.selectAll('rect.' + constants.maskMinClassName)
+        .data([0]);
+
+    maskMin.enter().append('rect')
+        .classed(constants.maskMinClassName, true)
+        .attr({ x: 0, y: 0 });
+
+    maskMin.attr({
+        height: opts._height,
+        fill: constants.maskColor
+    });
+
+    var maskMax = rangeSlider.selectAll('rect.' + constants.maskMaxClassName)
+        .data([0]);
+
+    maskMax.enter().append('rect')
+        .classed(constants.maskMaxClassName, true)
+        .attr('y', 0);
+
+    maskMax.attr({
+        height: opts._height,
+        fill: constants.maskColor
+    });
+}
+
+function drawSlideBox(rangeSlider, gd, axisOpts, opts) {
+    var slideBox = rangeSlider.selectAll('rect.' + constants.slideBoxClassName)
+        .data([0]);
+
+    slideBox.enter().append('rect')
+        .classed(constants.slideBoxClassName, true)
+        .attr('y', 0)
+        .attr('cursor', constants.slideBoxCursor);
+
+    slideBox.attr({
+        height: opts._height,
+        fill: constants.slideBoxFill
+    });
+}
+
+function drawGrabbers(rangeSlider, gd, axisOpts, opts) {
+
+    // <g grabber />
+
+    var grabberMin = rangeSlider.selectAll('g.' + constants.grabberMinClassName)
+        .data([0]);
+    grabberMin.enter().append('g')
+        .classed(constants.grabberMinClassName, true);
+
+    var grabberMax = rangeSlider.selectAll('g.' + constants.grabberMaxClassName)
+        .data([0]);
+    grabberMax.enter().append('g')
+        .classed(constants.grabberMaxClassName, true);
+
+    // <g handle />
+
+    var handleFixAttrs = {
+        x: 0,
+        width: constants.handleWidth,
+        rx: constants.handleRadius,
+        fill: constants.handleFill,
+        stroke: constants.handleStroke,
+        'shape-rendering': 'crispEdges'
+    };
+
+    var handleDynamicAttrs = {
+        y: opts._height / 4,
+        height: opts._height / 2,
+    };
+
+    var handleMin = grabberMin.selectAll('rect.' + constants.handleMinClassName)
+        .data([0]);
+    handleMin.enter().append('rect')
+        .classed(constants.handleMinClassName, true)
+        .attr(handleFixAttrs);
+    handleMin.attr(handleDynamicAttrs);
+
+    var handleMax = grabberMax.selectAll('rect.' + constants.handleMaxClassName)
+        .data([0]);
+    handleMax.enter().append('rect')
+        .classed(constants.handleMaxClassName, true)
+        .attr(handleFixAttrs);
+    handleMax.attr(handleDynamicAttrs);
+
+    // <g grabarea />
+
+    var grabAreaFixAttrs = {
+        width: constants.grabAreaWidth,
+        y: 0,
+        fill: constants.grabAreaFill,
+        cursor: constants.grabAreaCursor
+    };
+
+    var grabAreaMin = grabberMin.selectAll('rect.' + constants.grabAreaMinClassName)
+        .data([0]);
+    grabAreaMin.enter().append('rect')
+        .classed(constants.grabAreaMinClassName, true)
+        .attr(grabAreaFixAttrs);
+    grabAreaMin.attr({
+        x: constants.grabAreaMinOffset,
+        height: opts._height
+    });
+
+    var grabAreaMax = grabberMax.selectAll('rect.' + constants.grabAreaMaxClassName)
+        .data([0]);
+    grabAreaMax.enter().append('rect')
+        .classed(constants.grabAreaMaxClassName, true)
+        .attr(grabAreaFixAttrs);
+    grabAreaMax.attr({
+        x: constants.grabAreaMaxOffset,
+        height: opts._height
+    });
+}
+
+function clearPushMargins(gd) {
+    var pushMargins = gd._fullLayout._pushmargin || {},
+        keys = Object.keys(pushMargins);
+
+    for(var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+
+        if(k.indexOf(constants.name) !== -1) {
+            Plots.autoMargin(gd, k);
+        }
+    }
+}
+
+},{"../../lib":282,"../../lib/setcursor":292,"../../plotly":306,"../../plots/cartesian":318,"../../plots/cartesian/axes":310,"../../plots/plots":337,"../color":189,"../dragelement":210,"../drawing":212,"./constants":246,"d3":55}],249:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+'use strict';
+
+module.exports = {
+    moduleType: 'component',
+    name: 'rangeslider',
+    layoutAttributes: require('./attributes'),
+    handleDefaults: require('./defaults'),
+    draw: require('./draw')
+};
+
+},{"./attributes":245,"./defaults":247,"./draw":248}],250:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45766,7 +45232,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../../traces/scatter/attributes":398,"../annotations/attributes":203}],273:[function(require,module,exports){
+},{"../../lib/extend":278,"../../traces/scatter/attributes":382,"../annotations/attributes":182}],251:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45842,7 +45308,7 @@ function shapeBounds(ax, v0, v1, path, paramsToUse) {
     if(max >= min) return [min, max];
 }
 
-},{"../../plots/cartesian/axes":327,"./constants":274,"./helpers":277}],274:[function(require,module,exports){
+},{"../../plots/cartesian/axes":310,"./constants":252,"./helpers":255}],252:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45906,7 +45372,7 @@ module.exports = {
     }
 };
 
-},{}],275:[function(require,module,exports){
+},{}],253:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -45933,7 +45399,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut) {
     }
 };
 
-},{"./shape_defaults":279}],276:[function(require,module,exports){
+},{"./shape_defaults":257}],254:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -46496,7 +45962,7 @@ function movePath(pathIn, moveX, moveY) {
     });
 }
 
-},{"../../lib":299,"../../lib/setcursor":309,"../../plotly":323,"../../plots/cartesian/axes":327,"../color":210,"../dragelement":231,"../drawing":233,"./constants":274,"./defaults":275,"./helpers":277,"./shape_defaults":279,"fast-isnumeric":66}],277:[function(require,module,exports){
+},{"../../lib":282,"../../lib/setcursor":292,"../../plotly":306,"../../plots/cartesian/axes":310,"../color":189,"../dragelement":210,"../drawing":212,"./constants":252,"./defaults":253,"./helpers":255,"./shape_defaults":257,"fast-isnumeric":61}],255:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -46577,7 +46043,7 @@ exports.getPixelToData = function(gd, axis, isVertical) {
     return pixelToData;
 };
 
-},{}],278:[function(require,module,exports){
+},{}],256:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -46603,7 +46069,7 @@ var drawModule = require('./draw');
 exports.draw = drawModule.draw;
 exports.drawOne = drawModule.drawOne;
 
-},{"./attributes":272,"./calc_autorange":273,"./defaults":275,"./draw":276}],279:[function(require,module,exports){
+},{"./attributes":250,"./calc_autorange":251,"./defaults":253,"./draw":254}],257:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -46674,7 +46140,1032 @@ module.exports = function handleShapeDefaults(shapeIn, fullLayout) {
     return shapeOut;
 };
 
-},{"../../lib":299,"../../plots/cartesian/axes":327,"./attributes":272,"./helpers":277}],280:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/axes":310,"./attributes":250,"./helpers":255}],258:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+'use strict';
+
+var fontAttrs = require('../../plots/font_attributes');
+var padAttrs = require('../../plots/pad_attributes');
+var extendFlat = require('../../lib/extend').extendFlat;
+var animationAttrs = require('../../plots/animation_attributes');
+var constants = require('./constants');
+
+var stepsAttrs = {
+    _isLinkedToArray: true,
+
+    method: {
+        valType: 'enumerated',
+        values: ['restyle', 'relayout', 'animate', 'update'],
+        dflt: 'restyle',
+        
+        
+    },
+    args: {
+        valType: 'info_array',
+        
+        freeLength: true,
+        items: [
+            { valType: 'any' },
+            { valType: 'any' },
+            { valType: 'any' }
+        ],
+        
+    },
+    label: {
+        valType: 'string',
+        
+        
+    },
+    value: {
+        valType: 'string',
+        
+        
+    }
+};
+
+module.exports = {
+    visible: {
+        valType: 'boolean',
+        
+        dflt: true,
+        
+    },
+
+    active: {
+        valType: 'number',
+        
+        min: -10,
+        dflt: 0,
+        
+    },
+
+    steps: stepsAttrs,
+
+    lenmode: {
+        valType: 'enumerated',
+        values: ['fraction', 'pixels'],
+        
+        dflt: 'fraction',
+        
+    },
+    len: {
+        valType: 'number',
+        min: 0,
+        dflt: 1,
+        
+        
+    },
+    x: {
+        valType: 'number',
+        min: -2,
+        max: 3,
+        dflt: -0.05,
+        
+        
+    },
+    pad: extendFlat({}, padAttrs, {
+        
+    }),
+    xanchor: {
+        valType: 'enumerated',
+        values: ['auto', 'left', 'center', 'right'],
+        dflt: 'left',
+        
+        
+    },
+    y: {
+        valType: 'number',
+        min: -2,
+        max: 3,
+        dflt: 1,
+        
+        
+    },
+    yanchor: {
+        valType: 'enumerated',
+        values: ['auto', 'top', 'middle', 'bottom'],
+        dflt: 'bottom',
+        
+        
+    },
+
+    transition: {
+        duration: {
+            valType: 'number',
+            
+            min: 0,
+            dflt: 150,
+            
+        },
+        easing: {
+            valType: 'enumerated',
+            values: animationAttrs.transition.easing.values,
+            
+            dflt: 'cubic-in-out',
+            
+        },
+    },
+
+    currentvalue: {
+        visible: {
+            valType: 'boolean',
+            
+            dflt: true,
+            
+        },
+
+        xanchor: {
+            valType: 'enumerated',
+            values: ['left', 'center', 'right'],
+            dflt: 'left',
+            
+            
+        },
+
+        offset: {
+            valType: 'number',
+            dflt: 10,
+            
+            
+        },
+
+        prefix: {
+            valType: 'string',
+            
+            
+        },
+
+        suffix: {
+            valType: 'string',
+            
+            
+        },
+
+        font: extendFlat({}, fontAttrs, {
+            
+        }),
+    },
+
+    font: extendFlat({}, fontAttrs, {
+        
+    }),
+
+    activebgcolor: {
+        valType: 'color',
+        
+        dflt: constants.gripBgActiveColor,
+        
+    },
+    bgcolor: {
+        valType: 'color',
+        
+        dflt: constants.railBgColor,
+        
+    },
+    bordercolor: {
+        valType: 'color',
+        dflt: constants.railBorderColor,
+        
+        
+    },
+    borderwidth: {
+        valType: 'number',
+        min: 0,
+        dflt: constants.railBorderWidth,
+        
+        
+    },
+    ticklen: {
+        valType: 'number',
+        min: 0,
+        dflt: constants.tickLength,
+        
+        
+    },
+    tickcolor: {
+        valType: 'color',
+        dflt: constants.tickColor,
+        
+        
+    },
+    tickwidth: {
+        valType: 'number',
+        min: 0,
+        dflt: 1,
+        
+        
+    },
+    minorticklen: {
+        valType: 'number',
+        min: 0,
+        dflt: constants.minorTickLength,
+        
+        
+    },
+};
+
+},{"../../lib/extend":278,"../../plots/animation_attributes":307,"../../plots/font_attributes":329,"../../plots/pad_attributes":336,"./constants":259}],259:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+
+'use strict';
+
+
+module.exports = {
+
+    // layout attribute names
+    name: 'sliders',
+    itemName: 'slider',
+
+    // class names
+    containerClassName: 'slider-container',
+    groupClassName: 'slider-group',
+    inputAreaClass: 'slider-input-area',
+    railRectClass: 'slider-rail-rect',
+    railTouchRectClass: 'slider-rail-touch-rect',
+    gripRectClass: 'slider-grip-rect',
+    tickRectClass: 'slider-tick-rect',
+    inputProxyClass: 'slider-input-proxy',
+    labelsClass: 'slider-labels',
+    labelGroupClass: 'slider-label-group',
+    labelClass: 'slider-label',
+    currentValueClass: 'slider-current-value',
+
+    railHeight: 5,
+
+    // DOM attribute name in button group keeping track
+    // of active update menu
+    menuIndexAttrName: 'slider-active-index',
+
+    // id root pass to Plots.autoMargin
+    autoMarginIdRoot: 'slider-',
+
+    // min item width / height
+    minWidth: 30,
+    minHeight: 30,
+
+    // padding around item text
+    textPadX: 40,
+
+    // font size to height scale
+    fontSizeToHeight: 1.3,
+
+    // arrow offset off right edge
+    arrowOffsetX: 4,
+
+    railRadius: 2,
+    railWidth: 5,
+    railBorder: 4,
+    railBorderWidth: 1,
+    railBorderColor: '#bec8d9',
+    railBgColor: '#f8fafc',
+
+    // The distance of the rail from the edge of the touchable area
+    // Slightly less than the step inset because of the curved edges
+    // of the rail
+    railInset: 8,
+
+    // The distance from the extremal tick marks to the edge of the
+    // touchable area. This is basically the same as the grip radius,
+    // but for other styles it wouldn't really need to be.
+    stepInset: 10,
+
+    gripRadius: 10,
+    gripWidth: 20,
+    gripHeight: 20,
+    gripBorder: 20,
+    gripBorderWidth: 1,
+    gripBorderColor: '#bec8d9',
+    gripBgColor: '#f6f8fa',
+    gripBgActiveColor: '#dbdde0',
+
+    labelPadding: 8,
+    labelOffset: 0,
+
+    tickWidth: 1,
+    tickColor: '#333',
+    tickOffset: 25,
+    tickLength: 7,
+
+    minorTickOffset: 25,
+    minorTickColor: '#333',
+    minorTickLength: 4,
+
+    // Extra space below the current value label:
+    currentValuePadding: 8,
+    currentValueInset: 0,
+};
+
+},{}],260:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+'use strict';
+
+var Lib = require('../../lib');
+
+var attributes = require('./attributes');
+var constants = require('./constants');
+
+var name = constants.name;
+var stepAttrs = attributes.steps;
+
+
+module.exports = function slidersDefaults(layoutIn, layoutOut) {
+    var contIn = Array.isArray(layoutIn[name]) ? layoutIn[name] : [],
+        contOut = layoutOut[name] = [];
+
+    for(var i = 0; i < contIn.length; i++) {
+        var sliderIn = contIn[i] || {},
+            sliderOut = {};
+
+        sliderDefaults(sliderIn, sliderOut, layoutOut);
+
+        // used on button click to update the 'active' field
+        sliderOut._input = sliderIn;
+
+        // used to determine object constancy
+        sliderOut._index = i;
+
+        contOut.push(sliderOut);
+    }
+};
+
+function sliderDefaults(sliderIn, sliderOut, layoutOut) {
+
+    function coerce(attr, dflt) {
+        return Lib.coerce(sliderIn, sliderOut, attributes, attr, dflt);
+    }
+
+    var steps = stepsDefaults(sliderIn, sliderOut);
+
+    var visible = coerce('visible', steps.length > 0);
+    if(!visible) return;
+
+    coerce('active');
+
+    coerce('x');
+    coerce('y');
+    Lib.noneOrAll(sliderIn, sliderOut, ['x', 'y']);
+
+    coerce('xanchor');
+    coerce('yanchor');
+
+    coerce('len');
+    coerce('lenmode');
+
+    coerce('pad.t');
+    coerce('pad.r');
+    coerce('pad.b');
+    coerce('pad.l');
+
+    Lib.coerceFont(coerce, 'font', layoutOut.font);
+
+    var currentValueIsVisible = coerce('currentvalue.visible');
+
+    if(currentValueIsVisible) {
+        coerce('currentvalue.xanchor');
+        coerce('currentvalue.prefix');
+        coerce('currentvalue.suffix');
+        coerce('currentvalue.offset');
+
+        Lib.coerceFont(coerce, 'currentvalue.font', sliderOut.font);
+    }
+
+    coerce('transition.duration');
+    coerce('transition.easing');
+
+    coerce('bgcolor');
+    coerce('activebgcolor');
+    coerce('bordercolor');
+    coerce('borderwidth');
+    coerce('ticklen');
+    coerce('tickwidth');
+    coerce('tickcolor');
+    coerce('minorticklen');
+}
+
+function stepsDefaults(sliderIn, sliderOut) {
+    var valuesIn = sliderIn.steps || [],
+        valuesOut = sliderOut.steps = [];
+
+    var valueIn, valueOut;
+
+    function coerce(attr, dflt) {
+        return Lib.coerce(valueIn, valueOut, stepAttrs, attr, dflt);
+    }
+
+    for(var i = 0; i < valuesIn.length; i++) {
+        valueIn = valuesIn[i];
+        valueOut = {};
+
+        if(!Lib.isPlainObject(valueIn) || !Array.isArray(valueIn.args)) {
+            continue;
+        }
+
+        coerce('method');
+        coerce('args');
+        coerce('label', 'step-' + i);
+        coerce('value', valueOut.label);
+
+        valuesOut.push(valueOut);
+    }
+
+    return valuesOut;
+}
+
+},{"../../lib":282,"./attributes":258,"./constants":259}],261:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+
+'use strict';
+
+var d3 = require('d3');
+
+var Plotly = require('../../plotly');
+var Plots = require('../../plots/plots');
+var Lib = require('../../lib');
+var Color = require('../color');
+var Drawing = require('../drawing');
+var svgTextUtils = require('../../lib/svg_text_utils');
+var anchorUtils = require('../legend/anchor_utils');
+
+var constants = require('./constants');
+
+
+module.exports = function draw(gd) {
+    var fullLayout = gd._fullLayout,
+        sliderData = makeSliderData(fullLayout);
+
+    // draw a container for *all* sliders:
+    var sliders = fullLayout._infolayer
+        .selectAll('g.' + constants.containerClassName)
+        .data(sliderData.length > 0 ? [0] : []);
+
+    sliders.enter().append('g')
+        .classed(constants.containerClassName, true)
+        .style('cursor', 'ew-resize');
+
+    sliders.exit().remove();
+
+    // If no more sliders, clear the margisn:
+    if(sliders.exit().size()) clearPushMargins(gd);
+
+    // Return early if no menus visible:
+    if(sliderData.length === 0) return;
+
+    var sliderGroups = sliders.selectAll('g.' + constants.groupClassName)
+        .data(sliderData, keyFunction);
+
+    sliderGroups.enter().append('g')
+        .classed(constants.groupClassName, true);
+
+    sliderGroups.exit().each(function(sliderOpts) {
+        d3.select(this).remove();
+
+        Plots.autoMargin(gd, constants.autoMarginIdRoot + sliderOpts._index);
+    });
+
+    // Find the dimensions of the sliders:
+    for(var i = 0; i < sliderData.length; i++) {
+        var sliderOpts = sliderData[i];
+        findDimensions(gd, sliderOpts);
+    }
+
+    sliderGroups.each(function(sliderOpts) {
+        // If it has fewer than two options, it's not really a slider:
+        if(sliderOpts.steps.length < 2) return;
+
+        computeLabelSteps(sliderOpts);
+
+        drawSlider(gd, d3.select(this), sliderOpts);
+
+        // makeInputProxy(gd, d3.select(this), sliderOpts);
+
+    });
+};
+
+/* function makeInputProxy(gd, sliderGroup, sliderOpts) {
+    sliderOpts.inputProxy = gd._fullLayout._paperdiv.selectAll('input.' + constants.inputProxyClass)
+        .data([0]);
+}*/
+
+// This really only just filters by visibility:
+function makeSliderData(fullLayout) {
+    var contOpts = fullLayout[constants.name],
+        sliderData = [];
+
+    for(var i = 0; i < contOpts.length; i++) {
+        var item = contOpts[i];
+        if(!item.visible || !item.steps.length) continue;
+        sliderData.push(item);
+    }
+
+    return sliderData;
+}
+
+// This is set in the defaults step:
+function keyFunction(opts) {
+    return opts._index;
+}
+
+// Compute the dimensions (mutates sliderOpts):
+function findDimensions(gd, sliderOpts) {
+    var sliderLabels = gd._tester.selectAll('g.' + constants.labelGroupClass)
+        .data(sliderOpts.steps);
+
+    sliderLabels.enter().append('g')
+        .classed(constants.labelGroupClass, true);
+
+    // loop over fake buttons to find width / height
+    var maxLabelWidth = 0;
+    var labelHeight = 0;
+    sliderLabels.each(function(stepOpts) {
+        var labelGroup = d3.select(this);
+
+        var text = drawLabel(labelGroup, {step: stepOpts}, sliderOpts);
+
+        var tWidth = (text.node() && Drawing.bBox(text.node()).width) || 0;
+
+        // This just overwrites with the last. Which is fine as long as
+        // the bounding box (probably incorrectly) measures the text *on
+        // a single line*:
+        labelHeight = (text.node() && Drawing.bBox(text.node()).height) || 0;
+
+        maxLabelWidth = Math.max(maxLabelWidth, tWidth);
+    });
+
+    sliderLabels.remove();
+
+    sliderOpts.inputAreaWidth = Math.max(
+        constants.railWidth,
+        constants.gripHeight
+    );
+
+    sliderOpts.currentValueMaxWidth = 0;
+    sliderOpts.currentValueHeight = 0;
+    sliderOpts.currentValueTotalHeight = 0;
+
+    if(sliderOpts.currentvalue.visible) {
+        // Get the dimensions of the current value label:
+        var dummyGroup = gd._tester.append('g');
+
+        sliderLabels.each(function(stepOpts) {
+            var curValPrefix = drawCurrentValue(dummyGroup, sliderOpts, stepOpts.label);
+            var curValSize = (curValPrefix.node() && Drawing.bBox(curValPrefix.node())) || {width: 0, height: 0};
+            sliderOpts.currentValueMaxWidth = Math.max(sliderOpts.currentValueMaxWidth, Math.ceil(curValSize.width));
+            sliderOpts.currentValueHeight = Math.max(sliderOpts.currentValueHeight, Math.ceil(curValSize.height));
+        });
+
+        sliderOpts.currentValueTotalHeight = sliderOpts.currentValueHeight + sliderOpts.currentvalue.offset;
+
+        dummyGroup.remove();
+    }
+
+    var graphSize = gd._fullLayout._size;
+    sliderOpts.lx = graphSize.l + graphSize.w * sliderOpts.x;
+    sliderOpts.ly = graphSize.t + graphSize.h * (1 - sliderOpts.y);
+
+    if(sliderOpts.lenmode === 'fraction') {
+        // fraction:
+        sliderOpts.outerLength = Math.round(graphSize.w * sliderOpts.len);
+    } else {
+        // pixels:
+        sliderOpts.outerLength = sliderOpts.len;
+    }
+
+    // Set the length-wise padding so that the grip ends up *on* the end of
+    // the bar when at either extreme
+    sliderOpts.lenPad = Math.round(constants.gripWidth * 0.5);
+
+    // The length of the rail, *excluding* padding on either end:
+    sliderOpts.inputAreaStart = 0;
+    sliderOpts.inputAreaLength = Math.round(sliderOpts.outerLength - sliderOpts.pad.l - sliderOpts.pad.r);
+
+    var textableInputLength = sliderOpts.inputAreaLength - 2 * constants.stepInset;
+    var availableSpacePerLabel = textableInputLength / (sliderOpts.steps.length - 1);
+    var computedSpacePerLabel = maxLabelWidth + constants.labelPadding;
+    sliderOpts.labelStride = Math.max(1, Math.ceil(computedSpacePerLabel / availableSpacePerLabel));
+    sliderOpts.labelHeight = labelHeight;
+
+    sliderOpts.height = sliderOpts.currentValueTotalHeight + constants.tickOffset + sliderOpts.ticklen + constants.labelOffset + sliderOpts.labelHeight + sliderOpts.pad.t + sliderOpts.pad.b;
+
+    var xanchor = 'left';
+    if(anchorUtils.isRightAnchor(sliderOpts)) {
+        sliderOpts.lx -= sliderOpts.outerLength;
+        xanchor = 'right';
+    }
+    if(anchorUtils.isCenterAnchor(sliderOpts)) {
+        sliderOpts.lx -= sliderOpts.outerLength / 2;
+        xanchor = 'center';
+    }
+
+    var yanchor = 'top';
+    if(anchorUtils.isBottomAnchor(sliderOpts)) {
+        sliderOpts.ly -= sliderOpts.height;
+        yanchor = 'bottom';
+    }
+    if(anchorUtils.isMiddleAnchor(sliderOpts)) {
+        sliderOpts.ly -= sliderOpts.height / 2;
+        yanchor = 'middle';
+    }
+
+    sliderOpts.outerLength = Math.ceil(sliderOpts.outerLength);
+    sliderOpts.height = Math.ceil(sliderOpts.height);
+    sliderOpts.lx = Math.round(sliderOpts.lx);
+    sliderOpts.ly = Math.round(sliderOpts.ly);
+
+    Plots.autoMargin(gd, constants.autoMarginIdRoot + sliderOpts._index, {
+        x: sliderOpts.x,
+        y: sliderOpts.y,
+        l: sliderOpts.outerLength * ({right: 1, center: 0.5}[xanchor] || 0),
+        r: sliderOpts.outerLength * ({left: 1, center: 0.5}[xanchor] || 0),
+        b: sliderOpts.height * ({top: 1, middle: 0.5}[yanchor] || 0),
+        t: sliderOpts.height * ({bottom: 1, middle: 0.5}[yanchor] || 0)
+    });
+}
+
+function drawSlider(gd, sliderGroup, sliderOpts) {
+    // These are carefully ordered for proper z-ordering:
+    sliderGroup
+        .call(drawCurrentValue, sliderOpts)
+        .call(drawRail, sliderOpts)
+        .call(drawLabelGroup, sliderOpts)
+        .call(drawTicks, sliderOpts)
+        .call(drawTouchRect, gd, sliderOpts)
+        .call(drawGrip, gd, sliderOpts);
+
+    // Position the rectangle:
+    Lib.setTranslate(sliderGroup, sliderOpts.lx + sliderOpts.pad.l, sliderOpts.ly + sliderOpts.pad.t);
+
+    setActive(gd, sliderGroup, sliderOpts, sliderOpts.active, false, false);
+}
+
+function drawCurrentValue(sliderGroup, sliderOpts, valueOverride) {
+    if(!sliderOpts.currentvalue.visible) return;
+
+    var x0, textAnchor;
+    var text = sliderGroup.selectAll('text')
+        .data([0]);
+
+    switch(sliderOpts.currentvalue.xanchor) {
+        case 'right':
+        // This is anchored left and adjusted by the width of the longest label
+        // so that the prefix doesn't move. The goal of this is to emphasize
+        // what's actually changing and make the update less distracting.
+            x0 = sliderOpts.inputAreaLength - constants.currentValueInset - sliderOpts.currentValueMaxWidth;
+            textAnchor = 'left';
+            break;
+        case 'center':
+            x0 = sliderOpts.inputAreaLength * 0.5;
+            textAnchor = 'middle';
+            break;
+        default:
+            x0 = constants.currentValueInset;
+            textAnchor = 'left';
+    }
+
+    text.enter().append('text')
+        .classed(constants.labelClass, true)
+        .classed('user-select-none', true)
+        .attr('text-anchor', textAnchor);
+
+    var str = sliderOpts.currentvalue.prefix ? sliderOpts.currentvalue.prefix : '';
+
+    if(typeof valueOverride === 'string') {
+        str += valueOverride;
+    } else {
+        var curVal = sliderOpts.steps[sliderOpts.active].label;
+        str += curVal;
+    }
+
+    if(sliderOpts.currentvalue.suffix) {
+        str += sliderOpts.currentvalue.suffix;
+    }
+
+    text.call(Drawing.font, sliderOpts.currentvalue.font)
+        .text(str)
+        .call(svgTextUtils.convertToTspans);
+
+    Lib.setTranslate(text, x0, sliderOpts.currentValueHeight);
+
+    return text;
+}
+
+function drawGrip(sliderGroup, gd, sliderOpts) {
+    var grip = sliderGroup.selectAll('rect.' + constants.gripRectClass)
+        .data([0]);
+
+    grip.enter().append('rect')
+        .classed(constants.gripRectClass, true)
+        .call(attachGripEvents, gd, sliderGroup, sliderOpts)
+        .style('pointer-events', 'all');
+
+    grip.attr({
+        width: constants.gripWidth,
+        height: constants.gripHeight,
+        rx: constants.gripRadius,
+        ry: constants.gripRadius,
+    })
+        .call(Color.stroke, sliderOpts.bordercolor)
+        .call(Color.fill, sliderOpts.bgcolor)
+        .style('stroke-width', sliderOpts.borderwidth + 'px');
+}
+
+function drawLabel(item, data, sliderOpts) {
+    var text = item.selectAll('text')
+        .data([0]);
+
+    text.enter().append('text')
+        .classed(constants.labelClass, true)
+        .classed('user-select-none', true)
+        .attr('text-anchor', 'middle');
+
+    text.call(Drawing.font, sliderOpts.font)
+        .text(data.step.label)
+        .call(svgTextUtils.convertToTspans);
+
+    return text;
+}
+
+function drawLabelGroup(sliderGroup, sliderOpts) {
+    var labels = sliderGroup.selectAll('g.' + constants.labelsClass)
+        .data([0]);
+
+    labels.enter().append('g')
+        .classed(constants.labelsClass, true);
+
+    var labelItems = labels.selectAll('g.' + constants.labelGroupClass)
+        .data(sliderOpts.labelSteps);
+
+    labelItems.enter().append('g')
+        .classed(constants.labelGroupClass, true);
+
+    labelItems.exit().remove();
+
+    labelItems.each(function(d) {
+        var item = d3.select(this);
+
+        item.call(drawLabel, d, sliderOpts);
+
+        Lib.setTranslate(item,
+            normalizedValueToPosition(sliderOpts, d.fraction),
+            constants.tickOffset + sliderOpts.ticklen + sliderOpts.labelHeight + constants.labelOffset + sliderOpts.currentValueTotalHeight
+        );
+    });
+
+}
+
+function handleInput(gd, sliderGroup, sliderOpts, normalizedPosition, doTransition) {
+    var quantizedPosition = Math.round(normalizedPosition * (sliderOpts.steps.length - 1));
+
+    if(quantizedPosition !== sliderOpts.active) {
+        setActive(gd, sliderGroup, sliderOpts, quantizedPosition, true, doTransition);
+    }
+}
+
+function setActive(gd, sliderGroup, sliderOpts, index, doCallback, doTransition) {
+    sliderOpts._input.active = sliderOpts.active = index;
+
+    var step = sliderOpts.steps[sliderOpts.active];
+
+    sliderGroup.call(setGripPosition, sliderOpts, sliderOpts.active / (sliderOpts.steps.length - 1), doTransition);
+    sliderGroup.call(drawCurrentValue, sliderOpts);
+
+    if(step && step.method && doCallback) {
+        if(sliderGroup._nextMethod) {
+            // If we've already queued up an update, just overwrite it with the most recent:
+            sliderGroup._nextMethod.step = step;
+            sliderGroup._nextMethod.doCallback = doCallback;
+            sliderGroup._nextMethod.doTransition = doTransition;
+        } else {
+            sliderGroup._nextMethod = {step: step, doCallback: doCallback, doTransition: doTransition};
+            sliderGroup._nextMethodRaf = window.requestAnimationFrame(function() {
+                var _step = sliderGroup._nextMethod.step;
+                var args = _step.args;
+                if(!_step.method) return;
+
+                sliderOpts._invokingCommand = true;
+                Plotly[_step.method](gd, args[0], args[1], args[2]).then(function() {
+                    sliderOpts._invokingCommand = false;
+                }, function() {
+                    sliderOpts._invokingCommand = false;
+
+                    // This is not a disaster. Some methods like `animate` reject if interrupted
+                    // and *should* nicely log a warning.
+                    Lib.warn('Warning: Plotly.' + _step.method + ' was called and rejected.');
+                });
+
+                sliderGroup._nextMethod = null;
+                sliderGroup._nextMethodRaf = null;
+            });
+        }
+    }
+}
+
+function attachGripEvents(item, gd, sliderGroup, sliderOpts) {
+    var node = sliderGroup.node();
+    var $gd = d3.select(gd);
+
+    item.on('mousedown', function() {
+        var grip = sliderGroup.select('.' + constants.gripRectClass);
+
+        d3.event.stopPropagation();
+        d3.event.preventDefault();
+        grip.call(Color.fill, sliderOpts.activebgcolor);
+
+        var normalizedPosition = positionToNormalizedValue(sliderOpts, d3.mouse(node)[0]);
+        handleInput(gd, sliderGroup, sliderOpts, normalizedPosition, true);
+
+        $gd.on('mousemove', function() {
+            var normalizedPosition = positionToNormalizedValue(sliderOpts, d3.mouse(node)[0]);
+            handleInput(gd, sliderGroup, sliderOpts, normalizedPosition, false);
+        });
+
+        $gd.on('mouseup', function() {
+            grip.call(Color.fill, sliderOpts.bgcolor);
+            $gd.on('mouseup', null);
+            $gd.on('mousemove', null);
+        });
+    });
+}
+
+function drawTicks(sliderGroup, sliderOpts) {
+    var tick = sliderGroup.selectAll('rect.' + constants.tickRectClass)
+        .data(sliderOpts.steps);
+
+    tick.enter().append('rect')
+        .classed(constants.tickRectClass, true);
+
+    tick.exit().remove();
+
+    tick.attr({
+        width: sliderOpts.tickwidth + 'px',
+        'shape-rendering': 'crispEdges'
+    });
+
+    tick.each(function(d, i) {
+        var isMajor = i % sliderOpts.labelStride === 0;
+        var item = d3.select(this);
+
+        item
+            .attr({height: isMajor ? sliderOpts.ticklen : sliderOpts.minorticklen})
+            .call(Color.fill, isMajor ? sliderOpts.tickcolor : sliderOpts.tickcolor);
+
+        Lib.setTranslate(item,
+            normalizedValueToPosition(sliderOpts, i / (sliderOpts.steps.length - 1)) - 0.5 * sliderOpts.tickwidth,
+            (isMajor ? constants.tickOffset : constants.minorTickOffset) + sliderOpts.currentValueTotalHeight
+        );
+    });
+
+}
+
+function computeLabelSteps(sliderOpts) {
+    sliderOpts.labelSteps = [];
+    var i0 = 0;
+    var nsteps = sliderOpts.steps.length;
+
+    for(var i = i0; i < nsteps; i += sliderOpts.labelStride) {
+        sliderOpts.labelSteps.push({
+            fraction: i / (nsteps - 1),
+            step: sliderOpts.steps[i]
+        });
+    }
+}
+
+function setGripPosition(sliderGroup, sliderOpts, position, doTransition) {
+    var grip = sliderGroup.select('rect.' + constants.gripRectClass);
+
+    var x = normalizedValueToPosition(sliderOpts, position);
+
+    var el = grip;
+    if(doTransition && sliderOpts.transition.duration > 0 && !sliderOpts._invokingCommand) {
+        el = el.transition()
+            .duration(sliderOpts.transition.duration)
+            .ease(sliderOpts.transition.easing);
+    }
+
+    // Lib.setTranslate doesn't work here becasue of the transition duck-typing.
+    // It's also not necessary because there are no other transitions to preserve.
+    el.attr('transform', 'translate(' + (x - constants.gripWidth * 0.5) + ',' + (sliderOpts.currentValueTotalHeight) + ')');
+}
+
+// Convert a number from [0-1] to a pixel position relative to the slider group container:
+function normalizedValueToPosition(sliderOpts, normalizedPosition) {
+    return sliderOpts.inputAreaStart + constants.stepInset +
+        (sliderOpts.inputAreaLength - 2 * constants.stepInset) * Math.min(1, Math.max(0, normalizedPosition));
+}
+
+// Convert a position relative to the slider group to a nubmer in [0, 1]
+function positionToNormalizedValue(sliderOpts, position) {
+    return Math.min(1, Math.max(0, (position - constants.stepInset - sliderOpts.inputAreaStart) / (sliderOpts.inputAreaLength - 2 * constants.stepInset - 2 * sliderOpts.inputAreaStart)));
+}
+
+function drawTouchRect(sliderGroup, gd, sliderOpts) {
+    var rect = sliderGroup.selectAll('rect.' + constants.railTouchRectClass)
+        .data([0]);
+
+    rect.enter().append('rect')
+        .classed(constants.railTouchRectClass, true)
+        .call(attachGripEvents, gd, sliderGroup, sliderOpts)
+        .style('pointer-events', 'all');
+
+    rect.attr({
+        width: sliderOpts.inputAreaLength,
+        height: Math.max(sliderOpts.inputAreaWidth, constants.tickOffset + sliderOpts.ticklen + sliderOpts.labelHeight)
+    })
+        .call(Color.fill, sliderOpts.bgcolor)
+        .attr('opacity', 0);
+
+    Lib.setTranslate(rect, 0, sliderOpts.currentValueTotalHeight);
+}
+
+function drawRail(sliderGroup, sliderOpts) {
+    var rect = sliderGroup.selectAll('rect.' + constants.railRectClass)
+        .data([0]);
+
+    rect.enter().append('rect')
+        .classed(constants.railRectClass, true);
+
+    var computedLength = sliderOpts.inputAreaLength - constants.railInset * 2;
+
+    rect.attr({
+        width: computedLength,
+        height: constants.railWidth,
+        rx: constants.railRadius,
+        ry: constants.railRadius,
+        'shape-rendering': 'crispEdges'
+    })
+        .call(Color.stroke, sliderOpts.bordercolor)
+        .call(Color.fill, sliderOpts.bgcolor)
+        .style('stroke-width', sliderOpts.borderwidth + 'px');
+
+    Lib.setTranslate(rect,
+        constants.railInset,
+        (sliderOpts.inputAreaWidth - constants.railWidth) * 0.5 + sliderOpts.currentValueTotalHeight
+    );
+}
+
+function clearPushMargins(gd) {
+    var pushMargins = gd._fullLayout._pushmargin || {},
+        keys = Object.keys(pushMargins);
+
+    for(var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+
+        if(k.indexOf(constants.autoMarginIdRoot) !== -1) {
+            Plots.autoMargin(gd, k);
+        }
+    }
+}
+
+},{"../../lib":282,"../../lib/svg_text_utils":296,"../../plotly":306,"../../plots/plots":337,"../color":189,"../drawing":212,"../legend/anchor_utils":225,"./constants":259,"d3":55}],262:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+'use strict';
+
+
+exports.moduleType = 'component';
+
+exports.name = 'sliders';
+
+exports.layoutAttributes = require('./attributes');
+
+exports.supplyLayoutDefaults = require('./defaults');
+
+exports.draw = require('./draw');
+
+},{"./attributes":258,"./defaults":260,"./draw":261}],263:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -46904,7 +47395,7 @@ Titles.draw = function(gd, titleClass, options) {
     el.classed('js-placeholder', isplaceholder);
 };
 
-},{"../../lib":299,"../../lib/svg_text_utils":313,"../../plotly":323,"../../plots/plots":353,"../color":210,"../drawing":233,"d3":63,"fast-isnumeric":66}],281:[function(require,module,exports){
+},{"../../lib":282,"../../lib/svg_text_utils":296,"../../plotly":306,"../../plots/plots":337,"../color":189,"../drawing":212,"d3":55,"fast-isnumeric":61}],264:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -46918,13 +47409,14 @@ Titles.draw = function(gd, titleClass, options) {
 var fontAttrs = require('../../plots/font_attributes');
 var colorAttrs = require('../color/attributes');
 var extendFlat = require('../../lib/extend').extendFlat;
+var padAttrs = require('../../plots/pad_attributes');
 
 var buttonsAttrs = {
     _isLinkedToArray: true,
 
     method: {
         valType: 'enumerated',
-        values: ['restyle', 'relayout', 'animate'],
+        values: ['restyle', 'relayout', 'animate', 'update'],
         dflt: 'restyle',
         
         
@@ -46957,11 +47449,34 @@ module.exports = {
         
     },
 
+    type: {
+        valType: 'enumerated',
+        values: ['dropdown', 'buttons'],
+        dflt: 'dropdown',
+        
+        
+    },
+
+    direction: {
+        valType: 'enumerated',
+        values: ['left', 'right', 'up', 'down'],
+        dflt: 'down',
+        
+        
+    },
+
     active: {
         valType: 'integer',
         
         min: -1,
         dflt: 0,
+        
+    },
+
+    showactive: {
+        valType: 'boolean',
+        
+        dflt: true,
         
     },
 
@@ -46998,6 +47513,10 @@ module.exports = {
         
     },
 
+    pad: extendFlat({}, padAttrs, {
+        
+    }),
+
     font: extendFlat({}, fontAttrs, {
         
     }),
@@ -47022,7 +47541,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../../plots/font_attributes":346,"../color/attributes":209}],282:[function(require,module,exports){
+},{"../../lib/extend":278,"../../plots/font_attributes":329,"../../plots/pad_attributes":336,"../color/attributes":188}],265:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47046,7 +47565,8 @@ module.exports = {
     headerGroupClassName: 'updatemenu-header-group',
     headerClassName: 'updatemenu-header',
     headerArrowClassName: 'updatemenu-header-arrow',
-    buttonGroupClassName: 'updatemenu-button-group',
+    dropdownButtonGroupClassName: 'updatemenu-dropdown-button-group',
+    dropdownButtonClassName: 'updatemenu-dropdown-button',
     buttonClassName: 'updatemenu-button',
     itemRectClassName: 'updatemenu-item-rect',
     itemTextClassName: 'updatemenu-item-text',
@@ -47066,7 +47586,8 @@ module.exports = {
     minHeight: 30,
 
     // padding around item text
-    textPadX: 40,
+    textPadX: 24,
+    arrowPadX: 16,
 
     // font size to height scale
     fontSizeToHeight: 1.3,
@@ -47097,7 +47618,7 @@ module.exports = {
     hoverColor: '#F4FAFF'
 };
 
-},{}],283:[function(require,module,exports){
+},{}],266:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47111,9 +47632,9 @@ module.exports = {
 var Lib = require('../../lib');
 
 var attributes = require('./attributes');
-var contants = require('./constants');
+var constants = require('./constants');
 
-var name = contants.name;
+var name = constants.name;
 var buttonAttrs = attributes.buttons;
 
 
@@ -47149,6 +47670,9 @@ function menuDefaults(menuIn, menuOut, layoutOut) {
     if(!visible) return;
 
     coerce('active');
+    coerce('direction');
+    coerce('type');
+    coerce('showactive');
 
     coerce('x');
     coerce('y');
@@ -47156,6 +47680,11 @@ function menuDefaults(menuIn, menuOut, layoutOut) {
 
     coerce('xanchor');
     coerce('yanchor');
+
+    coerce('pad.t');
+    coerce('pad.r');
+    coerce('pad.b');
+    coerce('pad.l');
 
     Lib.coerceFont(coerce, 'font', layoutOut.font);
 
@@ -47193,7 +47722,7 @@ function buttonsDefaults(menuIn, menuOut) {
     return buttonsOut;
 }
 
-},{"../../lib":299,"./attributes":281,"./constants":282}],284:[function(require,module,exports){
+},{"../../lib":282,"./attributes":264,"./constants":265}],267:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47273,12 +47802,12 @@ module.exports = function draw(gd) {
     headerGroups.enter().append('g')
         .classed(constants.headerGroupClassName, true);
 
-    // draw button container
-    var gButton = menus.selectAll('g.' + constants.buttonGroupClassName)
+    // draw dropdown button container
+    var gButton = menus.selectAll('g.' + constants.dropdownButtonGroupClassName)
         .data([0]);
 
     gButton.enter().append('g')
-        .classed(constants.buttonGroupClassName, true)
+        .classed(constants.dropdownButtonGroupClassName, true)
         .style('pointer-events', 'all');
 
     // whenever we add new menu, attach 'state' variable to node
@@ -47304,18 +47833,24 @@ module.exports = function draw(gd) {
     // find dimensions before plotting anything (this mutates menuOpts)
     for(var i = 0; i < menuData.length; i++) {
         var menuOpts = menuData[i];
-        findDimenstions(gd, menuOpts);
+        findDimensions(gd, menuOpts);
     }
 
     // draw headers!
     headerGroups.each(function(menuOpts) {
         var gHeader = d3.select(this);
-        drawHeader(gd, gHeader, gButton, menuOpts);
 
-        // update buttons if they are dropped
-        if(areMenuButtonsDropped(gButton, menuOpts)) {
-            drawButtons(gd, gHeader, gButton, menuOpts);
+        if(menuOpts.type === 'dropdown') {
+            drawHeader(gd, gHeader, gButton, menuOpts);
+
+            // update buttons if they are dropped
+            if(areMenuButtonsDropped(gButton, menuOpts)) {
+                drawButtons(gd, gHeader, gButton, menuOpts);
+            }
+        } else {
+            drawButtons(gd, gHeader, null, menuOpts);
         }
+
     });
 };
 
@@ -47359,11 +47894,15 @@ function drawHeader(gd, gHeader, gButton, menuOpts) {
 
     var active = menuOpts.active,
         headerOpts = menuOpts.buttons[active] || constants.blankHeaderOpts,
-        posOpts = { y: 0, yPad: 0 };
+        posOpts = { y: menuOpts.pad.t, yPad: 0, x: menuOpts.pad.l, xPad: 0, index: 0 },
+        positionOverrides = {
+            width: menuOpts.headerWidth,
+            height: menuOpts.headerHeight
+        };
 
     header
         .call(drawItem, menuOpts, headerOpts)
-        .call(setItemPosition, menuOpts, posOpts);
+        .call(setItemPosition, menuOpts, posOpts, positionOverrides);
 
     // draw drop arrow at the right edge
     var arrow = gHeader.selectAll('text.' + constants.headerArrowClassName)
@@ -47377,8 +47916,8 @@ function drawHeader(gd, gHeader, gButton, menuOpts) {
         .text('▼');
 
     arrow.attr({
-        x: menuOpts.width - constants.arrowOffsetX,
-        y: menuOpts.height1 / 2 + constants.textOffsetY
+        x: menuOpts.headerWidth - constants.arrowOffsetX + menuOpts.pad.l,
+        y: menuOpts.headerHeight / 2 + constants.textOffsetY + menuOpts.pad.t
     });
 
     header.on('click', function() {
@@ -47407,27 +47946,68 @@ function drawHeader(gd, gHeader, gButton, menuOpts) {
 }
 
 function drawButtons(gd, gHeader, gButton, menuOpts) {
-    var buttonData = gButton.attr(constants.menuIndexAttrName) !== '-1' ?
+    // If this is a set of buttons, set pointer events = all since we play
+    // some minor games with which container is which in order to simplify
+    // the drawing of *either* buttons or menus
+    if(!gButton) {
+        gButton = gHeader;
+        gButton.attr('pointer-events', 'all');
+    }
+
+    var buttonData = (gButton.attr(constants.menuIndexAttrName) !== '-1' || menuOpts.type === 'buttons') ?
         menuOpts.buttons :
         [];
 
-    var buttons = gButton.selectAll('g.' + constants.buttonClassName)
+    var klass = menuOpts.type === 'dropdown' ? constants.dropdownButtonClassName : constants.buttonClassName;
+
+    var buttons = gButton.selectAll('g.' + klass)
         .data(buttonData);
 
-    buttons.enter().append('g')
-        .classed(constants.buttonClassName, true)
-        .attr('opacity', '0')
-        .transition()
-        .attr('opacity', '1');
+    var enter = buttons.enter().append('g')
+        .classed(klass, true);
 
-    buttons.exit()
-        .transition()
-        .attr('opacity', '0')
-        .remove();
+    var exit = buttons.exit();
+
+    if(menuOpts.type === 'dropdown') {
+        enter.attr('opacity', '0')
+            .transition()
+            .attr('opacity', '1');
+
+        exit.transition()
+            .attr('opacity', '0')
+            .remove();
+    } else {
+        exit.remove();
+    }
+
+
+    var x0 = 0;
+    var y0 = 0;
+
+    var isVertical = ['up', 'down'].indexOf(menuOpts.direction) !== -1;
+
+    if(menuOpts.type === 'dropdown') {
+        if(isVertical) {
+            y0 = menuOpts.headerHeight + constants.gapButtonHeader;
+        } else {
+            x0 = menuOpts.headerWidth + constants.gapButtonHeader;
+        }
+    }
+
+    if(menuOpts.type === 'dropdown' && menuOpts.direction === 'up') {
+        y0 = -constants.gapButtonHeader + constants.gapButton - menuOpts.openHeight;
+    }
+
+    if(menuOpts.type === 'dropdown' && menuOpts.direction === 'left') {
+        x0 = -constants.gapButtonHeader + constants.gapButton - menuOpts.openWidth;
+    }
 
     var posOpts = {
-        y: menuOpts.height1 + constants.gapButtonHeader,
-        yPad: constants.gapButton
+        x: x0 + menuOpts.pad.l,
+        y: y0 + menuOpts.pad.t,
+        yPad: constants.gapButton,
+        xPad: constants.gapButton,
+        index: 0,
     };
 
     buttons.each(function(buttonOpts, buttonIndex) {
@@ -47443,7 +48023,11 @@ function drawButtons(gd, gHeader, gButton, menuOpts) {
 
             // fold up buttons and redraw header
             gButton.attr(constants.menuIndexAttrName, '-1');
-            drawHeader(gd, gHeader, gButton, menuOpts);
+
+            if(menuOpts.type === 'dropdown') {
+                drawHeader(gd, gHeader, gButton, menuOpts);
+            }
+
             drawButtons(gd, gHeader, gButton, menuOpts);
 
             // call button method
@@ -47509,7 +48093,7 @@ function styleButtons(buttons, menuOpts) {
     buttons.each(function(buttonOpts, i) {
         var button = d3.select(this);
 
-        if(i === active) {
+        if(i === active && menuOpts.showactive) {
             button.select('rect.' + constants.itemRectClassName)
                 .call(Color.fill, constants.activeColor);
         }
@@ -47527,21 +48111,28 @@ function styleOnMouseOut(item, menuOpts) {
 }
 
 // find item dimensions (this mutates menuOpts)
-function findDimenstions(gd, menuOpts) {
-    menuOpts.width = 0;
-    menuOpts.height = 0;
+function findDimensions(gd, menuOpts) {
+    menuOpts.width1 = 0;
     menuOpts.height1 = 0;
+    menuOpts.heights = [];
+    menuOpts.widths = [];
+    menuOpts.totalWidth = 0;
+    menuOpts.totalHeight = 0;
+    menuOpts.openWidth = 0;
+    menuOpts.openHeight = 0;
     menuOpts.lx = 0;
     menuOpts.ly = 0;
 
-    var fakeButtons = gd._tester.selectAll('g.' + constants.buttonClassName)
+    var fakeButtons = gd._tester.selectAll('g.' + constants.dropdownButtonClassName)
         .data(menuOpts.buttons);
 
     fakeButtons.enter().append('g')
-        .classed(constants.buttonClassName, true);
+        .classed(constants.dropdownButtonClassName, true);
+
+    var isVertical = ['up', 'down'].indexOf(menuOpts.direction) !== -1;
 
     // loop over fake buttons to find width / height
-    fakeButtons.each(function(buttonOpts) {
+    fakeButtons.each(function(buttonOpts, i) {
         var button = d3.select(this);
 
         button.call(drawItem, menuOpts, buttonOpts);
@@ -47558,12 +48149,55 @@ function findDimenstions(gd, menuOpts) {
             tLines = tspans[0].length || 1,
             hEff = Math.max(tHeight * tLines, constants.minHeight) + constants.textOffsetY;
 
-        menuOpts.width = Math.max(menuOpts.width, wEff);
+        hEff = Math.ceil(hEff);
+        wEff = Math.ceil(wEff);
+
+        // Store per-item sizes since a row of horizontal buttons, for example,
+        // don't all need to be the same width:
+        menuOpts.widths[i] = wEff;
+        menuOpts.heights[i] = hEff;
+
+        // Height and width of individual element:
         menuOpts.height1 = Math.max(menuOpts.height1, hEff);
-        menuOpts.height += menuOpts.height1;
+        menuOpts.width1 = Math.max(menuOpts.width1, wEff);
+
+        if(isVertical) {
+            menuOpts.totalWidth = Math.max(menuOpts.totalWidth, wEff);
+            menuOpts.openWidth = menuOpts.totalWidth;
+            menuOpts.totalHeight += hEff + constants.gapButton;
+            menuOpts.openHeight += hEff + constants.gapButton;
+        } else {
+            menuOpts.totalWidth += wEff + constants.gapButton;
+            menuOpts.openWidth += wEff + constants.gapButton;
+            menuOpts.totalHeight = Math.max(menuOpts.totalHeight, hEff);
+            menuOpts.openHeight = menuOpts.totalHeight;
+        }
     });
 
+    if(isVertical) {
+        menuOpts.totalHeight -= constants.gapButton;
+    } else {
+        menuOpts.totalWidth -= constants.gapButton;
+    }
+
+
+    menuOpts.headerWidth = menuOpts.width1 + constants.arrowPadX;
+    menuOpts.headerHeight = menuOpts.height1;
+
+    if(menuOpts.type === 'dropdown') {
+        if(isVertical) {
+            menuOpts.width1 += constants.arrowPadX;
+            menuOpts.totalHeight = menuOpts.height1;
+        } else {
+            menuOpts.totalWidth = menuOpts.width1;
+        }
+        menuOpts.totalWidth += constants.arrowPadX;
+    }
+
     fakeButtons.remove();
+
+    var paddedWidth = menuOpts.totalWidth + menuOpts.pad.l + menuOpts.pad.r;
+    var paddedHeight = menuOpts.totalHeight + menuOpts.pad.t + menuOpts.pad.b;
 
     var graphSize = gd._fullLayout._size;
     menuOpts.lx = graphSize.l + graphSize.w * menuOpts.x;
@@ -47571,53 +48205,57 @@ function findDimenstions(gd, menuOpts) {
 
     var xanchor = 'left';
     if(anchorUtils.isRightAnchor(menuOpts)) {
-        menuOpts.lx -= menuOpts.width;
+        menuOpts.lx -= paddedWidth;
         xanchor = 'right';
     }
     if(anchorUtils.isCenterAnchor(menuOpts)) {
-        menuOpts.lx -= menuOpts.width / 2;
+        menuOpts.lx -= paddedWidth / 2;
         xanchor = 'center';
     }
 
     var yanchor = 'top';
     if(anchorUtils.isBottomAnchor(menuOpts)) {
-        menuOpts.ly -= menuOpts.height;
+        menuOpts.ly -= paddedHeight;
         yanchor = 'bottom';
     }
     if(anchorUtils.isMiddleAnchor(menuOpts)) {
-        menuOpts.ly -= menuOpts.height / 2;
+        menuOpts.ly -= paddedHeight / 2;
         yanchor = 'middle';
     }
 
-    menuOpts.width = Math.ceil(menuOpts.width);
-    menuOpts.height = Math.ceil(menuOpts.height);
+    menuOpts.totalWidth = Math.ceil(menuOpts.totalWidth);
+    menuOpts.totalHeight = Math.ceil(menuOpts.totalHeight);
     menuOpts.lx = Math.round(menuOpts.lx);
     menuOpts.ly = Math.round(menuOpts.ly);
 
     Plots.autoMargin(gd, constants.autoMarginIdRoot + menuOpts._index, {
         x: menuOpts.x,
         y: menuOpts.y,
-        l: menuOpts.width * ({right: 1, center: 0.5}[xanchor] || 0),
-        r: menuOpts.width * ({left: 1, center: 0.5}[xanchor] || 0),
-        b: menuOpts.height * ({top: 1, middle: 0.5}[yanchor] || 0),
-        t: menuOpts.height * ({bottom: 1, middle: 0.5}[yanchor] || 0)
+        l: paddedWidth * ({right: 1, center: 0.5}[xanchor] || 0),
+        r: paddedWidth * ({left: 1, center: 0.5}[xanchor] || 0),
+        b: paddedHeight * ({top: 1, middle: 0.5}[yanchor] || 0),
+        t: paddedHeight * ({bottom: 1, middle: 0.5}[yanchor] || 0)
     });
 }
 
 // set item positions (mutates posOpts)
-function setItemPosition(item, menuOpts, posOpts) {
+function setItemPosition(item, menuOpts, posOpts, overrideOpts) {
+    overrideOpts = overrideOpts || {};
     var rect = item.select('.' + constants.itemRectClassName),
         text = item.select('.' + constants.itemTextClassName),
         tspans = text.selectAll('tspan'),
-        borderWidth = menuOpts.borderwidth;
+        borderWidth = menuOpts.borderwidth,
+        index = posOpts.index;
 
-    Lib.setTranslate(item, borderWidth, borderWidth + posOpts.y);
+    Lib.setTranslate(item, borderWidth + posOpts.x, borderWidth + posOpts.y);
+
+    var isVertical = ['up', 'down'].indexOf(menuOpts.direction) !== -1;
 
     rect.attr({
         x: 0,
         y: 0,
-        width: menuOpts.width,
-        height: menuOpts.height1
+        width: overrideOpts.width || (isVertical ? menuOpts.width1 : menuOpts.widths[index]),
+        height: overrideOpts.height || (isVertical ? menuOpts.heights[index] : menuOpts.height1)
     });
 
     var tHeight = menuOpts.font.size * constants.fontSizeToHeight,
@@ -47626,17 +48264,23 @@ function setItemPosition(item, menuOpts, posOpts) {
 
     var textAttrs = {
         x: constants.textOffsetX,
-        y: menuOpts.height1 / 2 - spanOffset + constants.textOffsetY
+        y: menuOpts.heights[index] / 2 - spanOffset + constants.textOffsetY
     };
 
     text.attr(textAttrs);
     tspans.attr(textAttrs);
 
-    posOpts.y += menuOpts.height1 + posOpts.yPad;
+    if(isVertical) {
+        posOpts.y += menuOpts.heights[index] + posOpts.yPad;
+    } else {
+        posOpts.x += menuOpts.widths[index] + posOpts.xPad;
+    }
+
+    posOpts.index++;
 }
 
 function removeAllButtons(gButton) {
-    gButton.selectAll('g.' + constants.buttonClassName).remove();
+    gButton.selectAll('g.' + constants.dropdownButtonClassName).remove();
 }
 
 function clearPushMargins(gd) {
@@ -47652,7 +48296,7 @@ function clearPushMargins(gd) {
     }
 }
 
-},{"../../lib":299,"../../lib/svg_text_utils":313,"../../plotly":323,"../../plots/plots":353,"../color":210,"../drawing":233,"../legend/anchor_utils":246,"./constants":282,"d3":63}],285:[function(require,module,exports){
+},{"../../lib":282,"../../lib/svg_text_utils":296,"../../plotly":306,"../../plots/plots":337,"../color":189,"../drawing":212,"../legend/anchor_utils":225,"./constants":265,"d3":55}],268:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47674,7 +48318,7 @@ exports.supplyLayoutDefaults = require('./defaults');
 
 exports.draw = require('./draw');
 
-},{"./attributes":281,"./defaults":283,"./draw":284}],286:[function(require,module,exports){
+},{"./attributes":264,"./defaults":266,"./draw":267}],269:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47695,7 +48339,7 @@ module.exports = {
     longdashdot: [8, 1, 1, 1]
 };
 
-},{}],287:[function(require,module,exports){
+},{}],270:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47718,7 +48362,7 @@ module.exports = {
     x: '❌'
 };
 
-},{}],288:[function(require,module,exports){
+},{}],271:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47756,7 +48400,7 @@ module.exports = {
 
 };
 
-},{}],289:[function(require,module,exports){
+},{}],272:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47780,7 +48424,7 @@ exports.svgAttrs = {
     'xmlns:xlink': exports.xlink
 };
 
-},{}],290:[function(require,module,exports){
+},{}],273:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47841,6 +48485,7 @@ exports.register([
     require('./components/shapes'),
     require('./components/images'),
     require('./components/updatemenus'),
+    require('./components/sliders'),
     require('./components/rangeslider'),
     require('./components/rangeselector')
 ]);
@@ -47858,7 +48503,7 @@ exports.Queue = require('./lib/queue');
 // export d3 used in the bundle
 exports.d3 = require('d3');
 
-},{"../build/plotcss":1,"../build/ploticon":2,"./components/annotations":208,"./components/images":245,"./components/legend":253,"./components/rangeselector":265,"./components/rangeslider":270,"./components/shapes":278,"./components/updatemenus":285,"./fonts/mathjax_config":291,"./lib/queue":307,"./plot_api/plot_schema":317,"./plot_api/register":318,"./plot_api/set_plot_config":319,"./plot_api/to_image":321,"./plot_api/validate":322,"./plotly":323,"./snapshot":365,"./snapshot/download":362,"./traces/scatter":408,"d3":63,"es6-promise":65}],291:[function(require,module,exports){
+},{"../build/plotcss":1,"../build/ploticon":2,"./components/annotations":187,"./components/images":224,"./components/legend":232,"./components/rangeselector":244,"./components/rangeslider":249,"./components/shapes":256,"./components/sliders":262,"./components/updatemenus":268,"./fonts/mathjax_config":274,"./lib/queue":290,"./plot_api/plot_schema":300,"./plot_api/register":301,"./plot_api/set_plot_config":302,"./plot_api/to_image":304,"./plot_api/validate":305,"./plotly":306,"./snapshot":349,"./snapshot/download":346,"./traces/scatter":392,"d3":55,"es6-promise":59}],274:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47891,7 +48536,7 @@ if(typeof MathJax !== 'undefined') {
     exports.MathJax = false;
 }
 
-},{}],292:[function(require,module,exports){
+},{}],275:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -47906,11 +48551,16 @@ if(typeof MathJax !== 'undefined') {
 var isNumeric = require('fast-isnumeric');
 var tinycolor = require('tinycolor2');
 var nestedProperty = require('./nested_property');
+var isPlainObject = require('./is_plain_object');
 
 var getColorscale = require('../components/colorscale/get_scale');
 var colorscaleNames = Object.keys(require('../components/colorscale/scales'));
 
 var idRegex = /^([2-9]|[1-9][0-9]+)$/;
+
+function isValObject(obj) {
+    return obj && obj.valType !== undefined;
+}
 
 exports.valObjects = {
     data_array: {
@@ -48201,7 +48851,106 @@ exports.validate = function(value, opts) {
     return out !== failed;
 };
 
-},{"../components/colorscale/get_scale":222,"../components/colorscale/scales":228,"./nested_property":304,"fast-isnumeric":66,"tinycolor2":177}],293:[function(require,module,exports){
+/*
+ * returns true for a valid value object and false for tree nodes in the attribute hierarchy
+ */
+exports.isValObject = isValObject;
+
+exports.IS_SUBPLOT_OBJ = '_isSubplotObj';
+exports.IS_LINKED_TO_ARRAY = '_isLinkedToArray';
+exports.DEPRECATED = '_deprecated';
+
+// list of underscore attributes to keep in schema as is
+exports.UNDERSCORE_ATTRS = [exports.IS_SUBPLOT_OBJ, exports.IS_LINKED_TO_ARRAY, exports.DEPRECATED];
+
+/**
+ * Crawl the attribute tree, recursively calling a callback function
+ *
+ * @param {object} attrs
+ *  The node of the attribute tree (e.g. the root) from which recursion originates
+ * @param {Function} callback
+ *  A callback function with the signature:
+ *          @callback callback
+ *          @param {object} attr an attribute
+ *          @param {String} attrName name string
+ *          @param {object[]} attrs all the attributes
+ *          @param {Number} level the recursion level, 0 at the root
+ * @param {Number} [specifiedLevel]
+ *  The level in the tree, in order to let the callback function detect descend or backtrack,
+ *  typically unsupplied (implied 0), just used by the self-recursive call.
+ *  The necessity arises because the tree traversal is not controlled by callback return values.
+ *  The decision to not use callback return values for controlling tree pruning arose from
+ *  the goal of keeping the crawler backwards compatible. Observe that one of the pruning conditions
+ *  precedes the callback call.
+ *
+ * @return {object} transformOut
+ *  copy of transformIn that contains attribute defaults
+ */
+exports.crawl = function(attrs, callback, specifiedLevel) {
+    var level = specifiedLevel || 0;
+    Object.keys(attrs).forEach(function(attrName) {
+        var attr = attrs[attrName];
+
+        if(exports.UNDERSCORE_ATTRS.indexOf(attrName) !== -1) return;
+
+        callback(attr, attrName, attrs, level);
+
+        if(isValObject(attr)) return;
+        if(isPlainObject(attr)) exports.crawl(attr, callback, level + 1);
+    });
+};
+
+/**
+ * Find all data array attributes in a given trace object - including
+ * `arrayOk` attributes.
+ *
+ * @param {object} trace
+ *  full trace object that contains a reference to `_module.attributes`
+ *
+ * @return {array} arrayAttributes
+ *  list of array attributes for the given trace
+ */
+exports.findArrayAttributes = function(trace) {
+    var arrayAttributes = [],
+        stack = [];
+
+    /**
+     * A closure that gathers attribute paths into its enclosed arraySplitAttributes
+     * Attribute paths are collected iff their leaf node is a splittable attribute
+     *
+     * @callback callback
+     * @param {object} attr an attribute
+     * @param {String} attrName name string
+     * @param {object[]} attrs all the attributes
+     * @param {Number} level the recursion level, 0 at the root
+     *
+     * @closureVariable {String[][]} arrayAttributes the set of gathered attributes
+     *   Example of filled closure variable (expected to be initialized to []):
+     *        [["marker","size"],["marker","line","width"],["marker","line","color"]]
+     */
+    function callback(attr, attrName, attrs, level) {
+        stack = stack.slice(0, level).concat([attrName]);
+
+        var splittableAttr = attr.valType === 'data_array' || attr.arrayOk === true;
+        if(!splittableAttr) return;
+
+        var astr = toAttrString(stack);
+        var val = nestedProperty(trace, astr).get();
+        if(!Array.isArray(val)) return;
+
+        arrayAttributes.push(astr);
+    }
+
+    function toAttrString(stack) {
+        return stack.join('.');
+    }
+
+    exports.crawl(trace._module.attributes, callback);
+
+    return arrayAttributes;
+};
+
+},{"../components/colorscale/get_scale":201,"../components/colorscale/scales":207,"./is_plain_object":284,"./nested_property":287,"fast-isnumeric":61,"tinycolor2":165}],276:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -48535,7 +49284,7 @@ exports.parseDate = function(v) {
     return out;
 };
 
-},{"d3":63,"fast-isnumeric":66}],294:[function(require,module,exports){
+},{"d3":55,"fast-isnumeric":61}],277:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -48701,7 +49450,7 @@ var Events = {
 
 module.exports = Events;
 
-},{"events":15}],295:[function(require,module,exports){
+},{"events":60}],278:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -48815,7 +49564,7 @@ function _extend(inputs, isDeep, keepAllKeys, noArrayCopies) {
     return target;
 }
 
-},{"./is_plain_object.js":301}],296:[function(require,module,exports){
+},{"./is_plain_object.js":284}],279:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -48838,7 +49587,7 @@ module.exports = function truncate(float32ArrayIn, len) {
     return float32ArrayOut;
 };
 
-},{}],297:[function(require,module,exports){
+},{}],280:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -48917,7 +49666,7 @@ function formatColor(containerIn, opacityIn, len) {
 
 module.exports = formatColor;
 
-},{"../components/color/attributes":209,"../components/colorscale/make_scale_function":227,"./str2rgbarray":312,"fast-isnumeric":66,"tinycolor2":177}],298:[function(require,module,exports){
+},{"../components/color/attributes":188,"../components/colorscale/make_scale_function":206,"./str2rgbarray":295,"fast-isnumeric":61,"tinycolor2":165}],281:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -48986,7 +49735,7 @@ function convertHTMLToUnicode(html) {
 
 module.exports = convertHTMLToUnicode;
 
-},{"../constants/string_mappings":288,"superscript-text":166}],299:[function(require,module,exports){
+},{"../constants/string_mappings":271,"superscript-text":162}],282:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -49012,6 +49761,13 @@ lib.coerce = coerceModule.coerce;
 lib.coerce2 = coerceModule.coerce2;
 lib.coerceFont = coerceModule.coerceFont;
 lib.validate = coerceModule.validate;
+lib.isValObject = coerceModule.isValObject;
+lib.crawl = coerceModule.crawl;
+lib.findArrayAttributes = coerceModule.findArrayAttributes;
+lib.IS_SUBPLOT_OBJ = coerceModule.IS_SUBPLOT_OBJ;
+lib.IS_LINKED_TO_ARRAY = coerceModule.IS_LINKED_TO_ARRAY;
+lib.DEPRECATED = coerceModule.DEPRECATED;
+lib.UNDERSCORE_ATTRS = coerceModule.UNDERSCORE_ATTRS;
 
 var datesModule = require('./dates');
 lib.dateTime2ms = datesModule.dateTime2ms;
@@ -49650,7 +50406,7 @@ lib.numSeparate = function(value, separators, separatethousands) {
     return x1 + x2;
 };
 
-},{"./coerce":292,"./dates":293,"./extend":295,"./is_array":300,"./is_plain_object":301,"./loggers":302,"./matrix":303,"./nested_property":304,"./notifier":305,"./search":308,"./stats":311,"d3":63}],300:[function(require,module,exports){
+},{"./coerce":275,"./dates":276,"./extend":278,"./is_array":283,"./is_plain_object":284,"./loggers":285,"./matrix":286,"./nested_property":287,"./notifier":288,"./search":291,"./stats":294,"d3":55}],283:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -49668,7 +50424,7 @@ module.exports = function isArray(a) {
     return Array.isArray(a) || ArrayBuffer.isView(a);
 };
 
-},{}],301:[function(require,module,exports){
+},{}],284:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -49697,7 +50453,7 @@ module.exports = function isPlainObject(obj) {
     );
 };
 
-},{}],302:[function(require,module,exports){
+},{}],285:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -49764,7 +50520,7 @@ loggers.error = function() {
     }
 };
 
-},{"../plot_api/plot_config":316}],303:[function(require,module,exports){
+},{"../plot_api/plot_config":299}],286:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -49874,7 +50630,7 @@ exports.apply2DTransform2 = function(transform) {
     };
 };
 
-},{}],304:[function(require,module,exports){
+},{}],287:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50131,7 +50887,7 @@ function badContainer(container, propStr, propParts) {
     };
 }
 
-},{"./is_array":300,"fast-isnumeric":66}],305:[function(require,module,exports){
+},{"./is_array":283,"fast-isnumeric":61}],288:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50208,7 +50964,7 @@ module.exports = function(text, displayLength) {
         });
 };
 
-},{"d3":63,"fast-isnumeric":66}],306:[function(require,module,exports){
+},{"d3":55,"fast-isnumeric":61}],289:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50448,7 +51204,7 @@ polygon.filter = function filter(pts, tolerance) {
     };
 };
 
-},{"./matrix":303}],307:[function(require,module,exports){
+},{"./matrix":286}],290:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50659,7 +51415,7 @@ queue.plotDo = function(gd, func, args) {
 
 module.exports = queue;
 
-},{"../lib":299,"../plot_api/plot_config":316}],308:[function(require,module,exports){
+},{"../lib":282,"../plot_api/plot_config":299}],291:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50770,7 +51526,7 @@ exports.roundUp = function(val, arrayIn, reverse) {
     return arrayIn[low];
 };
 
-},{"./loggers":302,"fast-isnumeric":66}],309:[function(require,module,exports){
+},{"./loggers":285,"fast-isnumeric":61}],292:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50793,7 +51549,7 @@ module.exports = function setCursor(el3, csr) {
     if(csr) el3.classed('cursor-' + csr, true);
 };
 
-},{}],310:[function(require,module,exports){
+},{}],293:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50842,7 +51598,7 @@ module.exports = function showWebGlMsg(scene) {
     return false;
 };
 
-},{"../components/color":210}],311:[function(require,module,exports){
+},{"../components/color":189}],294:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50938,7 +51694,7 @@ exports.interp = function(arr, n) {
     return frac * arr[Math.ceil(n)] + (1 - frac) * arr[Math.floor(n)];
 };
 
-},{"fast-isnumeric":66}],312:[function(require,module,exports){
+},{"fast-isnumeric":61}],295:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -50960,7 +51716,7 @@ function str2RgbaArray(color) {
 
 module.exports = str2RgbaArray;
 
-},{"arraytools":9,"tinycolor2":177}],313:[function(require,module,exports){
+},{"arraytools":10,"tinycolor2":165}],296:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -51487,7 +52243,7 @@ exports.makeEditable = function(context, _delegate, options) {
     return d3.rebind(this, dispatch, 'on');
 };
 
-},{"../constants/string_mappings":288,"../constants/xmlns_namespaces":289,"../lib":299,"d3":63}],314:[function(require,module,exports){
+},{"../constants/string_mappings":271,"../constants/xmlns_namespaces":272,"../lib":282,"d3":55}],297:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -51903,7 +52659,7 @@ exports.coerceTraceIndices = function(gd, traceIndices) {
     return traceIndices;
 };
 
-},{"../components/color":210,"../lib":299,"../plots/cartesian/axes":327,"../plots/plots":353,"../registry":360,"fast-isnumeric":66,"gl-mat4/fromQuat":79}],315:[function(require,module,exports){
+},{"../components/color":189,"../lib":282,"../plots/cartesian/axes":310,"../plots/plots":337,"../registry":344,"fast-isnumeric":61,"gl-mat4/fromQuat":79}],298:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -51937,11 +52693,8 @@ var svgTextUtils = require('../lib/svg_text_utils');
 var helpers = require('./helpers');
 var subroutines = require('./subroutines');
 
-
 /**
  * Main plot-creation function
- *
- * Note: will call makePlotFramework if necessary to create the framework
  *
  * @param {string id or DOM element} gd
  *      the id or DOM element of the graph container div
@@ -51952,15 +52705,17 @@ var subroutines = require('./subroutines');
  *      all the stuff that doesn't pertain to any individual trace
  * @param {object} config
  *      configuration options (see ./plot_config.js for more info)
- *
+ * @param {object} dynamicBehavior
+ *      object containing Javascript functions that mirror the behavior of options
+ *      in data, layout, and config.
  */
-Plotly.plot = function(gd, data, layout, config) {
+Plotly.plot = function(gd, data, layout, config, dynamicBehavior) {
     gd = helpers.getGraphDiv(gd);
 
     // Events.init is idempotent and bails early if gd has already been init'd
     Events.init(gd);
 
-    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config]);
+    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config, dynamicBehavior]);
     if(okToPlot === false) return Promise.reject();
 
     // if there's no data or layout, and this isn't yet a plotly plot
@@ -51970,9 +52725,12 @@ Plotly.plot = function(gd, data, layout, config) {
             'but this container doesn\'t yet have a plot.', gd);
     }
 
+    if(!dynamicBehavior) dynamicBehavior = {};
+    gd.dynamicBehavior = dynamicBehavior;
+
     // transfer configuration options to gd until we move over to
     // a more OO like model
-    setPlotContext(gd, config);
+    setPlotContext(gd, config, dynamicBehavior.config);
 
     if(!layout) layout = {};
 
@@ -52021,7 +52779,7 @@ Plotly.plot = function(gd, data, layout, config) {
         gd._replotPending = false;
     }
 
-    Plots.supplyDefaults(gd);
+    Plots.supplyDefaults(gd, dynamicBehavior);
 
     // Polar plots
     if(data && data[0] && data[0].r) return plotPolar(gd, data, layout);
@@ -52029,28 +52787,15 @@ Plotly.plot = function(gd, data, layout, config) {
     // so we don't try to re-call Plotly.plot from inside
     // legend and colorbar, if margins changed
     gd._replotting = true;
-    var hasData = gd._fullData.length > 0;
 
-    var subplots = Plotly.Axes.getSubplots(gd).join(''),
-        oldSubplots = Object.keys(gd._fullLayout._plots || {}).join(''),
-        hasSameSubplots = (oldSubplots === subplots);
+    // make or remake the framework if we need to
+    if(graphWasEmpty) makePlotFramework(gd);
 
-    // Make or remake the framework (ie container and axes) if we need to
-    // note: if they container already exists and has data,
-    //  the new layout gets ignored (as it should)
-    //  but if there's no data there yet, it's just a placeholder...
-    //  then it should destroy and remake the plot
-    if(hasData) {
-        if(gd.framework !== makePlotFramework || graphWasEmpty || !hasSameSubplots) {
-            gd.framework = makePlotFramework;
-            makePlotFramework(gd);
-        }
-    }
-    else if(!hasSameSubplots) {
+    // polar need a different framework
+    if(gd.framework !== makePlotFramework) {
         gd.framework = makePlotFramework;
         makePlotFramework(gd);
     }
-    else if(graphWasEmpty) makePlotFramework(gd);
 
     // save initial axis range once per graph
     if(graphWasEmpty) Plotly.Axes.saveRangeInitial(gd);
@@ -52075,6 +52820,24 @@ Plotly.plot = function(gd, data, layout, config) {
 
     var oldmargins = JSON.stringify(fullLayout._size);
 
+    // draw framework first so that margin-pushing
+    // components can position themselves correctly
+    function drawFramework() {
+        var basePlotModules = fullLayout._basePlotModules;
+
+        for(var i = 0; i < basePlotModules.length; i++) {
+            if(basePlotModules[i].drawFramework) {
+                basePlotModules[i].drawFramework(gd);
+            }
+        }
+
+        return Lib.syncOrAsync([
+            subroutines.layoutStyles,
+            drawAxes,
+            Fx.init
+        ], gd);
+    }
+
     // draw anything that can affect margins.
     // currently this is legend and colorbars
     function marginPushers() {
@@ -52084,6 +52847,7 @@ Plotly.plot = function(gd, data, layout, config) {
         Registry.getComponentMethod('legend', 'draw')(gd);
         Registry.getComponentMethod('rangeselector', 'draw')(gd);
         Registry.getComponentMethod('updatemenus', 'draw')(gd);
+        Registry.getComponentMethod('sliders', 'draw')(gd);
 
         for(i = 0; i < calcdata.length; i++) {
             cd = calcdata[i];
@@ -52101,8 +52865,10 @@ Plotly.plot = function(gd, data, layout, config) {
     function marginPushersAgain() {
         // in case the margins changed, draw margin pushers again
         var seq = JSON.stringify(fullLayout._size) === oldmargins ?
-            [] : [marginPushers, subroutines.layoutStyles];
-        return Lib.syncOrAsync(seq.concat(Fx.init), gd);
+            [] :
+            [marginPushers, subroutines.layoutStyles];
+
+        return Lib.syncOrAsync(seq, gd);
     }
 
     function positionAndAutorange() {
@@ -52126,7 +52892,6 @@ Plotly.plot = function(gd, data, layout, config) {
             }
         }
 
-
         // calc and autorange for errorbars
         ErrorBars.calc(gd);
 
@@ -52140,14 +52905,15 @@ Plotly.plot = function(gd, data, layout, config) {
 
     function doAutoRange() {
         if(gd._transitioning) return;
+
         var axList = Plotly.Axes.list(gd, '', true);
         for(var i = 0; i < axList.length; i++) {
             Plotly.Axes.doAutoRange(axList[i]);
         }
     }
 
+    // draw ticks, titles, and calculate axis scaling (._b, ._m)
     function drawAxes() {
-        // draw ticks, titles, and calculate axis scaling (._b, ._m)
         return Plotly.Axes.doTicks(gd, 'redraw');
     }
 
@@ -52182,6 +52948,11 @@ Plotly.plot = function(gd, data, layout, config) {
             basePlotModules[i].plot(gd);
         }
 
+        // keep reference to shape layers in subplots
+        var layerSubplot = fullLayout._paper.selectAll('.layer-subplot');
+        fullLayout._imageSubplotLayer = layerSubplot.selectAll('.imagelayer');
+        fullLayout._shapeSubplotLayer = layerSubplot.selectAll('.shapelayer');
+
         // styling separate from drawing
         Plots.style(gd);
 
@@ -52209,6 +52980,7 @@ Plotly.plot = function(gd, data, layout, config) {
         Registry.getComponentMethod('rangeslider', 'draw')(gd);
         Registry.getComponentMethod('rangeselector', 'draw')(gd);
         Registry.getComponentMethod('updatemenus', 'draw')(gd);
+        Registry.getComponentMethod('sliders', 'draw')(gd);
     }
 
     function cleanUp() {
@@ -52219,6 +52991,7 @@ Plotly.plot = function(gd, data, layout, config) {
 
     Lib.syncOrAsync([
         Plots.previousPromises,
+        drawFramework,
         marginPushers,
         marginPushersAgain,
         positionAndAutorange,
@@ -52241,13 +53014,19 @@ function opaqueSetBackground(gd, bgColor) {
     Plotly.defaultConfig.setBackground(gd, bgColor);
 }
 
-function setPlotContext(gd, config) {
+function setPlotContext(gd, config, dynamicConfig) {
     if(!gd._context) gd._context = Lib.extendFlat({}, Plotly.defaultConfig);
     var context = gd._context;
 
+    if(!dynamicConfig) dynamicConfig = {};
+
     if(config) {
-        Object.keys(config).forEach(function(key) {
-            if(key in context) {
+        Object.keys(context).forEach(function(key) {
+            // Prefer dynamic functions over static options
+            if(typeof dynamicConfig[key] === 'function') {
+                context[key] = dynamicConfig[key];
+            }
+            else if(key in config) {
                 if(key === 'setBackground' && config[key] === 'opaque') {
                     context[key] = opaqueSetBackground;
                 }
@@ -52396,15 +53175,16 @@ Plotly.redraw = function(gd) {
  * @param {Object[]} data
  * @param {Object} layout
  * @param {Object} config
+ * @param {Object} dynamicBehavior
  */
-Plotly.newPlot = function(gd, data, layout, config) {
+Plotly.newPlot = function(gd, data, layout, config, dynamicBehavior) {
     gd = helpers.getGraphDiv(gd);
 
     // remove gl contexts
     Plots.cleanPlot([], {}, gd._fullData || {}, gd._fullLayout || {});
 
     Plots.purge(gd);
-    return Plotly.plot(gd, data, layout, config);
+    return Plotly.plot(gd, data, layout, config, dynamicBehavior);
 };
 
 /**
@@ -53602,7 +54382,6 @@ Plotly.relayout = function relayout(gd, astr, val) {
     if(!plotDone || !plotDone.then) plotDone = Promise.resolve(gd);
 
     return plotDone.then(function() {
-        subroutines.setRangeSliderRange(gd, specs.eventData);
         gd.emit('plotly_relayout', specs.eventData);
         return gd;
     });
@@ -53850,6 +54629,15 @@ function _relayout(gd, aobj) {
             for(i = 0; i < diff; i++) menus.push({});
             flags.doplot = true;
         }
+        else if(p.parts[0] === 'sliders') {
+            Lib.extendDeepAll(gd.layout, Lib.objectFromPath(ai, vi));
+
+            var sliders = gd._fullLayout.sliders || [];
+            diff = (p.parts[2] + 1) - sliders.length;
+
+            for(i = 0; i < diff; i++) sliders.push({});
+            flags.doplot = true;
+        }
         // alter gd.layout
         else {
             // check whether we can short-circuit a full redraw
@@ -53945,6 +54733,8 @@ Plotly.update = function update(gd, traceUpdate, layoutUpdate, traces) {
     gd = helpers.getGraphDiv(gd);
     helpers.clearPromiseQueue(gd);
 
+    var dynamicBehavior = gd.dynamicBehavior;
+
     if(gd.framework && gd.framework.isPolar) {
         return Promise.resolve(gd);
     }
@@ -53968,9 +54758,15 @@ Plotly.update = function update(gd, traceUpdate, layoutUpdate, traces) {
     var seq = [];
 
     if(restyleFlags.fullReplot && relayoutFlags.layoutReplot) {
-        var layout = gd.layout;
+        var data = gd.data,
+            layout = gd.layout;
+
+        // clear existing data/layout on gd
+        // so that Plotly.plot doesn't try to extend them
+        gd.data = undefined;
         gd.layout = undefined;
-        seq.push(function() { return Plotly.plot(gd, gd.data, layout); });
+
+        seq.push(function() { return Plotly.plot(gd, data, layout, null, dynamicBehavior); });
     }
     else if(restyleFlags.fullReplot) {
         seq.push(Plotly.plot);
@@ -53999,8 +54795,6 @@ Plotly.update = function update(gd, traceUpdate, layoutUpdate, traces) {
     if(!plotDone || !plotDone.then) plotDone = Promise.resolve(gd);
 
     return plotDone.then(function() {
-        subroutines.setRangeSliderRange(gd, relayoutSpecs.eventData);
-
         gd.emit('plotly_update', {
             data: restyleSpecs.eventData,
             layout: relayoutSpecs.eventData
@@ -54347,6 +55141,10 @@ Plotly.animate = function(gd, frameOrGroupNameOrFrameList, animationOpts) {
 Plotly.addFrames = function(gd, frameList, indices) {
     gd = helpers.getGraphDiv(gd);
 
+    if(frameList === null || frameList === undefined) {
+        return Promise.resolve();
+    }
+
     if(!Lib.isPlotDiv(gd)) {
         throw new Error('This element is not a Plotly plot: ' + gd);
     }
@@ -54653,20 +55451,11 @@ function makePlotFramework(gd) {
     fullLayout._shapeLowerLayer = layerBelow.append('g')
         .classed('shapelayer', true);
 
-    var subplots = Plotly.Axes.getSubplots(gd);
-    if(subplots.join('') !== Object.keys(gd._fullLayout._plots || {}).join('')) {
-        makeSubplots(gd, subplots);
-    }
-
-    if(fullLayout._has('cartesian')) makeCartesianPlotFramwork(gd, subplots);
+    // single cartesian layer for the whole plot
+    fullLayout._cartesianlayer = fullLayout._paper.append('g').classed('cartesianlayer', true);
 
     // single ternary layer for the whole plot
     fullLayout._ternarylayer = fullLayout._paper.append('g').classed('ternarylayer', true);
-
-    // shape layers in subplots
-    var layerSubplot = fullLayout._paper.selectAll('.layer-subplot');
-    fullLayout._imageSubplotLayer = layerSubplot.selectAll('.imagelayer');
-    fullLayout._shapeSubplotLayer = layerSubplot.selectAll('.shapelayer');
 
     // upper shape layer
     // (only for shapes to be drawn above the whole plot, including subplots)
@@ -54692,181 +55481,9 @@ function makePlotFramework(gd) {
     fullLayout._hoverlayer = fullLayout._toppaper.append('g').classed('hoverlayer', true);
 
     gd.emit('plotly_framework');
-
-    // position and style the containers, make main title
-    var frameWorkDone = Lib.syncOrAsync([
-        subroutines.layoutStyles,
-        function goAxes() { return Plotly.Axes.doTicks(gd, 'redraw'); },
-        Fx.init
-    ], gd);
-
-    if(frameWorkDone && frameWorkDone.then) {
-        gd._promises.push(frameWorkDone);
-    }
-
-    return frameWorkDone;
 }
 
-// create '_plots' object grouping x/y axes into subplots
-// to be better manage subplots
-function makeSubplots(gd, subplots) {
-    var _plots = gd._fullLayout._plots = {};
-    var subplot, plotinfo;
-
-    function getAxisFunc(subplot, axLetter) {
-        return function() {
-            return Plotly.Axes.getFromId(gd, subplot, axLetter);
-        };
-    }
-
-    for(var i = 0; i < subplots.length; i++) {
-        subplot = subplots[i];
-        plotinfo = _plots[subplot] = {};
-
-        plotinfo.id = subplot;
-
-        // references to the axis objects controlling this subplot
-        plotinfo.x = getAxisFunc(subplot, 'x');
-        plotinfo.y = getAxisFunc(subplot, 'y');
-
-        // TODO investigate why replacing calls to .x and .y
-        // for .xaxis and .yaxis makes the `pseudo_html`
-        // test image fail
-        plotinfo.xaxis = plotinfo.x();
-        plotinfo.yaxis = plotinfo.y();
-    }
-}
-
-function makeCartesianPlotFramwork(gd, subplots) {
-    var fullLayout = gd._fullLayout;
-
-    // Layers to keep plot types in the right order.
-    // from back to front:
-    // 1. heatmaps, 2D histos and contour maps
-    // 2. bars / 1D histos
-    // 3. errorbars for bars and scatter
-    // 4. scatter
-    // 5. box plots
-    function plotLayers(svg) {
-        svg.append('g').classed('imagelayer', true);
-        svg.append('g').classed('maplayer', true);
-        svg.append('g').classed('barlayer', true);
-        svg.append('g').classed('boxlayer', true);
-        svg.append('g').classed('scatterlayer', true);
-    }
-
-    // create all the layers in order, so we know they'll stay in order
-    var overlays = [];
-
-    fullLayout._paper.selectAll('g.subplot').data(subplots)
-      .enter().append('g')
-        .classed('subplot', true)
-        .each(function(subplot) {
-            var plotinfo = fullLayout._plots[subplot],
-                plotgroup = plotinfo.plotgroup = d3.select(this).classed(subplot, true),
-                xa = plotinfo.xaxis,
-                ya = plotinfo.yaxis;
-
-            // references to any subplots overlaid on this one
-            plotinfo.overlays = [];
-
-            // is this subplot overlaid on another?
-            // ax.overlaying is the id of another axis of the same
-            // dimension that this one overlays to be an overlaid subplot,
-            // the main plot must exist make sure we're not trying to
-            // overlay on an axis that's already overlaying another
-            var xa2 = Plotly.Axes.getFromId(gd, xa.overlaying) || xa;
-            if(xa2 !== xa && xa2.overlaying) {
-                xa2 = xa;
-                xa.overlaying = false;
-            }
-
-            var ya2 = Plotly.Axes.getFromId(gd, ya.overlaying) || ya;
-            if(ya2 !== ya && ya2.overlaying) {
-                ya2 = ya;
-                ya.overlaying = false;
-            }
-
-            var mainplot = xa2._id + ya2._id;
-            if(mainplot !== subplot && subplots.indexOf(mainplot) !== -1) {
-                plotinfo.mainplot = mainplot;
-                overlays.push(plotinfo);
-
-                // for now force overlays to overlay completely... so they
-                // can drag together correctly and share backgrounds.
-                // Later perhaps we make separate axis domain and
-                // tick/line domain or something, so they can still share
-                // the (possibly larger) dragger and background but don't
-                // have to both be drawn over that whole domain
-                xa.domain = xa2.domain.slice();
-                ya.domain = ya2.domain.slice();
-            }
-            else {
-                // main subplot - make the components of
-                // the plot and containers for overlays
-                plotinfo.bg = plotgroup.append('rect')
-                    .style('stroke-width', 0);
-
-                // back layer for shapes and images to
-                // be drawn below a subplot
-                var backlayer = plotgroup.append('g')
-                    .classed('layer-subplot', true);
-
-                plotinfo.shapelayer = backlayer.append('g')
-                    .classed('shapelayer', true);
-                plotinfo.imagelayer = backlayer.append('g')
-                    .classed('imagelayer', true);
-                plotinfo.gridlayer = plotgroup.append('g');
-                plotinfo.overgrid = plotgroup.append('g');
-                plotinfo.zerolinelayer = plotgroup.append('g');
-                plotinfo.overzero = plotgroup.append('g');
-                plotinfo.plot = plotgroup.append('g').call(plotLayers);
-                plotinfo.overplot = plotgroup.append('g');
-                plotinfo.xlines = plotgroup.append('path');
-                plotinfo.ylines = plotgroup.append('path');
-                plotinfo.overlines = plotgroup.append('g');
-                plotinfo.xaxislayer = plotgroup.append('g');
-                plotinfo.yaxislayer = plotgroup.append('g');
-                plotinfo.overaxes = plotgroup.append('g');
-
-                // make separate drag layers for each subplot,
-                // but append them to paper rather than the plot groups,
-                // so they end up on top of the rest
-            }
-            plotinfo.draglayer = fullLayout._draggers.append('g');
-        });
-
-    // now make the components of overlaid subplots
-    // overlays don't have backgrounds, and append all
-    // their other components to the corresponding
-    // extra groups of their main Plots.
-    overlays.forEach(function(plotinfo) {
-        var mainplot = fullLayout._plots[plotinfo.mainplot];
-        mainplot.overlays.push(plotinfo);
-
-        plotinfo.gridlayer = mainplot.overgrid.append('g');
-        plotinfo.zerolinelayer = mainplot.overzero.append('g');
-        plotinfo.plot = mainplot.overplot.append('g').call(plotLayers);
-        plotinfo.xlines = mainplot.overlines.append('path');
-        plotinfo.ylines = mainplot.overlines.append('path');
-        plotinfo.xaxislayer = mainplot.overaxes.append('g');
-        plotinfo.yaxislayer = mainplot.overaxes.append('g');
-    });
-
-    // common attributes for all subplots, overlays or not
-    subplots.forEach(function(subplot) {
-        var plotinfo = fullLayout._plots[subplot];
-
-        plotinfo.xlines
-            .style('fill', 'none')
-            .classed('crisp', true);
-        plotinfo.ylines
-            .style('fill', 'none')
-            .classed('crisp', true);
-    });
-}
-
-},{"../components/drawing":233,"../components/errorbars":239,"../constants/xmlns_namespaces":289,"../lib":299,"../lib/events":294,"../lib/queue":307,"../lib/svg_text_utils":313,"../plotly":323,"../plots/cartesian/graph_interact":334,"../plots/plots":353,"../plots/polar":356,"../registry":360,"./helpers":314,"./subroutines":320,"d3":63,"fast-isnumeric":66}],316:[function(require,module,exports){
+},{"../components/drawing":212,"../components/errorbars":218,"../constants/xmlns_namespaces":272,"../lib":282,"../lib/events":277,"../lib/queue":290,"../lib/svg_text_utils":296,"../plotly":306,"../plots/cartesian/graph_interact":317,"../plots/plots":337,"../plots/polar":340,"../registry":344,"./helpers":297,"./subroutines":303,"d3":55,"fast-isnumeric":61}],299:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -54985,7 +55602,7 @@ function defaultSetBackground(gd, bgColor) {
     }
 }
 
-},{}],317:[function(require,module,exports){
+},{}],300:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -55011,13 +55628,7 @@ var extendDeep = Lib.extendDeep;
 var extendDeepAll = Lib.extendDeepAll;
 
 var NESTED_MODULE = '_nestedModules',
-    COMPOSED_MODULE = '_composedModules',
-    IS_SUBPLOT_OBJ = '_isSubplotObj',
-    IS_LINKED_TO_ARRAY = '_isLinkedToArray',
-    DEPRECATED = '_deprecated';
-
-// list of underscore attributes to keep in schema as is
-var UNDERSCORE_ATTRS = [IS_SUBPLOT_OBJ, IS_LINKED_TO_ARRAY, DEPRECATED];
+    COMPOSED_MODULE = '_composedModules';
 
 var plotSchema = {
     traces: {},
@@ -55044,22 +55655,9 @@ PlotSchema.get = function() {
     return plotSchema;
 };
 
-PlotSchema.crawl = function(attrs, callback) {
-    Object.keys(attrs).forEach(function(attrName) {
-        var attr = attrs[attrName];
+PlotSchema.crawl = Lib.crawl;
 
-        if(UNDERSCORE_ATTRS.indexOf(attrName) !== -1) return;
-
-        callback(attr, attrName, attrs);
-
-        if(PlotSchema.isValObject(attr)) return;
-        if(Lib.isPlainObject(attr)) PlotSchema.crawl(attr, callback);
-    });
-};
-
-PlotSchema.isValObject = function(obj) {
-    return obj && obj.valType !== undefined;
-};
+PlotSchema.isValObject = Lib.isValObject;
 
 function getTraceAttributes(type) {
     var globalAttributes = Plots.attributes,
@@ -55119,13 +55717,13 @@ function getLayoutAttributes() {
     // FIXME polar layout attributes
     layoutAttributes = assignPolarLayoutAttrs(layoutAttributes);
 
-    // add IS_SUBPLOT_OBJ attribute
+    // add crawler.IS_SUBPLOT_OBJ attribute
     layoutAttributes = handleSubplotObjs(layoutAttributes);
 
     layoutAttributes = removeUnderscoreAttrs(layoutAttributes);
     mergeValTypeAndRole(layoutAttributes);
 
-    // generate IS_LINKED_TO_ARRAY structure
+    // generate crawler.IS_LINKED_TO_ARRAY structure
     handleLinkedToArray(layoutAttributes);
 
     plotSchema.layout = { layoutAttributes: layoutAttributes };
@@ -55146,7 +55744,7 @@ function getTransformAttributes(name) {
 function getDefs() {
     plotSchema.defs = {
         valObjects: Lib.valObjects,
-        metaKeys: UNDERSCORE_ATTRS.concat(['description', 'role'])
+        metaKeys: Lib.UNDERSCORE_ATTRS.concat(['description', 'role'])
     };
 }
 
@@ -55226,7 +55824,7 @@ function mergeValTypeAndRole(attrs) {
         }
     }
 
-    PlotSchema.crawl(attrs, callback);
+    Lib.crawl(attrs, callback);
 }
 
 // helper methods
@@ -55252,7 +55850,7 @@ function getModule(arg) {
 function removeUnderscoreAttrs(attributes) {
     Object.keys(attributes).forEach(function(k) {
         if(k.charAt(0) === '_' &&
-            UNDERSCORE_ATTRS.indexOf(k) === -1) delete attributes[k];
+            Lib.UNDERSCORE_ATTRS.indexOf(k) === -1) delete attributes[k];
     });
     return attributes;
 }
@@ -55306,7 +55904,7 @@ function handleSubplotObjs(layoutAttributes) {
                 isSubplotObj = subplotRegistry.attrRegex.test(k);
             }
 
-            if(isSubplotObj) layoutAttributes[k][IS_SUBPLOT_OBJ] = true;
+            if(isSubplotObj) layoutAttributes[k][Lib.IS_SUBPLOT_OBJ] = true;
         });
     });
 
@@ -55316,22 +55914,22 @@ function handleSubplotObjs(layoutAttributes) {
 function handleLinkedToArray(layoutAttributes) {
 
     function callback(attr, attrName, attrs) {
-        if(attr[IS_LINKED_TO_ARRAY] !== true) return;
+        if(attr[Lib.IS_LINKED_TO_ARRAY] !== true) return;
 
         // TODO more robust logic
         var itemName = attrName.substr(0, attrName.length - 1);
 
-        delete attr[IS_LINKED_TO_ARRAY];
+        delete attr[Lib.IS_LINKED_TO_ARRAY];
 
         attrs[attrName] = { items: {} };
         attrs[attrName].items[itemName] = attr;
         attrs[attrName].role = 'object';
     }
 
-    PlotSchema.crawl(layoutAttributes, callback);
+    Lib.crawl(layoutAttributes, callback);
 }
 
-},{"../lib":299,"../plotly":323,"../plots/plots":353,"../plots/polar/area_attributes":354,"../plots/polar/axis_attributes":355,"../registry":360}],318:[function(require,module,exports){
+},{"../lib":282,"../plotly":306,"../plots/plots":337,"../plots/polar/area_attributes":338,"../plots/polar/axis_attributes":339,"../registry":344}],301:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -55395,14 +55993,28 @@ function registerTransformModule(newModule) {
 
     var prefix = 'Transform module ' + newModule.name;
 
-    if(typeof newModule.transform !== 'function') {
-        throw new Error(prefix + ' is missing a *transform* function.');
+    var hasTransform = typeof newModule.transform === 'function',
+        hasCalcTransform = typeof newModule.calcTransform === 'function';
+
+
+    if(!hasTransform && !hasCalcTransform) {
+        throw new Error(prefix + ' is missing a *transform* or *calcTransform* method.');
     }
+
+    if(hasTransform && hasCalcTransform) {
+        Lib.log([
+            prefix + ' has both a *transform* and *calcTransform* methods.',
+            'Please note that all *transform* methods are executed',
+            'before all *calcTransform* methods.'
+        ].join(' '));
+    }
+
     if(!Lib.isPlainObject(newModule.attributes)) {
         Lib.log(prefix + ' registered without an *attributes* object.');
     }
+
     if(typeof newModule.supplyDefaults !== 'function') {
-        Lib.log(prefix + ' registered without a *supplyDefaults* function.');
+        Lib.log(prefix + ' registered without a *supplyDefaults* method.');
     }
 
     Registry.transformsRegistry[newModule.name] = newModule;
@@ -55412,7 +56024,7 @@ function registerComponentModule(newModule) {
     Registry.componentsRegistry[newModule.name] = newModule;
 }
 
-},{"../lib":299,"../registry":360}],319:[function(require,module,exports){
+},{"../lib":282,"../registry":344}],302:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -55438,7 +56050,7 @@ module.exports = function setPlotConfig(configObj) {
     return Lib.extendFlat(Plotly.defaultConfig, configObj);
 };
 
-},{"../lib":299,"../plotly":323}],320:[function(require,module,exports){
+},{"../lib":282,"../plotly":306}],303:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -55489,6 +56101,7 @@ exports.lsInner = function(gd) {
         var plotinfo = fullLayout._plots[subplot],
             xa = Plotly.Axes.getFromId(gd, subplot, 'x'),
             ya = Plotly.Axes.getFromId(gd, subplot, 'y');
+
         xa.setScale(); // this may already be done... not sure
         ya.setScale();
 
@@ -55499,7 +56112,6 @@ exports.lsInner = function(gd) {
                     xa._length + 2 * gs.p, ya._length + 2 * gs.p)
                 .call(Color.fill, fullLayout.plot_bgcolor);
         }
-
 
         // Clip so that data only shows up on the plot area.
         plotinfo.clipId = 'clip' + fullLayout._uid + subplot + 'plot';
@@ -55717,7 +56329,7 @@ exports.doColorBars = function(gd) {
 exports.layoutReplot = function(gd) {
     var layout = gd.layout;
     gd.layout = undefined;
-    return Plotly.plot(gd, '', layout);
+    return Plotly.plot(gd, '', layout, null, gd.dynamicBehavior);
 };
 
 exports.doLegend = function(gd) {
@@ -55753,33 +56365,14 @@ exports.doModeBar = function(gd) {
 
     subplotIds = Plots.getSubplotIds(fullLayout, 'geo');
     for(i = 0; i < subplotIds.length; i++) {
-        var geo = fullLayout[subplotIds[i]]._geo;
+        var geo = fullLayout[subplotIds[i]]._subplot;
         geo.updateFx(fullLayout.hovermode);
     }
 
     return Plots.previousPromises(gd);
 };
 
-exports.setRangeSliderRange = function(gd, changes) {
-    var fullLayout = gd._fullLayout;
-
-    var newMin = changes['xaxis.range'] ? changes['xaxis.range'][0] : changes['xaxis.range[0]'],
-        newMax = changes['xaxis.range'] ? changes['xaxis.range'][1] : changes['xaxis.range[1]'];
-
-    var rangeSlider = fullLayout.xaxis && fullLayout.xaxis.rangeslider ?
-        fullLayout.xaxis.rangeslider : {};
-
-    if(rangeSlider.visible) {
-        if(newMin || newMax) {
-            fullLayout.xaxis.rangeslider.setRange(newMin, newMax);
-        }
-        else if(changes['xaxis.autorange']) {
-            fullLayout.xaxis.rangeslider.setRange();
-        }
-    }
-};
-
-},{"../components/color":210,"../components/drawing":233,"../components/modebar":256,"../components/titles":280,"../lib":299,"../plotly":323,"../plots/plots":353,"../registry":360}],321:[function(require,module,exports){
+},{"../components/color":189,"../components/drawing":212,"../components/modebar":235,"../components/titles":263,"../lib":282,"../plotly":306,"../plots/plots":337,"../registry":344}],304:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -55889,7 +56482,7 @@ function toImage(gd, opts) {
 
 module.exports = toImage;
 
-},{"../lib":299,"../plotly":323,"../snapshot/cloneplot":361,"../snapshot/helpers":364,"../snapshot/svgtoimg":366,"../snapshot/tosvg":368,"fast-isnumeric":66}],322:[function(require,module,exports){
+},{"../lib":282,"../plotly":306,"../snapshot/cloneplot":345,"../snapshot/helpers":348,"../snapshot/svgtoimg":350,"../snapshot/tosvg":352,"fast-isnumeric":61}],305:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -56259,7 +56852,7 @@ function convertPathToAttributeString(path) {
     return astr;
 }
 
-},{"../lib":299,"../plots/plots":353,"./plot_schema":317}],323:[function(require,module,exports){
+},{"../lib":282,"../plots/plots":337,"./plot_schema":300}],306:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -56299,12 +56892,13 @@ exports.Shapes = require('./components/shapes');
 exports.Legend = require('./components/legend');
 exports.Images = require('./components/images');
 exports.UpdateMenus = require('./components/updatemenus');
+exports.Sliders = require('./components/sliders');
 exports.ModeBar = require('./components/modebar');
 
 // plot api
 require('./plot_api/plot_api');
 
-},{"./components/annotations":208,"./components/color":210,"./components/colorbar":215,"./components/colorscale":224,"./components/drawing":233,"./components/errorbars":239,"./components/images":245,"./components/legend":253,"./components/modebar":256,"./components/shapes":278,"./components/updatemenus":285,"./plot_api/plot_api":315,"./plot_api/plot_config":316,"./plots/cartesian/axes":327,"./plots/cartesian/graph_interact":334,"./plots/plots":353}],324:[function(require,module,exports){
+},{"./components/annotations":187,"./components/color":189,"./components/colorbar":194,"./components/colorscale":203,"./components/drawing":212,"./components/errorbars":218,"./components/images":224,"./components/legend":232,"./components/modebar":235,"./components/shapes":256,"./components/sliders":262,"./components/updatemenus":268,"./plot_api/plot_api":298,"./plot_api/plot_config":299,"./plots/cartesian/axes":310,"./plots/cartesian/graph_interact":317,"./plots/plots":337}],307:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -56392,7 +56986,7 @@ module.exports = {
     }
 };
 
-},{}],325:[function(require,module,exports){
+},{}],308:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -56467,13 +57061,15 @@ module.exports = {
         maxpoints: {
             valType: 'number',
             min: 0,
+            max: 10000,
+            dflt: 500,
             
             
         }
     }
 };
 
-},{}],326:[function(require,module,exports){
+},{}],309:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -56500,7 +57096,7 @@ module.exports = {
     }
 };
 
-},{}],327:[function(require,module,exports){
+},{}],310:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -57598,6 +58194,9 @@ function numFormat(v, ax, fmtoverride, hover) {
         tickformat = ax.tickformat,
         separatethousands = ax.separatethousands;
 
+    // Dynamic tickformat function
+    if(typeof tickformat === 'function') return tickformat(v);
+
     // special case for hover: set exponent just for this value, and
     // add a couple more digits of precision over tick labels
     if(hover) {
@@ -57805,10 +58404,10 @@ axes.findSubplotsWithAxis = function(subplots, ax) {
 
 // makeClipPaths: prepare clipPaths for all single axes and all possible xy pairings
 axes.makeClipPaths = function(gd) {
-    var layout = gd._fullLayout,
-        defs = layout._defs,
-        fullWidth = {_offset: 0, _length: layout.width, _id: ''},
-        fullHeight = {_offset: 0, _length: layout.height, _id: ''},
+    var fullLayout = gd._fullLayout,
+        defs = fullLayout._defs,
+        fullWidth = {_offset: 0, _length: fullLayout.width, _id: ''},
+        fullHeight = {_offset: 0, _length: fullLayout.height, _id: ''},
         xaList = axes.list(gd, 'x', true),
         yaList = axes.list(gd, 'y', true),
         clipList = [],
@@ -57825,6 +58424,7 @@ axes.makeClipPaths = function(gd) {
 
     var defGroup = defs.selectAll('g.clips')
         .data([0]);
+
     defGroup.enter().append('g')
         .classed('clips', true);
 
@@ -57833,11 +58433,14 @@ axes.makeClipPaths = function(gd) {
     // https://groups.google.com/forum/#!topic/d3-js/6EpAzQ2gU9I
     var axClips = defGroup.selectAll('.axesclip')
         .data(clipList, function(d) { return d.x._id + d.y._id; });
+
     axClips.enter().append('clipPath')
         .classed('axesclip', true)
-        .attr('id', function(d) { return 'clip' + layout._uid + d.x._id + d.y._id; })
+        .attr('id', function(d) { return 'clip' + fullLayout._uid + d.x._id + d.y._id; })
       .append('rect');
+
     axClips.exit().remove();
+
     axClips.each(function(d) {
         d3.select(this).select('rect').attr({
             x: d.x._offset || 0,
@@ -57872,8 +58475,8 @@ axes.doTicks = function(gd, axid, skipTitle) {
         if(axid === 'redraw') {
             fullLayout._paper.selectAll('g.subplot').each(function(subplot) {
                 var plotinfo = fullLayout._plots[subplot],
-                    xa = plotinfo.x(),
-                    ya = plotinfo.y();
+                    xa = plotinfo.xaxis,
+                    ya = plotinfo.yaxis;
 
                 plotinfo.xaxislayer
                     .selectAll('.' + xa._id + 'tick').remove();
@@ -58336,7 +58939,7 @@ axes.doTicks = function(gd, axid, skipTitle) {
 
                 // [bottom or left, top or right, free, main]
                 linepositions = ax._linepositions[subplot] || [],
-                counteraxis = plotinfo[counterLetter](),
+                counteraxis = plotinfo[counterLetter + 'axis'],
                 mainSubplot = counteraxis._id === ax.anchor,
                 ticksides = [false, false, false],
                 tickpath = '';
@@ -58524,7 +59127,7 @@ function swapAxisAttrs(layout, key, xFullAxes, yFullAxes) {
 // rather than built-in % which gives a negative value for negative v
 function mod(v, d) { return ((v % d) + d) % d; }
 
-},{"../../components/color":210,"../../components/drawing":233,"../../components/titles":280,"../../lib":299,"../../lib/svg_text_utils":313,"../../registry":360,"./axis_ids":329,"./layout_attributes":336,"./layout_defaults":337,"./set_convert":341,"d3":63,"fast-isnumeric":66}],328:[function(require,module,exports){
+},{"../../components/color":189,"../../components/drawing":212,"../../components/titles":263,"../../lib":282,"../../lib/svg_text_utils":296,"../../registry":344,"./axis_ids":312,"./layout_attributes":319,"./layout_defaults":320,"./set_convert":324,"d3":55,"fast-isnumeric":61}],311:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -58807,7 +59410,7 @@ function category(a) {
     return curvecats > curvenums * 2;
 }
 
-},{"../../components/color/attributes":209,"../../lib":299,"../../registry":360,"./axis_ids":329,"./category_order_defaults":330,"./clean_datum":331,"./layout_attributes":336,"./ordered_categories":338,"./set_convert":341,"./tick_label_defaults":342,"./tick_mark_defaults":343,"./tick_value_defaults":344,"fast-isnumeric":66,"tinycolor2":177}],329:[function(require,module,exports){
+},{"../../components/color/attributes":188,"../../lib":282,"../../registry":344,"./axis_ids":312,"./category_order_defaults":313,"./clean_datum":314,"./layout_attributes":319,"./ordered_categories":321,"./set_convert":324,"./tick_label_defaults":325,"./tick_mark_defaults":326,"./tick_value_defaults":327,"fast-isnumeric":61,"tinycolor2":165}],312:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -58929,7 +59532,7 @@ exports.getFromTrace = function(gd, fullTrace, type) {
     return ax;
 };
 
-},{"../../lib":299,"../../registry":360,"../plots":353,"./constants":332}],330:[function(require,module,exports){
+},{"../../lib":282,"../../registry":344,"../plots":337,"./constants":315}],313:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -58963,7 +59566,7 @@ module.exports = function handleCategoryOrderDefaults(containerIn, containerOut,
     }
 };
 
-},{}],331:[function(require,module,exports){
+},{}],314:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -59002,7 +59605,7 @@ module.exports = function cleanDatum(c) {
     return c;
 };
 
-},{"../../lib":299,"fast-isnumeric":66}],332:[function(require,module,exports){
+},{"../../lib":282,"fast-isnumeric":61}],315:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -59080,7 +59683,7 @@ module.exports = {
     REDRAWDELAY: 50
 };
 
-},{}],333:[function(require,module,exports){
+},{}],316:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -59131,8 +59734,8 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
     var fullLayout = gd._fullLayout,
         // if we're dragging two axes at once, also drag overlays
         subplots = [plotinfo].concat((ns && ew) ? plotinfo.overlays : []),
-        xa = [plotinfo.x()],
-        ya = [plotinfo.y()],
+        xa = [plotinfo.xaxis],
+        ya = [plotinfo.yaxis],
         pw = xa[0]._length,
         ph = ya[0]._length,
         MINDRAG = constants.MINDRAG,
@@ -59140,8 +59743,8 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         isMainDrag = (ns + ew === 'nsew');
 
     for(var i = 1; i < subplots.length; i++) {
-        var subplotXa = subplots[i].x(),
-            subplotYa = subplots[i].y();
+        var subplotXa = subplots[i].xaxis,
+            subplotYa = subplots[i].yaxis;
         if(xa.indexOf(subplotXa) === -1) xa.push(subplotXa);
         if(ya.indexOf(subplotYa) === -1) ya.push(subplotYa);
     }
@@ -59229,8 +59832,8 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
     dragElement.init(dragOptions);
 
     var zoomlayer = gd._fullLayout._zoomlayer,
-        xs = plotinfo.x()._offset,
-        ys = plotinfo.y()._offset,
+        xs = plotinfo.xaxis._offset,
+        ys = plotinfo.yaxis._offset,
         x0,
         y0,
         box,
@@ -59242,14 +59845,14 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         corners;
 
     function recomputeAxisLists() {
-        xa = [plotinfo.x()];
-        ya = [plotinfo.y()];
+        xa = [plotinfo.xaxis];
+        ya = [plotinfo.yaxis];
         pw = xa[0]._length;
         ph = ya[0]._length;
 
         for(var i = 1; i < subplots.length; i++) {
-            var subplotXa = subplots[i].x(),
-                subplotYa = subplots[i].y();
+            var subplotXa = subplots[i].xaxis,
+                subplotYa = subplots[i].yaxis;
             if(xa.indexOf(subplotXa) === -1) xa.push(subplotXa);
             if(ya.indexOf(subplotYa) === -1) ya.push(subplotYa);
         }
@@ -59257,8 +59860,8 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         xActive = isDirectionActive(xa, ew);
         yActive = isDirectionActive(ya, ns);
         cursor = getDragCursor(yActive + xActive, fullLayout.dragmode);
-        xs = plotinfo.x()._offset;
-        ys = plotinfo.y()._offset;
+        xs = plotinfo.xaxis._offset;
+        ys = plotinfo.yaxis._offset;
         dragOptions.xa = xa;
         dragOptions.ya = ya;
     }
@@ -59739,8 +60342,8 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
         for(var i = 0; i < subplots.length; i++) {
 
             var subplot = plotinfos[subplots[i]],
-                xa2 = subplot.x(),
-                ya2 = subplot.y(),
+                xa2 = subplot.xaxis,
+                ya2 = subplot.yaxis,
                 editX = ew && !xa2.fixedrange,
                 editY = ns && !ya2.fixedrange;
 
@@ -59777,7 +60380,6 @@ module.exports = function dragBox(gd, plotinfo, x, y, w, h, ns, ew) {
 
             var plotDx = xa2._offset - fracDx,
                 plotDy = ya2._offset - fracDy;
-
 
             fullLayout._defs.selectAll('#' + subplot.clipId)
                 .call(Lib.setTranslate, clipDx, clipDy)
@@ -59838,7 +60440,7 @@ function isSelectOrLasso(dragmode) {
     return modes.indexOf(dragmode) !== -1;
 }
 
-},{"../../components/color":210,"../../components/dragelement":231,"../../components/drawing":233,"../../lib":299,"../../lib/setcursor":309,"../../lib/svg_text_utils":313,"../../plotly":323,"../../registry":360,"./axes":327,"./constants":332,"./select":340,"d3":63,"tinycolor2":177}],334:[function(require,module,exports){
+},{"../../components/color":189,"../../components/dragelement":210,"../../components/drawing":212,"../../lib":282,"../../lib/setcursor":292,"../../lib/svg_text_utils":296,"../../plotly":306,"../../registry":344,"./axes":310,"./constants":315,"./select":323,"d3":55,"tinycolor2":165}],317:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -59945,8 +60547,8 @@ fx.init = function(gd) {
 
         if(!fullLayout._has('cartesian')) return;
 
-        var xa = plotinfo.x(),
-            ya = plotinfo.y(),
+        var xa = plotinfo.xaxis,
+            ya = plotinfo.yaxis,
 
             // the y position of the main x axis line
             y0 = (xa._linepositions[subplot] || [])[3],
@@ -60215,6 +60817,7 @@ function hover(gd, evt, subplot) {
         curvenum,
         cd,
         trace,
+        subplotId,
         subploti,
         mode,
         xval,
@@ -60304,7 +60907,8 @@ function hover(gd, evt, subplot) {
         if(!cd || !cd[0] || !cd[0].trace || cd[0].trace.visible !== true) continue;
 
         trace = cd[0].trace;
-        subploti = subplots.indexOf(getSubplot(trace));
+        subplotId = getSubplot(trace);
+        subploti = subplots.indexOf(subplotId);
 
         // within one trace mode can sometimes be overridden
         mode = hovermode;
@@ -60330,6 +60934,11 @@ function hover(gd, evt, subplot) {
             zLabelVal: undefined,
             text: undefined
         };
+
+        // add ref to subplot object (non-cartesian case)
+        if(fullLayout[subplotId]) {
+            pointData.subplot = fullLayout[subplotId]._subplot;
+        }
 
         closedataPreviousLength = hoverData.length;
 
@@ -60381,7 +60990,6 @@ function hover(gd, evt, subplot) {
             hoverData.splice(0, closedataPreviousLength);
             distance = hoverData[0].distance;
         }
-
     }
 
     // nothing left: remove all labels and quit
@@ -60419,31 +61027,35 @@ function hover(gd, evt, subplot) {
     // other people and send it to the event
     for(itemnum = 0; itemnum < hoverData.length; itemnum++) {
         var pt = hoverData[itemnum];
+
         var out = {
             data: pt.trace._input,
             fullData: pt.trace,
             curveNumber: pt.trace.index,
-            pointNumber: pt.index,
-            x: pt.xVal,
-            y: pt.yVal,
-            xaxis: pt.xa,
-            yaxis: pt.ya
+            pointNumber: pt.index
         };
-        if(pt.zLabelVal !== undefined) out.z = pt.zLabelVal;
+
+        if(pt.trace._module.eventData) out = pt.trace._module.eventData(out, pt);
+        else {
+            out.x = pt.xVal;
+            out.y = pt.yVal;
+            out.xaxis = pt.xa;
+            out.yaxis = pt.ya;
+
+            if(pt.zLabelVal !== undefined) out.z = pt.zLabelVal;
+        }
+
         newhoverdata.push(out);
     }
+
     gd._hoverdata = newhoverdata;
 
     if(!hoverChanged(gd, evt, oldhoverdata)) return;
 
-    /* Emit the custom hover handler. Bind this like:
-     *  gd.on('hover.plotly', function(extras) {
-     *      // do something with extras.data
-     *  });
-     */
     if(oldhoverdata) {
         gd.emit('plotly_unhover', { points: oldhoverdata });
     }
+
     gd.emit('plotly_hover', {
         points: gd._hoverdata,
         xaxes: xaArray,
@@ -60456,7 +61068,7 @@ function hover(gd, evt, subplot) {
 // look for either .subplot (currently just ternary)
 // or xaxis and yaxis attributes
 function getSubplot(trace) {
-    return trace.subplot || (trace.xaxis + trace.yaxis);
+    return trace.subplot || (trace.xaxis + trace.yaxis) || trace.geo;
 }
 
 fx.getDistanceFunction = function(mode, dx, dy, dxy) {
@@ -60560,6 +61172,7 @@ function cleanPoint(d, hovermode) {
         if(infomode.indexOf('text') === -1) d.text = undefined;
         if(infomode.indexOf('name') === -1) d.name = undefined;
     }
+
     return d;
 }
 
@@ -61182,7 +61795,7 @@ fx.inbox = function(v0, v1) {
     return Infinity;
 };
 
-},{"../../components/color":210,"../../components/dragelement":231,"../../components/drawing":233,"../../lib":299,"../../lib/events":294,"../../lib/svg_text_utils":313,"./axes":327,"./constants":332,"./dragbox":333,"d3":63,"fast-isnumeric":66,"tinycolor2":177}],335:[function(require,module,exports){
+},{"../../components/color":189,"../../components/dragelement":210,"../../components/drawing":212,"../../lib":282,"../../lib/events":277,"../../lib/svg_text_utils":296,"./axes":310,"./constants":315,"./dragbox":316,"d3":55,"fast-isnumeric":61,"tinycolor2":165}],318:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -61194,8 +61807,10 @@ fx.inbox = function(v0, v1) {
 
 'use strict';
 
+var d3 = require('d3');
+var Lib = require('../../lib');
 var Plots = require('../plots');
-
+var Axes = require('./axes');
 var constants = require('./constants');
 
 exports.name = 'cartesian';
@@ -61213,17 +61828,16 @@ exports.attributes = require('./attributes');
 exports.transitionAxes = require('./transition_axes');
 
 exports.plot = function(gd, traces, transitionOpts, makeOnCompleteCallback) {
-    var cdSubplot, cd, trace, i, j, k;
-
     var fullLayout = gd._fullLayout,
         subplots = Plots.getSubplotIds(fullLayout, 'cartesian'),
         calcdata = gd.calcdata,
-        modules = fullLayout._modules;
+        i;
 
+    // If traces is not provided, then it's a complete replot and missing
+    // traces are removed
     if(!Array.isArray(traces)) {
-      // If traces is not provided, then it's a complete replot and missing
-      // traces are removed
         traces = [];
+
         for(i = 0; i < calcdata.length; i++) {
             traces.push(i);
         }
@@ -61234,11 +61848,12 @@ exports.plot = function(gd, traces, transitionOpts, makeOnCompleteCallback) {
             subplotInfo = fullLayout._plots[subplot];
 
         // Get all calcdata for this subplot:
-        cdSubplot = [];
+        var cdSubplot = [];
         var pcd;
-        for(j = 0; j < calcdata.length; j++) {
-            cd = calcdata[j];
-            trace = cd[0].trace;
+
+        for(var j = 0; j < calcdata.length; j++) {
+            var cd = calcdata[j],
+                trace = cd[0].trace;
 
             // Skip trace if whitelist provided and it's not whitelisted:
             // if (Array.isArray(traces) && traces.indexOf(i) === -1) continue;
@@ -61264,37 +61879,45 @@ exports.plot = function(gd, traces, transitionOpts, makeOnCompleteCallback) {
             }
         }
 
-        // remove old traces, then redraw everything
-        // TODO: scatterlayer is manually excluded from this since it knows how
-        // to update instead of fully removing and redrawing every time. The
-        // remaining plot traces should also be able to do this. Once implemented,
-        // we won't need this - which should sometimes be a big speedup.
-        if(subplotInfo.plot) {
-            subplotInfo.plot.selectAll('g:not(.scatterlayer)').selectAll('g.trace').remove();
-        }
-
-        // Plot all traces for each module at once:
-        for(j = 0; j < modules.length; j++) {
-            var _module = modules[j];
-
-            // skip over non-cartesian trace modules
-            if(_module.basePlotModule.name !== 'cartesian') continue;
-
-            // plot all traces of this type on this subplot at once
-            var cdModule = [];
-            for(k = 0; k < cdSubplot.length; k++) {
-                cd = cdSubplot[k];
-                trace = cd[0].trace;
-
-                if((trace._module === _module) && (trace.visible === true)) {
-                    cdModule.push(cd);
-                }
-            }
-
-            _module.plot(gd, subplotInfo, cdModule, transitionOpts, makeOnCompleteCallback);
-        }
+        plotOne(gd, subplotInfo, cdSubplot, transitionOpts, makeOnCompleteCallback);
     }
 };
+
+function plotOne(gd, plotinfo, cdSubplot, transitionOpts, makeOnCompleteCallback) {
+    var fullLayout = gd._fullLayout,
+        modules = fullLayout._modules;
+
+    // remove old traces, then redraw everything
+    //
+    // TODO: scatterlayer is manually excluded from this since it knows how
+    // to update instead of fully removing and redrawing every time. The
+    // remaining plot traces should also be able to do this. Once implemented,
+    // we won't need this - which should sometimes be a big speedup.
+    if(plotinfo.plot) {
+        plotinfo.plot.selectAll('g:not(.scatterlayer)').selectAll('g.trace').remove();
+    }
+
+    // plot all traces for each module at once
+    for(var j = 0; j < modules.length; j++) {
+        var _module = modules[j];
+
+        // skip over non-cartesian trace modules
+        if(_module.basePlotModule.name !== 'cartesian') continue;
+
+        // plot all traces of this type on this subplot at once
+        var cdModule = [];
+        for(var k = 0; k < cdSubplot.length; k++) {
+            var cd = cdSubplot[k],
+                trace = cd[0].trace;
+
+            if((trace._module === _module) && (trace.visible === true)) {
+                cdModule.push(cd);
+            }
+        }
+
+        _module.plot(gd, plotinfo, cdModule, transitionOpts, makeOnCompleteCallback);
+    }
+}
 
 exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout) {
     var oldModules = oldFullLayout._modules || [],
@@ -61330,9 +61953,221 @@ exports.clean = function(newFullData, newFullLayout, oldFullData, oldFullLayout)
             }
         }
     }
+
+    var hadCartesian = (oldFullLayout._has && oldFullLayout._has('cartesian'));
+    var hasCartesian = (newFullLayout._has && newFullLayout._has('cartesian'));
+
+    if(hadCartesian && !hasCartesian) {
+        var subplotLayers = oldFullLayout._cartesianlayer.selectAll('.subplot');
+
+        subplotLayers.call(purgeSubplotLayers, oldFullLayout);
+        oldFullLayout._defs.selectAll('.axesclip').remove();
+    }
 };
 
-},{"../plots":353,"./attributes":326,"./constants":332,"./transition_axes":345}],336:[function(require,module,exports){
+exports.drawFramework = function(gd) {
+    var fullLayout = gd._fullLayout,
+        subplotData = makeSubplotData(gd);
+
+    var subplotLayers = fullLayout._cartesianlayer.selectAll('.subplot')
+        .data(subplotData, Lib.identity);
+
+    subplotLayers.enter().append('g')
+        .attr('class', function(name) { return 'subplot ' + name; });
+
+    subplotLayers.order();
+
+    subplotLayers.exit()
+        .call(purgeSubplotLayers, fullLayout);
+
+    subplotLayers.each(function(name) {
+        var plotinfo = fullLayout._plots[name];
+
+        // keep ref to plot group
+        plotinfo.plotgroup = d3.select(this);
+
+        // initialize list of overlay subplots
+        plotinfo.overlays = [];
+
+        makeSubplotLayer(plotinfo);
+
+        // fill in list of overlay subplots
+        if(plotinfo.mainplot) {
+            var mainplot = fullLayout._plots[plotinfo.mainplot];
+            mainplot.overlays.push(plotinfo);
+        }
+
+        // make separate drag layers for each subplot,
+        // but append them to paper rather than the plot groups,
+        // so they end up on top of the rest
+        plotinfo.draglayer = joinLayer(fullLayout._draggers, 'g', name);
+    });
+};
+
+exports.rangePlot = function(gd, plotinfo, cdSubplot) {
+    makeSubplotLayer(plotinfo);
+    plotOne(gd, plotinfo, cdSubplot);
+    Plots.style(gd);
+};
+
+function makeSubplotData(gd) {
+    var fullLayout = gd._fullLayout,
+        subplots = Axes.getSubplots(gd);
+
+    var subplotData = [],
+        overlays = [];
+
+    for(var i = 0; i < subplots.length; i++) {
+        var subplot = subplots[i],
+            plotinfo = fullLayout._plots[subplot];
+
+        var xa = plotinfo.xaxis,
+            ya = plotinfo.yaxis;
+
+        // is this subplot overlaid on another?
+        // ax.overlaying is the id of another axis of the same
+        // dimension that this one overlays to be an overlaid subplot,
+        // the main plot must exist make sure we're not trying to
+        // overlay on an axis that's already overlaying another
+        var xa2 = Axes.getFromId(gd, xa.overlaying) || xa;
+        if(xa2 !== xa && xa2.overlaying) {
+            xa2 = xa;
+            xa.overlaying = false;
+        }
+
+        var ya2 = Axes.getFromId(gd, ya.overlaying) || ya;
+        if(ya2 !== ya && ya2.overlaying) {
+            ya2 = ya;
+            ya.overlaying = false;
+        }
+
+        var mainplot = xa2._id + ya2._id;
+        if(mainplot !== subplot && subplots.indexOf(mainplot) !== -1) {
+            plotinfo.mainplot = mainplot;
+            plotinfo.mainplotinfo = fullLayout._plots[mainplot];
+            overlays.push(subplot);
+
+            // for now force overlays to overlay completely... so they
+            // can drag together correctly and share backgrounds.
+            // Later perhaps we make separate axis domain and
+            // tick/line domain or something, so they can still share
+            // the (possibly larger) dragger and background but don't
+            // have to both be drawn over that whole domain
+            xa.domain = xa2.domain.slice();
+            ya.domain = ya2.domain.slice();
+        }
+        else {
+            subplotData.push(subplot);
+        }
+    }
+
+    // main subplots before overlays
+    subplotData = subplotData.concat(overlays);
+
+    return subplotData;
+}
+
+function makeSubplotLayer(plotinfo) {
+    var plotgroup = plotinfo.plotgroup,
+        id = plotinfo.id;
+
+    // Layers to keep plot types in the right order.
+    // from back to front:
+    // 1. heatmaps, 2D histos and contour maps
+    // 2. bars / 1D histos
+    // 3. errorbars for bars and scatter
+    // 4. scatter
+    // 5. box plots
+    function joinPlotLayers(parent) {
+        joinLayer(parent, 'g', 'imagelayer');
+        joinLayer(parent, 'g', 'maplayer');
+        joinLayer(parent, 'g', 'barlayer');
+        joinLayer(parent, 'g', 'boxlayer');
+        joinLayer(parent, 'g', 'scatterlayer');
+    }
+
+    if(!plotinfo.mainplot) {
+        plotinfo.bg = joinLayer(plotgroup, 'rect', 'bg');
+        plotinfo.bg.style('stroke-width', 0);
+
+        var backLayer = joinLayer(plotgroup, 'g', 'layer-subplot');
+        plotinfo.shapelayer = joinLayer(backLayer, 'g', 'shapelayer');
+        plotinfo.imagelayer = joinLayer(backLayer, 'g', 'imagelayer');
+
+        plotinfo.gridlayer = joinLayer(plotgroup, 'g', 'gridlayer');
+        plotinfo.overgrid = joinLayer(plotgroup, 'g', 'overgrid');
+
+        plotinfo.zerolinelayer = joinLayer(plotgroup, 'g', 'zerolinelayer');
+        plotinfo.overzero = joinLayer(plotgroup, 'g', 'overzero');
+
+        plotinfo.plot = joinLayer(plotgroup, 'g', 'plot');
+        plotinfo.overplot = joinLayer(plotgroup, 'g', 'overplot');
+
+        plotinfo.xlines = joinLayer(plotgroup, 'path', 'xlines');
+        plotinfo.ylines = joinLayer(plotgroup, 'path', 'ylines');
+        plotinfo.overlines = joinLayer(plotgroup, 'g', 'overlines');
+
+        plotinfo.xaxislayer = joinLayer(plotgroup, 'g', 'xaxislayer');
+        plotinfo.yaxislayer = joinLayer(plotgroup, 'g', 'yaxislayer');
+        plotinfo.overaxes = joinLayer(plotgroup, 'g', 'overaxes');
+    }
+    else {
+        var mainplotinfo = plotinfo.mainplotinfo;
+
+        // now make the components of overlaid subplots
+        // overlays don't have backgrounds, and append all
+        // their other components to the corresponding
+        // extra groups of their main plots.
+
+        plotinfo.gridlayer = joinLayer(mainplotinfo.overgrid, 'g', id);
+        plotinfo.zerolinelayer = joinLayer(mainplotinfo.overzero, 'g', id);
+
+        plotinfo.plot = joinLayer(mainplotinfo.overplot, 'g', id);
+        plotinfo.xlines = joinLayer(mainplotinfo.overlines, 'path', id);
+        plotinfo.ylines = joinLayer(mainplotinfo.overlines, 'path', id);
+        plotinfo.xaxislayer = joinLayer(mainplotinfo.overaxes, 'g', id);
+        plotinfo.yaxislayer = joinLayer(mainplotinfo.overaxes, 'g', id);
+    }
+
+    // common attributes for all subplots, overlays or not
+    plotinfo.plot.call(joinPlotLayers);
+
+    plotinfo.xlines
+        .style('fill', 'none')
+        .classed('crisp', true);
+
+    plotinfo.ylines
+        .style('fill', 'none')
+        .classed('crisp', true);
+}
+
+function purgeSubplotLayers(layers, fullLayout) {
+    if(!layers) return;
+
+    layers.each(function(subplot) {
+        var plotgroup = d3.select(this),
+            clipId = 'clip' + fullLayout._uid + subplot + 'plot';
+
+        plotgroup.remove();
+        fullLayout._draggers.selectAll('g.' + subplot).remove();
+        fullLayout._defs.select('#' + clipId).remove();
+
+        // do not remove individual axis <clipPath>s here
+        // as other subplots may need them
+    });
+}
+
+function joinLayer(parent, nodeType, className) {
+    var layer = parent.selectAll('.' + className)
+        .data([0]);
+
+    layer.enter().append(nodeType)
+        .classed(className, true);
+
+    return layer;
+}
+
+},{"../../lib":282,"../plots":337,"./attributes":309,"./axes":310,"./constants":315,"./transition_axes":328,"d3":55}],319:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -61682,7 +62517,7 @@ module.exports = {
     }
 };
 
-},{"../../components/color/attributes":209,"../../lib/extend":295,"../font_attributes":346,"./constants":332}],337:[function(require,module,exports){
+},{"../../components/color/attributes":188,"../../lib/extend":278,"../font_attributes":329,"./constants":315}],320:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -61856,7 +62691,7 @@ module.exports = function supplyLayoutDefaults(layoutIn, layoutOut, fullData) {
     });
 };
 
-},{"../../components/color":210,"../../lib":299,"../../registry":360,"../layout_attributes":352,"./axis_defaults":328,"./axis_ids":329,"./constants":332,"./layout_attributes":336,"./position_defaults":339}],338:[function(require,module,exports){
+},{"../../components/color":189,"../../lib":282,"../../registry":344,"../layout_attributes":335,"./axis_defaults":311,"./axis_ids":312,"./constants":315,"./layout_attributes":319,"./position_defaults":322}],321:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -61935,7 +62770,7 @@ module.exports = function orderedCategories(axisLetter, categoryorder, categorya
     }
 };
 
-},{"d3":63}],339:[function(require,module,exports){
+},{"d3":55}],322:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62000,7 +62835,7 @@ module.exports = function handlePositionDefaults(containerIn, containerOut, coer
     return containerOut;
 };
 
-},{"../../lib":299,"fast-isnumeric":66}],340:[function(require,module,exports){
+},{"../../lib":282,"fast-isnumeric":61}],323:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62027,8 +62862,8 @@ function getAxId(ax) { return ax._id; }
 module.exports = function prepSelect(e, startX, startY, dragOptions, mode) {
     var plot = dragOptions.gd._fullLayout._zoomlayer,
         dragBBox = dragOptions.element.getBoundingClientRect(),
-        xs = dragOptions.plotinfo.x()._offset,
-        ys = dragOptions.plotinfo.y()._offset,
+        xs = dragOptions.plotinfo.xaxis._offset,
+        ys = dragOptions.plotinfo.yaxis._offset,
         x0 = startX - dragBBox.left,
         y0 = startY - dragBBox.top,
         x1 = x0,
@@ -62200,7 +63035,7 @@ module.exports = function prepSelect(e, startX, startY, dragOptions, mode) {
     };
 };
 
-},{"../../components/color":210,"../../lib/polygon":306,"./axes":327,"./constants":332}],341:[function(require,module,exports){
+},{"../../components/color":189,"../../lib/polygon":289,"./axes":310,"./constants":315}],324:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62450,7 +63285,7 @@ module.exports = function setConvert(ax) {
     ax._forceTick0 = null;
 };
 
-},{"../../lib":299,"./axis_ids":329,"./clean_datum":331,"./constants":332,"d3":63,"fast-isnumeric":66}],342:[function(require,module,exports){
+},{"../../lib":282,"./axis_ids":312,"./clean_datum":314,"./constants":315,"d3":55,"fast-isnumeric":61}],325:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62534,7 +63369,7 @@ function getShowAttrDflt(containerIn) {
     }
 }
 
-},{"../../lib":299}],343:[function(require,module,exports){
+},{"../../lib":282}],326:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62567,7 +63402,7 @@ module.exports = function handleTickDefaults(containerIn, containerOut, coerce, 
     }
 };
 
-},{"../../lib":299,"./layout_attributes":336}],344:[function(require,module,exports){
+},{"../../lib":282,"./layout_attributes":319}],327:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62608,7 +63443,7 @@ module.exports = function handleTickValueDefaults(containerIn, containerOut, coe
     }
 };
 
-},{"fast-isnumeric":66}],345:[function(require,module,exports){
+},{"fast-isnumeric":61}],328:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62745,8 +63580,8 @@ module.exports = function transitionAxes(gd, newLayout, transitionOpts, makeOnCo
     }
 
     function unsetSubplotTransform(subplot) {
-        var xa2 = subplot.x();
-        var ya2 = subplot.y();
+        var xa2 = subplot.xaxis;
+        var ya2 = subplot.yaxis;
 
         fullLayout._defs.selectAll('#' + subplot.clipId)
             .call(Lib.setTranslate, 0, 0)
@@ -62805,11 +63640,11 @@ module.exports = function transitionAxes(gd, newLayout, transitionOpts, makeOnCo
             viewBox[3] = subplot.yaxis._length;
         }
 
-        ticksAndAnnotations(subplot.x(), subplot.y());
+        ticksAndAnnotations(subplot.xaxis, subplot.yaxis);
 
 
-        var xa2 = subplot.x();
-        var ya2 = subplot.y();
+        var xa2 = subplot.xaxis;
+        var ya2 = subplot.yaxis;
 
         var editX = !!xUpdate;
         var editY = !!yUpdate;
@@ -62920,7 +63755,7 @@ module.exports = function transitionAxes(gd, newLayout, transitionOpts, makeOnCo
     return Promise.resolve();
 };
 
-},{"../../lib":299,"../../plotly":323,"../../registry":360,"./axes":327,"d3":63}],346:[function(require,module,exports){
+},{"../../lib":282,"../../plotly":306,"../../registry":344,"./axes":310,"d3":55}],329:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62951,7 +63786,7 @@ module.exports = {
     }
 };
 
-},{}],347:[function(require,module,exports){
+},{}],330:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -62992,7 +63827,7 @@ module.exports = {
     }
 };
 
-},{}],348:[function(require,module,exports){
+},{}],331:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -63153,7 +63988,7 @@ function createCamera(scene) {
     return result;
 }
 
-},{"mouse-change":154,"mouse-wheel":158}],349:[function(require,module,exports){
+},{"mouse-change":126,"mouse-wheel":128}],332:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -63397,7 +64232,7 @@ function createAxes2D(scene) {
 
 module.exports = createAxes2D;
 
-},{"../../lib/html2unicode":298,"../../lib/str2rgbarray":312,"../cartesian/axes":327,"../plots":353}],350:[function(require,module,exports){
+},{"../../lib/html2unicode":281,"../../lib/str2rgbarray":295,"../cartesian/axes":310,"../plots":337}],333:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -63509,7 +64344,7 @@ exports.toSVG = function(gd) {
     }
 };
 
-},{"../../constants/xmlns_namespaces":289,"../cartesian/attributes":326,"../plots":353,"./scene2d":351}],351:[function(require,module,exports){
+},{"../../constants/xmlns_namespaces":272,"../cartesian/attributes":309,"../plots":337,"./scene2d":334}],334:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -63545,6 +64380,7 @@ function Scene2D(options, fullLayout) {
     this.staticPlot = !!options.staticPlot;
 
     this.fullLayout = fullLayout;
+    this.fullData = null;
     this.updateAxes(fullLayout);
 
     this.makeFramework();
@@ -63561,6 +64397,7 @@ function Scene2D(options, fullLayout) {
 
     // trace set
     this.traces = {};
+    this._inputs = {};
 
     // create axes spikes
     this.spikes = createSpikes(this.glplot);
@@ -63569,6 +64406,9 @@ function Scene2D(options, fullLayout) {
         innerFill: false,
         outerFill: true
     });
+
+    // last button state
+    this.lastButtonState = 0;
 
     // last pick result
     this.pickResult = null;
@@ -63844,6 +64684,8 @@ proto.destroy = function() {
     this.container.removeChild(this.svgContainer);
     this.container.removeChild(this.mouseContainer);
 
+    this.fullData = null;
+    this._inputs = null;
     this.glplot = null;
     this.stopped = true;
 };
@@ -63934,6 +64776,8 @@ proto.updateTraces = function(fullData, calcData) {
     var traceIds = Object.keys(this.traces);
     var i, j, fullTrace;
 
+    this.fullData = fullData;
+
     // remove empty traces
     trace_id_loop:
     for(i = 0; i < traceIds.length; i++) {
@@ -63955,7 +64799,7 @@ proto.updateTraces = function(fullData, calcData) {
     // update / create trace objects
     for(i = 0; i < fullData.length; i++) {
         fullTrace = fullData[i];
-
+        this._inputs[fullTrace.uid] = i;
         var calcTrace = calcData[i],
             traceObj = this.traces[fullTrace.uid];
 
@@ -63967,6 +64811,24 @@ proto.updateTraces = function(fullData, calcData) {
     }
 };
 
+proto.emitPointAction = function(nextSelection, eventType) {
+
+    var curveIndex = this._inputs[nextSelection.trace.uid];
+
+    this.graphDiv.emit(eventType, {
+        points: [{
+            x: nextSelection.traceCoord[0],
+            y: nextSelection.traceCoord[1],
+            curveNumber: curveIndex,
+            pointNumber: nextSelection.pointIndex,
+            data: this.fullData[curveIndex]._input,
+            fullData: this.fullData,
+            xaxis: this.xaxis,
+            yaxis: this.yaxis
+        }]
+    });
+};
+
 proto.draw = function() {
     if(this.stopped) return;
 
@@ -63975,7 +64837,10 @@ proto.draw = function() {
     var glplot = this.glplot,
         camera = this.camera,
         mouseListener = camera.mouseListener,
+        mouseUp = this.lastButtonState === 1 && mouseListener.buttons === 0,
         fullLayout = this.fullLayout;
+
+    this.lastButtonState = mouseListener.buttons;
 
     this.cameraChanged();
 
@@ -64006,8 +64871,13 @@ proto.draw = function() {
             (y / glplot.pixelRatio) - (size.t + (1 - domainY[1]) * size.h)
         );
 
+        var nextSelection = result && result.object._trace.handlePick(result);
+
+        if(nextSelection && mouseUp) {
+            this.emitPointAction(nextSelection, 'plotly_click');
+        }
+
         if(result && result.object._trace.hoverinfo !== 'skip' && fullLayout.hovermode) {
-            var nextSelection = result.object._trace.handlePick(result);
 
             if(nextSelection && (
                 !this.lastPickResult ||
@@ -64033,6 +64903,10 @@ proto.draw = function() {
                         (glplot.dataBox[3] - glplot.dataBox[1]) - glplot.viewBox[1]) /
                             glplot.pixelRatio
                 ];
+
+                // this needs to happen before the next block that deletes traceCoord data
+                // also it's important to copy, otherwise data is lost by the time event data is read
+                this.emitPointAction(nextSelection, 'plotly_hover');
 
                 var hoverinfo = selection.hoverinfo;
                 if(hoverinfo !== 'all') {
@@ -64061,6 +64935,7 @@ proto.draw = function() {
         else if(!result && this.lastPickResult) {
             this.spikes.update({});
             this.lastPickResult = null;
+            this.graphDiv.emit('plotly_unhover');
             Fx.loneUnhover(this.svgContainer);
         }
     }
@@ -64075,7 +64950,7 @@ proto.hoverFormatter = function(axisName, val) {
     return Axes.tickText(axis, axis.c2l(val), 'hover').text;
 };
 
-},{"../../lib/html2unicode":298,"../../lib/show_no_webgl_msg":310,"../../plots/cartesian/axes":327,"../../plots/cartesian/graph_interact":334,"./camera":348,"./convert":349,"gl-plot2d":86,"gl-select-box":123,"gl-spikes2d":143}],352:[function(require,module,exports){
+},{"../../lib/html2unicode":281,"../../lib/show_no_webgl_msg":293,"../../plots/cartesian/axes":310,"../../plots/cartesian/graph_interact":317,"./camera":331,"./convert":332,"gl-plot2d":86,"gl-select-box":104,"gl-spikes2d":113}],335:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -64234,11 +65109,50 @@ module.exports = {
         'annotations': 'annotations',
         'shapes': 'shapes',
         'images': 'images',
-        'updatemenus': 'updatemenus'
+        'updatemenus': 'updatemenus',
+        'sliders': 'sliders'
     }
 };
 
-},{"../components/color/attributes":209,"../lib":299,"./font_attributes":346}],353:[function(require,module,exports){
+},{"../components/color/attributes":188,"../lib":282,"./font_attributes":329}],336:[function(require,module,exports){
+/**
+* Copyright 2012-2016, Plotly, Inc.
+* All rights reserved.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+
+'use strict';
+
+module.exports = {
+    t: {
+        valType: 'number',
+        dflt: 0,
+        
+        
+    },
+    r: {
+        valType: 'number',
+        dflt: 0,
+        
+        
+    },
+    b: {
+        valType: 'number',
+        dflt: 0,
+        
+        
+    },
+    l: {
+        valType: 'number',
+        dflt: 0,
+        
+        
+    }
+};
+
+},{}],337:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -64257,7 +65171,9 @@ var Plotly = require('../plotly');
 var Registry = require('../registry');
 var Lib = require('../lib');
 var Color = require('../components/color');
+
 var plots = module.exports = {};
+
 var animationAttrs = require('./animation_attributes');
 var frameAttrs = require('./frame_attributes');
 
@@ -64571,6 +65487,29 @@ plots.sendDataToCloud = function(gd) {
     return false;
 };
 
+// Recursively copy any function properties of b into a if a
+// already has the corresponding key.
+// If a = {key1: "val1", key2: "val2"} and b = {key1: func1, key3: func2},
+// sets a to {key1: func1, key2: "val2"}.
+function recursivelyCopyFunctions(a, b) {
+    if (!b) return;
+
+    Object.keys(a).forEach(function(key) {
+        // If a[key] and b[key] are objects, recurse down.
+        // Note that typeof returns 'object' on arrays.
+        if(typeof a[key] === 'object') {
+            if(typeof b[key] === 'object') {
+                recursivelyCopyFunctions(a[key], b[key]);
+            }
+        }
+        // If a[key] is anything besides an object and
+        // b[key] is a funciton, replace a[key] with b[key]
+        else if(typeof b[key] === 'function') {
+            a[key] = b[key];
+        }
+    });
+}
+
 // Fill in default values:
 //
 // gd.data, gd.layout:
@@ -64588,7 +65527,7 @@ plots.sendDataToCloud = function(gd) {
 // gd._fullLayout._basePlotModules
 //   is a list of all the plot modules required to draw the plot.
 //
-plots.supplyDefaults = function(gd) {
+plots.supplyDefaults = function(gd, dynamicBehavior) {
     var oldFullLayout = gd._fullLayout || {},
         newFullLayout = gd._fullLayout = {},
         newLayout = gd.layout || {};
@@ -64598,6 +65537,8 @@ plots.supplyDefaults = function(gd) {
         newData = gd.data || [];
 
     var i;
+
+    dynamicBehavior = dynamicBehavior || {};
 
     // first fill in what we can of layout without looking at data
     // because fullData needs a few things from layout
@@ -64626,7 +65567,7 @@ plots.supplyDefaults = function(gd) {
         }
     }
 
-    // finally, fill in the pieces of layout that may need to look at data
+    // fill in the pieces of layout that may need to look at data
     plots.supplyLayoutModuleDefaults(newLayout, newFullLayout, newFullData);
 
     // TODO remove in v2.0.0
@@ -64637,6 +65578,10 @@ plots.supplyDefaults = function(gd) {
     newFullLayout._hasGL2D = newFullLayout._has('gl2d');
     newFullLayout._hasTernary = newFullLayout._has('ternary');
     newFullLayout._hasPie = newFullLayout._has('pie');
+
+    // finally, fill in any functions from dynamicBehavior.data and .layout
+    recursivelyCopyFunctions(newFullData, dynamicBehavior.data);
+    recursivelyCopyFunctions(newFullLayout, dynamicBehavior.layout);
 
     // clean subplots and other artifacts from previous plot calls
     plots.cleanPlot(newFullData, newFullLayout, oldFullData, oldFullLayout);
@@ -64654,6 +65599,9 @@ plots.supplyDefaults = function(gd) {
         ax._gd = gd;
         ax.setScale();
     }
+
+    // relink / initialize subplot axis objects
+    plots.linkSubplots(newFullData, newFullLayout, oldFullData, oldFullLayout);
 
     // update object references in calcdata
     if((gd.calcdata || []).length === newFullData.length) {
@@ -64799,6 +65747,35 @@ function relinkPrivateKeys(toContainer, fromContainer) {
         }
     }
 }
+
+plots.linkSubplots = function(newFullData, newFullLayout, oldFullData, oldFullLayout) {
+    var oldSubplots = oldFullLayout._plots || {},
+        newSubplots = newFullLayout._plots = {};
+
+    var mockGd = {
+        data: newFullData,
+        _fullLayout: newFullLayout
+    };
+
+    var ids = Plotly.Axes.getSubplots(mockGd);
+
+    for(var i = 0; i < ids.length; i++) {
+        var id = ids[i],
+            oldSubplot = oldSubplots[id],
+            plotinfo;
+
+        if(oldSubplot) {
+            plotinfo = newSubplots[id] = oldSubplot;
+        }
+        else {
+            plotinfo = newSubplots[id] = {};
+            plotinfo.id = id;
+        }
+
+        plotinfo.xaxis = Plotly.Axes.getFromId(mockGd, id, 'x');
+        plotinfo.yaxis = Plotly.Axes.getFromId(mockGd, id, 'y');
+    }
+};
 
 plots.supplyDataDefaults = function(dataIn, dataOut, layout) {
     var modules = layout._modules = [],
@@ -65029,15 +66006,15 @@ function applyTransforms(fullTrace, fullData, layout) {
 
     for(var i = 0; i < container.length; i++) {
         var transform = container[i],
-            type = transform.type,
-            _module = transformsRegistry[type];
+            _module = transformsRegistry[transform.type];
 
-        if(_module) {
+        if(_module && _module.transform) {
             dataOut = _module.transform(dataOut, {
                 transform: transform,
                 fullTrace: fullTrace,
                 fullData: fullData,
-                layout: layout
+                layout: layout,
+                transformIndex: i
             });
         }
     }
@@ -65604,7 +66581,8 @@ plots.transition = function(gd, data, layout, traces, frameOpts, transitionOpts)
     var transitionedTraces = [];
 
     function prepareTransitions() {
-        var plotinfo, i;
+        var i;
+
         for(i = 0; i < traceIndices.length; i++) {
             var traceIdx = traceIndices[i];
             var trace = gd._fullData[traceIdx];
@@ -65650,19 +66628,6 @@ plots.transition = function(gd, data, layout, traces, frameOpts, transitionOpts)
         // supplyDefaults even though it's heavier than would otherwise be desired for
         // transitions:
         plots.supplyDefaults(gd);
-
-        // This step fies the .xaxis and .yaxis references that otherwise
-        // aren't updated by the supplyDefaults step:
-        var subplots = Plotly.Axes.getSubplots(gd);
-
-        // Polar does not have _plots:
-        if(gd._fullLayout._plots) {
-            for(i = 0; i < subplots.length; i++) {
-                plotinfo = gd._fullLayout._plots[subplots[i]];
-                plotinfo.xaxis = plotinfo.x();
-                plotinfo.yaxis = plotinfo.y();
-            }
-        }
 
         plots.doCalcdata(gd);
 
@@ -65821,7 +66786,7 @@ plots.doCalcdata = function(gd, traces) {
     var axList = Plotly.Axes.list(gd),
         fullData = gd._fullData,
         fullLayout = gd._fullLayout,
-        i;
+        i, j;
 
     // XXX: Is this correct? Needs a closer look so that *some* traces can be recomputed without
     // *all* needing doCalcdata:
@@ -65859,7 +66824,6 @@ plots.doCalcdata = function(gd, traces) {
         }
 
         var trace = fullData[i],
-            _module = trace._module,
             cd = [];
 
         // If traces were specified and this trace was not included, then transfer it over from
@@ -65869,14 +66833,42 @@ plots.doCalcdata = function(gd, traces) {
             continue;
         }
 
-        if(_module && trace.visible === true) {
-            if(_module.calc) cd = _module.calc(gd, trace);
+        var _module;
+        if(trace.visible === true) {
+
+            // call calcTransform method if any
+            if(trace.transforms) {
+
+                // we need one round of trace module calc before
+                // the calc transform to 'fill in' the categories list
+                // used for example in the data-to-coordinate method
+                _module = trace._module;
+                if(_module && _module.calc) _module.calc(gd, trace);
+
+                for(j = 0; j < trace.transforms.length; j++) {
+                    var transform = trace.transforms[j];
+
+                    _module = transformsRegistry[transform.type];
+                    if(_module && _module.calcTransform) {
+                        _module.calcTransform(gd, trace, transform);
+                    }
+                }
+            }
+
+            _module = trace._module;
+            if(_module && _module.calc) cd = _module.calc(gd, trace);
         }
 
-        // make sure there is a first point
-        // this ensures there is a calcdata item for every trace,
-        // even if cartesian logic doesn't handle it
-        if(!Array.isArray(cd) || !cd[0]) cd = [{x: false, y: false}];
+        // Make sure there is a first point.
+        //
+        // This ensures there is a calcdata item for every trace,
+        // even if cartesian logic doesn't handle it (for things like legends).
+        //
+        // Tag this artificial calc point with 'placeholder: true',
+        // to make it easier to skip over them in during the plot and hover step.
+        if(!Array.isArray(cd) || !cd[0]) {
+            cd = [{x: false, y: false, placeholder: true}];
+        }
 
         // add the trace-wide properties to the first point,
         // per point properties to every point
@@ -65888,7 +66880,7 @@ plots.doCalcdata = function(gd, traces) {
     }
 };
 
-},{"../components/color":210,"../components/errorbars":239,"../lib":299,"../plotly":323,"../registry":360,"./animation_attributes":324,"./attributes":325,"./font_attributes":346,"./frame_attributes":347,"./layout_attributes":352,"d3":63,"fast-isnumeric":66}],354:[function(require,module,exports){
+},{"../components/color":189,"../components/errorbars":218,"../lib":282,"../plotly":306,"../registry":344,"./animation_attributes":307,"./attributes":308,"./font_attributes":329,"./frame_attributes":330,"./layout_attributes":335,"d3":55,"fast-isnumeric":61}],338:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -65913,7 +66905,7 @@ module.exports = {
     }
 };
 
-},{"../../traces/scatter/attributes":398}],355:[function(require,module,exports){
+},{"../../traces/scatter/attributes":382}],339:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -66028,7 +67020,7 @@ module.exports = {
     }
 };
 
-},{"../../lib/extend":295,"../cartesian/layout_attributes":336}],356:[function(require,module,exports){
+},{"../../lib/extend":278,"../cartesian/layout_attributes":319}],340:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -66043,7 +67035,7 @@ var Polar = module.exports = require('./micropolar');
 
 Polar.manager = require('./micropolar_manager');
 
-},{"./micropolar":357,"./micropolar_manager":358}],357:[function(require,module,exports){
+},{"./micropolar":341,"./micropolar_manager":342}],341:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -67462,7 +68454,7 @@ var µ = module.exports = { version: '0.2.2' };
     return exports;
 };
 
-},{"../../lib":299,"d3":63}],358:[function(require,module,exports){
+},{"../../lib":282,"d3":55}],342:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -67548,7 +68540,7 @@ manager.fillLayout = function(_gd) {
     _gd._fullLayout = extendDeepAll(dflts, _gd.layout);
 };
 
-},{"../../components/color":210,"../../lib":299,"./micropolar":357,"./undo_manager":359,"d3":63}],359:[function(require,module,exports){
+},{"../../components/color":189,"../../lib":282,"./micropolar":341,"./undo_manager":343,"d3":55}],343:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -67614,7 +68606,7 @@ module.exports = function UndoManager() {
     };
 };
 
-},{}],360:[function(require,module,exports){
+},{}],344:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -67771,7 +68763,7 @@ function getTraceType(traceType) {
     return traceType;
 }
 
-},{"./lib":299,"./plots/attributes":325}],361:[function(require,module,exports){
+},{"./lib":282,"./plots/attributes":308}],345:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -67928,7 +68920,7 @@ module.exports = function clonePlot(graphObj, options) {
     return plotTile;
 };
 
-},{"../lib":299,"../plots/plots":353}],362:[function(require,module,exports){
+},{"../lib":282,"../plots/plots":337}],346:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -67994,7 +68986,7 @@ function downloadImage(gd, opts) {
 
 module.exports = downloadImage;
 
-},{"../lib":299,"../plot_api/to_image":321,"./filesaver":363}],363:[function(require,module,exports){
+},{"../lib":282,"../plot_api/to_image":304,"./filesaver":347}],347:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68062,7 +69054,7 @@ var fileSaver = function(url, name) {
 
 module.exports = fileSaver;
 
-},{}],364:[function(require,module,exports){
+},{}],348:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68095,7 +69087,7 @@ exports.getRedrawFunc = function(gd) {
     };
 };
 
-},{}],365:[function(require,module,exports){
+},{}],349:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68121,7 +69113,7 @@ var Snapshot = {
 
 module.exports = Snapshot;
 
-},{"./cloneplot":361,"./download":362,"./helpers":364,"./svgtoimg":366,"./toimage":367,"./tosvg":368}],366:[function(require,module,exports){
+},{"./cloneplot":345,"./download":346,"./helpers":348,"./svgtoimg":350,"./toimage":351,"./tosvg":352}],350:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68252,7 +69244,7 @@ function svgToImg(opts) {
 
 module.exports = svgToImg;
 
-},{"../lib":299,"events":15}],367:[function(require,module,exports){
+},{"../lib":282,"events":60}],351:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68332,7 +69324,7 @@ function toImage(gd, opts) {
 
 module.exports = toImage;
 
-},{"../lib":299,"../plotly":323,"./cloneplot":361,"./helpers":364,"./svgtoimg":366,"./tosvg":368,"events":15}],368:[function(require,module,exports){
+},{"../lib":282,"../plotly":306,"./cloneplot":345,"./helpers":348,"./svgtoimg":350,"./tosvg":352,"events":60}],352:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68444,7 +69436,7 @@ module.exports = function toSVG(gd, format) {
     return s;
 };
 
-},{"../components/color":210,"../components/drawing":233,"../constants/xmlns_namespaces":289,"../lib/svg_text_utils":313,"d3":63}],369:[function(require,module,exports){
+},{"../components/color":189,"../components/drawing":212,"../constants/xmlns_namespaces":272,"../lib/svg_text_utils":296,"d3":55}],353:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68544,7 +69536,7 @@ module.exports = extendFlat({},
     {autocolorscale: extendFlat({}, colorscaleAttrs.autocolorscale, {dflt: false})}
 );
 
-},{"../../components/colorscale/attributes":216,"../../lib/extend":295,"../heatmap/attributes":377,"../scatter/attributes":398}],370:[function(require,module,exports){
+},{"../../components/colorscale/attributes":195,"../../lib/extend":278,"../heatmap/attributes":361,"../scatter/attributes":382}],354:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68597,7 +69589,7 @@ module.exports = function calc(gd, trace) {
     return cd;
 };
 
-},{"../../plots/cartesian/axes":327,"../heatmap/calc":378}],371:[function(require,module,exports){
+},{"../../plots/cartesian/axes":310,"../heatmap/calc":362}],355:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68658,7 +69650,7 @@ module.exports = function colorbar(gd, cd) {
         .options(trace.colorbar)();
 };
 
-},{"../../components/colorbar/draw":213,"../../plots/plots":353,"./make_color_map":373}],372:[function(require,module,exports){
+},{"../../components/colorbar/draw":192,"../../plots/plots":337,"./make_color_map":357}],356:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68702,7 +69694,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     handleStyleDefaults(traceIn, traceOut, coerce, layout);
 };
 
-},{"../../lib":299,"../contour/style_defaults":374,"../heatmap/has_columns":382,"../heatmap/xyz_defaults":384,"./attributes":369}],373:[function(require,module,exports){
+},{"../../lib":282,"../contour/style_defaults":358,"../heatmap/has_columns":366,"../heatmap/xyz_defaults":368,"./attributes":353}],357:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68782,7 +69774,7 @@ module.exports = function makeColorMap(trace) {
     return colorMap;
 };
 
-},{"../../components/colorscale/get_scale":222,"d3":63}],374:[function(require,module,exports){
+},{"../../components/colorscale/get_scale":201,"d3":55}],358:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68818,7 +69810,7 @@ module.exports = function handleStyleDefaults(traceIn, traceOut, coerce, layout)
     }
 };
 
-},{"../../components/colorscale/defaults":220}],375:[function(require,module,exports){
+},{"../../components/colorscale/defaults":199}],359:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -68881,20 +69873,24 @@ function Contour(scene, uid) {
 var proto = Contour.prototype;
 
 proto.handlePick = function(pickResult) {
-    var index = pickResult.pointId,
-        options = this.heatmapOptions,
-        shape = options.shape;
+    var options = this.heatmapOptions,
+        shape = options.shape,
+        index = pickResult.pointId,
+        xIndex = index % shape[0],
+        yIndex = Math.floor(index / shape[0]),
+        zIndex = index;
 
     return {
         trace: this,
         dataCoord: pickResult.dataCoord,
         traceCoord: [
-            options.x[index % shape[0]],
-            options.y[Math.floor(index / shape[0])],
-            options.z[index]
+            options.x[xIndex],
+            options.y[yIndex],
+            options.z[zIndex]
         ],
         textLabel: this.textLabels[index],
         name: this.name,
+        pointIndex: [xIndex, yIndex],
         hoverinfo: this.hoverinfo
     };
 };
@@ -69001,7 +69997,7 @@ function createContour(scene, fullTrace, calcTrace) {
 
 module.exports = createContour;
 
-},{"../../lib/str2rgbarray":312,"../../plots/cartesian/axes":327,"../contour/make_color_map":373,"gl-contour2d":68,"gl-heatmap2d":74}],376:[function(require,module,exports){
+},{"../../lib/str2rgbarray":295,"../../plots/cartesian/axes":310,"../contour/make_color_map":357,"gl-contour2d":67,"gl-heatmap2d":74}],360:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69032,7 +70028,7 @@ ContourGl.meta = {
 
 module.exports = ContourGl;
 
-},{"../../plots/gl2d":350,"../contour/attributes":369,"../contour/calc":370,"../contour/colorbar":371,"../contour/defaults":372,"./convert":375}],377:[function(require,module,exports){
+},{"../../plots/gl2d":333,"../contour/attributes":353,"../contour/calc":354,"../contour/colorbar":355,"../contour/defaults":356,"./convert":359}],361:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69117,7 +70113,7 @@ module.exports = extendFlat({},
     {autocolorscale: extendFlat({}, colorscaleAttrs.autocolorscale, {dflt: false})}
 );
 
-},{"../../components/colorscale/attributes":216,"../../lib/extend":295,"../scatter/attributes":398}],378:[function(require,module,exports){
+},{"../../components/colorscale/attributes":195,"../../lib/extend":278,"../scatter/attributes":382}],362:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69567,7 +70563,7 @@ function iterateInterp2d(z, emptyPoints, overshoot) {
     return maxFractionalChange;
 }
 
-},{"../../components/colorscale/calc":217,"../../lib":299,"../../plots/cartesian/axes":327,"../../registry":360,"../histogram2d/calc":391,"./convert_column_xyz":380,"./has_columns":382,"./max_row_length":383,"fast-isnumeric":66}],379:[function(require,module,exports){
+},{"../../components/colorscale/calc":196,"../../lib":282,"../../plots/cartesian/axes":310,"../../registry":344,"../histogram2d/calc":375,"./convert_column_xyz":364,"./has_columns":366,"./max_row_length":367,"fast-isnumeric":61}],363:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69613,7 +70609,7 @@ module.exports = function colorbar(gd, cd) {
         .options(trace.colorbar)();
 };
 
-},{"../../components/colorbar/draw":213,"../../components/colorscale/get_scale":222,"../../lib":299,"../../plots/plots":353,"d3":63,"fast-isnumeric":66}],380:[function(require,module,exports){
+},{"../../components/colorbar/draw":192,"../../components/colorscale/get_scale":201,"../../lib":282,"../../plots/plots":337,"d3":55,"fast-isnumeric":61}],364:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69670,7 +70666,7 @@ module.exports = function convertColumnXYZ(trace, xa, ya) {
     if(hasColumnText) trace.text = text;
 };
 
-},{"../../lib":299}],381:[function(require,module,exports){
+},{"../../lib":282}],365:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69715,7 +70711,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     colorscaleDefaults(traceIn, traceOut, layout, coerce, {prefix: '', cLetter: 'z'});
 };
 
-},{"../../components/colorscale/defaults":220,"../../lib":299,"./attributes":377,"./has_columns":382,"./xyz_defaults":384}],382:[function(require,module,exports){
+},{"../../components/colorscale/defaults":199,"../../lib":282,"./attributes":361,"./has_columns":366,"./xyz_defaults":368}],366:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69731,7 +70727,7 @@ module.exports = function(trace) {
     return !Array.isArray(trace.z[0]);
 };
 
-},{}],383:[function(require,module,exports){
+},{}],367:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69753,7 +70749,7 @@ module.exports = function maxRowLength(z) {
     return len;
 };
 
-},{}],384:[function(require,module,exports){
+},{}],368:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69842,7 +70838,7 @@ function isValidZ(z) {
     return (allRowsAreArrays && oneRowIsFilled && hasOneNumber);
 }
 
-},{"./has_columns":382,"fast-isnumeric":66}],385:[function(require,module,exports){
+},{"./has_columns":366,"fast-isnumeric":61}],369:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69858,7 +70854,7 @@ var heatmapAttrs = require('../scatter/attributes');
 
 module.exports = heatmapAttrs;
 
-},{"../scatter/attributes":398}],386:[function(require,module,exports){
+},{"../scatter/attributes":382}],370:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -69907,19 +70903,24 @@ function Heatmap(scene, uid) {
 var proto = Heatmap.prototype;
 
 proto.handlePick = function(pickResult) {
-    var index = pickResult.pointId,
-        shape = this.options.shape;
+    var options = this.options,
+        shape = options.shape,
+        index = pickResult.pointId,
+        xIndex = index % shape[0],
+        yIndex = Math.floor(index / shape[0]),
+        zIndex = index;
 
     return {
         trace: this,
         dataCoord: pickResult.dataCoord,
         traceCoord: [
-            this.options.x[index % shape[0]],
-            this.options.y[Math.floor(index / shape[0])],
-            this.options.z[index]
+            options.x[xIndex],
+            options.y[yIndex],
+            options.z[zIndex]
         ],
         textLabel: this.textLabels[index],
         name: this.name,
+        pointIndex: [xIndex, yIndex],
         hoverinfo: this.hoverinfo
     };
 };
@@ -69992,7 +70993,7 @@ function createHeatmap(scene, fullTrace, calcTrace) {
 
 module.exports = createHeatmap;
 
-},{"../../lib/str2rgbarray":312,"../../plots/cartesian/axes":327,"gl-heatmap2d":74}],387:[function(require,module,exports){
+},{"../../lib/str2rgbarray":295,"../../plots/cartesian/axes":310,"gl-heatmap2d":74}],371:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70023,7 +71024,7 @@ HeatmapGl.meta = {
 
 module.exports = HeatmapGl;
 
-},{"../../plots/gl2d":350,"../heatmap/calc":378,"../heatmap/colorbar":379,"../heatmap/defaults":381,"./attributes":385,"./convert":386}],388:[function(require,module,exports){
+},{"../../plots/gl2d":333,"../heatmap/calc":362,"../heatmap/colorbar":363,"../heatmap/defaults":365,"./attributes":369,"./convert":370}],372:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70049,7 +71050,7 @@ module.exports = function doAvg(size, counts) {
     return total;
 };
 
-},{}],389:[function(require,module,exports){
+},{}],373:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70123,7 +71124,7 @@ module.exports = {
     }
 };
 
-},{"fast-isnumeric":66}],390:[function(require,module,exports){
+},{"fast-isnumeric":61}],374:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70158,7 +71159,7 @@ module.exports = {
     }
 };
 
-},{}],391:[function(require,module,exports){
+},{}],375:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70324,7 +71325,7 @@ module.exports = function calc(gd, trace) {
     };
 };
 
-},{"../../lib":299,"../../plots/cartesian/axes":327,"../histogram/average":388,"../histogram/bin_functions":389,"../histogram/norm_functions":390}],392:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/axes":310,"../histogram/average":372,"../histogram/bin_functions":373,"../histogram/norm_functions":374}],376:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70351,7 +71352,7 @@ module.exports = function styleOne(s, pt, trace) {
     .call(Color.stroke, lineColor);
 };
 
-},{"../../components/color":210}],393:[function(require,module,exports){
+},{"../../components/color":189}],377:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70440,7 +71441,7 @@ module.exports = {
     }
 };
 
-},{"../scattergl/attributes":422}],394:[function(require,module,exports){
+},{"../scattergl/attributes":406}],378:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70506,6 +71507,7 @@ proto.handlePick = function(pickResult) {
             this.textLabels,
         color: this.color,
         name: this.name,
+        pointIndex: index,
         hoverinfo: this.hoverinfo
     };
 };
@@ -70663,7 +71665,7 @@ function createPointcloud(scene, data) {
 
 module.exports = createPointcloud;
 
-},{"../../lib/str2rgbarray":312,"../scatter/get_trace_color":406,"gl-pointcloud2d":114}],395:[function(require,module,exports){
+},{"../../lib/str2rgbarray":295,"../scatter/get_trace_color":390,"gl-pointcloud2d":95}],379:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70708,7 +71710,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor) {
     coerce('marker.border.arearatio');
 };
 
-},{"../../lib":299,"./attributes":393}],396:[function(require,module,exports){
+},{"../../lib":282,"./attributes":377}],380:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70738,7 +71740,7 @@ pointcloud.meta = {
 
 module.exports = pointcloud;
 
-},{"../../plots/gl2d":350,"../scatter3d/calc":421,"./attributes":393,"./convert":394,"./defaults":395}],397:[function(require,module,exports){
+},{"../../plots/gl2d":333,"../scatter3d/calc":405,"./attributes":377,"./convert":378,"./defaults":379}],381:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -70776,7 +71778,7 @@ module.exports = function arraysToCalcdata(cd) {
     }
 };
 
-},{"../../lib":299}],398:[function(require,module,exports){
+},{"../../lib":282}],382:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71036,7 +72038,7 @@ module.exports = {
     }
 };
 
-},{"../../components/colorscale/color_attributes":218,"../../components/drawing":233,"../../lib/extend":295,"./constants":403}],399:[function(require,module,exports){
+},{"../../components/colorscale/color_attributes":197,"../../components/drawing":212,"../../lib/extend":278,"./constants":387}],383:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71167,7 +72169,7 @@ module.exports = function calc(gd, trace) {
     return cd;
 };
 
-},{"../../lib":299,"../../plots/cartesian/axes":327,"./colorscale_calc":402,"./subtypes":418,"fast-isnumeric":66}],400:[function(require,module,exports){
+},{"../../lib":282,"../../plots/cartesian/axes":310,"./colorscale_calc":386,"./subtypes":402,"fast-isnumeric":61}],384:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71206,7 +72208,7 @@ module.exports = function cleanData(fullData) {
     }
 };
 
-},{}],401:[function(require,module,exports){
+},{}],385:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71259,7 +72261,7 @@ module.exports = function colorbar(gd, cd) {
         .options(marker.colorbar)();
 };
 
-},{"../../components/colorbar/draw":213,"../../components/colorscale/get_scale":222,"../../lib":299,"../../plots/plots":353,"d3":63,"fast-isnumeric":66}],402:[function(require,module,exports){
+},{"../../components/colorbar/draw":192,"../../components/colorscale/get_scale":201,"../../lib":282,"../../plots/plots":337,"d3":55,"fast-isnumeric":61}],386:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71292,7 +72294,7 @@ module.exports = function calcMarkerColorscale(trace) {
     }
 };
 
-},{"../../components/colorscale/calc":217,"../../components/colorscale/has_colorscale":223,"./subtypes":418}],403:[function(require,module,exports){
+},{"../../components/colorscale/calc":196,"../../components/colorscale/has_colorscale":202,"./subtypes":402}],387:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71308,7 +72310,7 @@ module.exports = {
     PTS_LINESONLY: 20
 };
 
-},{}],404:[function(require,module,exports){
+},{}],388:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71388,7 +72390,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     errorBarsSupplyDefaults(traceIn, traceOut, defaultColor, {axis: 'x', inherit: 'y'});
 };
 
-},{"../../components/errorbars/defaults":238,"../../lib":299,"./attributes":398,"./constants":403,"./fillcolor_defaults":405,"./line_defaults":409,"./line_shape_defaults":411,"./marker_defaults":414,"./subtypes":418,"./text_defaults":419,"./xy_defaults":420}],405:[function(require,module,exports){
+},{"../../components/errorbars/defaults":217,"../../lib":282,"./attributes":382,"./constants":387,"./fillcolor_defaults":389,"./line_defaults":393,"./line_shape_defaults":395,"./marker_defaults":398,"./subtypes":402,"./text_defaults":403,"./xy_defaults":404}],389:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71403,7 +72405,6 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
 var Color = require('../../components/color');
 
 
-// common to 'scatter' and 'scattergl'
 module.exports = function fillColorDefaults(traceIn, traceOut, defaultColor, coerce) {
     var inheritColorFromMarker = false;
 
@@ -71427,7 +72428,7 @@ module.exports = function fillColorDefaults(traceIn, traceOut, defaultColor, coe
     ));
 };
 
-},{"../../components/color":210}],406:[function(require,module,exports){
+},{"../../components/color":189}],390:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71480,7 +72481,7 @@ module.exports = function getTraceColor(trace, di) {
     }
 };
 
-},{"../../components/color":210,"./subtypes":418}],407:[function(require,module,exports){
+},{"../../components/color":189,"./subtypes":402}],391:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71649,7 +72650,7 @@ module.exports = function hoverPoints(pointData, xval, yval, hovermode) {
     }
 };
 
-},{"../../components/color":210,"../../components/errorbars":239,"../../lib":299,"../../plots/cartesian/constants":332,"../../plots/cartesian/graph_interact":334,"./get_trace_color":406}],408:[function(require,module,exports){
+},{"../../components/color":189,"../../components/errorbars":218,"../../lib":282,"../../plots/cartesian/constants":315,"../../plots/cartesian/graph_interact":317,"./get_trace_color":390}],392:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71693,7 +72694,7 @@ Scatter.meta = {
 
 module.exports = Scatter;
 
-},{"../../plots/cartesian":335,"./arrays_to_calcdata":397,"./attributes":398,"./calc":399,"./clean_data":400,"./colorbar":401,"./defaults":404,"./hover":407,"./plot":415,"./select":416,"./style":417,"./subtypes":418}],409:[function(require,module,exports){
+},{"../../plots/cartesian":318,"./arrays_to_calcdata":381,"./attributes":382,"./calc":383,"./clean_data":384,"./colorbar":385,"./defaults":388,"./hover":391,"./plot":399,"./select":400,"./style":401,"./subtypes":402}],393:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71726,7 +72727,7 @@ module.exports = function lineDefaults(traceIn, traceOut, defaultColor, layout, 
     coerce('line.dash');
 };
 
-},{"../../components/colorscale/defaults":220,"../../components/colorscale/has_colorscale":223}],410:[function(require,module,exports){
+},{"../../components/colorscale/defaults":199,"../../components/colorscale/has_colorscale":202}],394:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71900,7 +72901,7 @@ module.exports = function linePoints(d, opts) {
     return segments;
 };
 
-},{"../../plots/cartesian/axes":327}],411:[function(require,module,exports){
+},{"../../plots/cartesian/axes":310}],395:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71919,7 +72920,7 @@ module.exports = function handleLineShapeDefaults(traceIn, traceOut, coerce) {
     if(shape === 'spline') coerce('line.smoothing');
 };
 
-},{}],412:[function(require,module,exports){
+},{}],396:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -71960,7 +72961,7 @@ module.exports = function linkTraces(gd, plotinfo, cdscatter) {
     }
 };
 
-},{}],413:[function(require,module,exports){
+},{}],397:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72002,7 +73003,7 @@ module.exports = function makeBubbleSizeFn(trace) {
     };
 };
 
-},{"fast-isnumeric":66}],414:[function(require,module,exports){
+},{"fast-isnumeric":61}],398:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72062,7 +73063,7 @@ module.exports = function markerDefaults(traceIn, traceOut, defaultColor, layout
     }
 };
 
-},{"../../components/color":210,"../../components/colorscale/defaults":220,"../../components/colorscale/has_colorscale":223,"./subtypes":418}],415:[function(require,module,exports){
+},{"../../components/color":189,"../../components/colorscale/defaults":199,"../../components/colorscale/has_colorscale":202,"./subtypes":402}],399:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72221,8 +73222,8 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
         return hasTransition ? selection.transition() : selection;
     }
 
-    var xa = plotinfo.x(),
-        ya = plotinfo.y();
+    var xa = plotinfo.xaxis,
+        ya = plotinfo.yaxis;
 
     var trace = cdscatter[0].trace,
         line = trace.line,
@@ -72508,20 +73509,33 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
         }
 
         // text points
-
         selection = s.selectAll('g');
-
         join = selection.data(textFilter, keyFunc);
 
         // each text needs to go in its own 'g' in case
         // it gets converted to mathjax
-        join.enter().append('g')
-            .append('text');
+        join.enter().append('g').append('text');
 
         join.each(function(d) {
-            var sel = d3.select(this).select('text');
+            var sel = transition(d3.select(this).select('text'));
             Drawing.translatePoint(d, sel, xa, ya);
         });
+
+        join.selectAll('text')
+            .call(Drawing.textPointStyle, trace)
+            .each(function(d) {
+
+                // This just *has* to be totally custom becuase of SVG text positioning :(
+                // It's obviously copied from translatePoint; we just can't use that
+                //
+                // put xp and yp into d if pixel scaling is already done
+                var x = d.xp || xa.c2p(d.x),
+                    y = d.yp || ya.c2p(d.y);
+
+                d3.select(this).selectAll('tspan').each(function() {
+                    transition(d3.select(this)).attr({x: x, y: y});
+                });
+            });
 
         join.exit().remove();
     }
@@ -72544,8 +73558,8 @@ function plotOne(gd, idx, plotinfo, cdscatter, cdscatterAll, element, transition
 }
 
 function selectMarkers(gd, idx, plotinfo, cdscatter, cdscatterAll) {
-    var xa = plotinfo.x(),
-        ya = plotinfo.y(),
+    var xa = plotinfo.xaxis,
+        ya = plotinfo.yaxis,
         xr = d3.extent(xa.range.map(xa.l2c)),
         yr = d3.extent(ya.range.map(ya.l2c));
 
@@ -72585,7 +73599,7 @@ function selectMarkers(gd, idx, plotinfo, cdscatter, cdscatterAll) {
     });
 }
 
-},{"../../components/drawing":233,"../../components/errorbars":239,"../../lib":299,"../../lib/polygon":306,"./arrays_to_calcdata":397,"./line_points":410,"./link_traces":412,"./subtypes":418,"d3":63}],416:[function(require,module,exports){
+},{"../../components/drawing":212,"../../components/errorbars":218,"../../lib":282,"../../lib/polygon":289,"./arrays_to_calcdata":381,"./line_points":394,"./link_traces":396,"./subtypes":402,"d3":55}],400:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72657,7 +73671,7 @@ module.exports = function selectPoints(searchInfo, polygon) {
     return selection;
 };
 
-},{"./subtypes":418}],417:[function(require,module,exports){
+},{"./subtypes":402}],401:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72699,7 +73713,7 @@ module.exports = function style(gd) {
     s.call(ErrorBars.style);
 };
 
-},{"../../components/drawing":233,"../../components/errorbars":239,"d3":63}],418:[function(require,module,exports){
+},{"../../components/drawing":212,"../../components/errorbars":218,"d3":55}],402:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72735,7 +73749,7 @@ module.exports = {
     }
 };
 
-},{"../../lib":299}],419:[function(require,module,exports){
+},{"../../lib":282}],403:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72756,7 +73770,7 @@ module.exports = function(traceIn, traceOut, layout, coerce) {
     Lib.coerceFont(coerce, 'textfont', layout.font);
 };
 
-},{"../../lib":299}],420:[function(require,module,exports){
+},{"../../lib":282}],404:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72801,7 +73815,7 @@ module.exports = function handleXYDefaults(traceIn, traceOut, coerce) {
     return len;
 };
 
-},{}],421:[function(require,module,exports){
+},{}],405:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72830,7 +73844,7 @@ module.exports = function calc(gd, trace) {
     return cd;
 };
 
-},{"../scatter/arrays_to_calcdata":397,"../scatter/colorscale_calc":402}],422:[function(require,module,exports){
+},{"../scatter/arrays_to_calcdata":381,"../scatter/colorscale_calc":386}],406:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -72912,7 +73926,7 @@ module.exports = {
     }
 };
 
-},{"../../components/colorscale/color_attributes":218,"../../constants/gl2d_dashes":286,"../../constants/gl_markers":287,"../../lib/extend":295,"../scatter/attributes":398}],423:[function(require,module,exports){
+},{"../../components/colorscale/color_attributes":197,"../../constants/gl2d_dashes":269,"../../constants/gl_markers":270,"../../lib/extend":278,"../scatter/attributes":382}],407:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -73043,6 +74057,7 @@ proto.handlePick = function(pickResult) {
             this.color[index] :
             this.color,
         name: this.name,
+        pointIndex: index,
         hoverinfo: this.hoverinfo
     };
 };
@@ -73492,7 +74507,7 @@ function createLineWithMarkers(scene, data) {
 
 module.exports = createLineWithMarkers;
 
-},{"../../components/errorbars":239,"../../constants/gl2d_dashes":286,"../../constants/gl_markers":287,"../../lib":299,"../../lib/float32_truncate":296,"../../lib/gl_format_color":297,"../../lib/str2rgbarray":312,"../../plots/cartesian/axes":327,"../scatter/get_trace_color":406,"../scatter/make_bubble_size_func":413,"../scatter/subtypes":418,"fast-isnumeric":66,"gl-error2d":71,"gl-line2d":78,"gl-scatter2d":121,"gl-scatter2d-fancy":116}],424:[function(require,module,exports){
+},{"../../components/errorbars":218,"../../constants/gl2d_dashes":269,"../../constants/gl_markers":270,"../../lib":282,"../../lib/float32_truncate":279,"../../lib/gl_format_color":280,"../../lib/str2rgbarray":295,"../../plots/cartesian/axes":310,"../scatter/get_trace_color":390,"../scatter/make_bubble_size_func":397,"../scatter/subtypes":402,"fast-isnumeric":61,"gl-error2d":70,"gl-line2d":78,"gl-scatter2d":102,"gl-scatter2d-fancy":97}],408:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -73549,7 +74564,7 @@ module.exports = function supplyDefaults(traceIn, traceOut, defaultColor, layout
     errorBarsSupplyDefaults(traceIn, traceOut, defaultColor, {axis: 'x', inherit: 'y'});
 };
 
-},{"../../components/errorbars/defaults":238,"../../lib":299,"../scatter/constants":403,"../scatter/fillcolor_defaults":405,"../scatter/line_defaults":409,"../scatter/marker_defaults":414,"../scatter/subtypes":418,"../scatter/xy_defaults":420,"./attributes":422}],425:[function(require,module,exports){
+},{"../../components/errorbars/defaults":217,"../../lib":282,"../scatter/constants":387,"../scatter/fillcolor_defaults":389,"../scatter/line_defaults":393,"../scatter/marker_defaults":398,"../scatter/subtypes":402,"../scatter/xy_defaults":404,"./attributes":406}],409:[function(require,module,exports){
 /**
 * Copyright 2012-2016, Plotly, Inc.
 * All rights reserved.
@@ -73580,5 +74595,5 @@ ScatterGl.meta = {
 
 module.exports = ScatterGl;
 
-},{"../../plots/gl2d":350,"../scatter/colorbar":401,"../scatter3d/calc":421,"./attributes":422,"./convert":423,"./defaults":424}]},{},[6])(6)
+},{"../../plots/gl2d":333,"../scatter/colorbar":385,"../scatter3d/calc":405,"./attributes":406,"./convert":407,"./defaults":408}]},{},[6])(6)
 });
