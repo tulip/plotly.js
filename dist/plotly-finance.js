@@ -1,9 +1,3 @@
-/**
-* plotly.js (finance) v1.44.1
-* Copyright 2012-2019, Plotly, Inc.
-* All rights reserved.
-* Licensed under the MIT license
-*/
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Plotly = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
 'use strict';
 
@@ -23144,8 +23138,9 @@ function createHoverText(hoverData, opts, gd) {
         if(d.extraText !== undefined) text += (text ? '<br>' : '') + d.extraText;
 
         // if 'text' is empty at this point,
+        // and hovertemplate is not defined,
         // put 'name' in main label and don't show secondary label
-        if(text === '') {
+        if(text === '' && !d.hovertemplate) {
             // if 'name' is also empty, remove entire label
             if(name === '') g.remove();
             text = name;
@@ -25683,7 +25678,8 @@ function drawTexts(g, gd, maxLength) {
     textEl.attr('text-anchor', 'start')
         .classed('user-select-none', true)
         .call(Drawing.font, fullLayout.legend.font)
-        .text(isEditable ? ensureLength(name, maxLength) : name);
+        .text('whatever');
+//        .text(isEditable ? ensureLength(name, maxLength) : name);
 
     svgTextUtils.positionText(textEl, constants.textOffsetX, 0);
 
@@ -25805,6 +25801,17 @@ function computeTextDimensions(g, gd) {
         // to avoid getBoundingClientRect
         var textY = lineHeight * (0.3 + (1 - textLines) / 2);
         svgTextUtils.positionText(text, constants.textOffsetX, textY);
+
+        /* var anchor3 = annText.selectAll('a');
+        if(anchor3.size() === 1 && anchor3.text() === annText.text()) {
+            var wholeLink = annTextGroupInner.insert('a', ':first-child').attr({
+                'xlink:xlink:href': anchor3.attr('xlink:href'),
+                'xlink:xlink:show': anchor3.attr('xlink:show')
+            })
+            .style({cursor: 'pointer'});
+
+            wholeLink.node().appendChild(annTextBG.node());
+        }*/
     }
 
     legendItem.lineHeight = lineHeight;
@@ -27745,7 +27752,7 @@ proto.update = function(graphInfo, buttons) {
             }
 
             if(fullLayout.modebar.orientation === 'v') {
-                this.element.prepend(logoGroup);
+                this.element.insertBefore(logoGroup, this.element.childNodes[0]);
             } else {
                 this.element.appendChild(logoGroup);
             }

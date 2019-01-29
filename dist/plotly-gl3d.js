@@ -1,9 +1,3 @@
-/**
-* plotly.js (gl3d) v1.44.1
-* Copyright 2012-2019, Plotly, Inc.
-* All rights reserved.
-* Licensed under the MIT license
-*/
 (function(f){if(typeof exports==="object"&&typeof module!=="undefined"){module.exports=f()}else if(typeof define==="function"&&define.amd){define([],f)}else{var g;if(typeof window!=="undefined"){g=window}else if(typeof global!=="undefined"){g=global}else if(typeof self!=="undefined"){g=self}else{g=this}g.Plotly = f()}})(function(){var define,module,exports;return (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(_dereq_,module,exports){
 'use strict';
 
@@ -30042,7 +30036,7 @@ arguments[4][106][0].apply(exports,arguments)
 var glslify       = _dereq_('glslify')
 
 var triVertSrc = glslify(["precision mediump float;\n#define GLSLIFY 1\n\nattribute vec3 position, normal;\nattribute vec4 color;\nattribute vec2 uv;\n\nuniform mat4 model\n           , view\n           , projection\n           , inverseModel;\nuniform vec3 eyePosition\n           , lightPosition;\n\nvarying vec3 f_normal\n           , f_lightDirection\n           , f_eyeDirection\n           , f_data;\nvarying vec4 f_color;\nvarying vec2 f_uv;\n\nvec4 project(vec3 p) {\n  return projection * view * model * vec4(p, 1.0);\n}\n\nvoid main() {\n  gl_Position      = project(position);\n\n  //Lighting geometry parameters\n  vec4 cameraCoordinate = view * vec4(position , 1.0);\n  cameraCoordinate.xyz /= cameraCoordinate.w;\n  f_lightDirection = lightPosition - cameraCoordinate.xyz;\n  f_eyeDirection   = eyePosition - cameraCoordinate.xyz;\n  f_normal  = normalize((vec4(normal,0) * inverseModel).xyz);\n\n  f_color          = color;\n  f_data           = position;\n  f_uv             = uv;\n}\n"])
-var triFragSrc = glslify(["#extension GL_OES_standard_derivatives : enable\n\nprecision mediump float;\n#define GLSLIFY 1\n\nfloat beckmannDistribution(float x, float roughness) {\n  float NdotH = max(x, 0.0001);\n  float cos2Alpha = NdotH * NdotH;\n  float tan2Alpha = (cos2Alpha - 1.0) / cos2Alpha;\n  float roughness2 = roughness * roughness;\n  float denom = 3.141592653589793 * roughness2 * cos2Alpha * cos2Alpha;\n  return exp(tan2Alpha / roughness2) / denom;\n}\n\nfloat cookTorranceSpecular(\n  vec3 lightDirection,\n  vec3 viewDirection,\n  vec3 surfaceNormal,\n  float roughness,\n  float fresnel) {\n\n  float VdotN = max(dot(viewDirection, surfaceNormal), 0.0);\n  float LdotN = max(dot(lightDirection, surfaceNormal), 0.0);\n\n  //Half angle vector\n  vec3 H = normalize(lightDirection + viewDirection);\n\n  //Geometric term\n  float NdotH = max(dot(surfaceNormal, H), 0.0);\n  float VdotH = max(dot(viewDirection, H), 0.000001);\n  float LdotH = max(dot(lightDirection, H), 0.000001);\n  float G1 = (2.0 * NdotH * VdotN) / VdotH;\n  float G2 = (2.0 * NdotH * LdotN) / LdotH;\n  float G = min(1.0, min(G1, G2));\n  \n  //Distribution term\n  float D = beckmannDistribution(NdotH, roughness);\n\n  //Fresnel term\n  float F = pow(1.0 - VdotN, fresnel);\n\n  //Multiply terms and done\n  return  G * F * D / max(3.14159265 * VdotN, 0.000001);\n}\n\n//#pragma glslify: beckmann = require(glsl-specular-beckmann) // used in gl-surface3d\n\nbool outOfRange(float a, float b, float p) {\n  return ((p > max(a, b)) || \n          (p < min(a, b)));\n}\n\nbool outOfRange(vec2 a, vec2 b, vec2 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y));\n}\n\nbool outOfRange(vec3 a, vec3 b, vec3 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y) ||\n          outOfRange(a.z, b.z, p.z));\n}\n\nbool outOfRange(vec4 a, vec4 b, vec4 p) {\n  return outOfRange(a.xyz, b.xyz, p.xyz);\n}\n\nuniform vec3 clipBounds[2];\nuniform float roughness\n            , fresnel\n            , kambient\n            , kdiffuse\n            , kspecular\n            , opacity;\nuniform sampler2D texture;\n\nvarying vec3 f_normal\n           , f_lightDirection\n           , f_eyeDirection\n           , f_data;\nvarying vec4 f_color;\nvarying vec2 f_uv;\n\nvoid main() {\n  if (outOfRange(clipBounds[0], clipBounds[1], f_data)) discard;\n\n  vec3 N = normalize(f_normal);\n  vec3 L = normalize(f_lightDirection);\n  vec3 V = normalize(f_eyeDirection);\n\n  if(gl_FrontFacing) {\n    N = -N;\n  }\n\n  float specular = max(cookTorranceSpecular(L, V, N, roughness, fresnel), 0.);\n  //float specular = max(beckmann(L, V, N, roughness), 0.); // used in gl-surface3d\n\n  float diffuse  = min(kambient + kdiffuse * max(dot(N, L), 0.0), 1.0);\n\n  vec4 surfaceColor = f_color * texture2D(texture, f_uv);\n  vec4 litColor = surfaceColor.a * vec4(diffuse * surfaceColor.rgb + kspecular * vec3(1,1,1) * specular,  1.0);\n\n  gl_FragColor = litColor * opacity;\n}\n"])
+var triFragSrc = glslify(["#extension GL_OES_standard_derivatives : enable\n\nprecision mediump float;\n#define GLSLIFY 1\n\nfloat beckmannDistribution(float x, float roughness) {\n  float NdotH = max(x, 0.0001);\n  float cos2Alpha = NdotH * NdotH;\n  float tan2Alpha = (cos2Alpha - 1.0) / cos2Alpha;\n  float roughness2 = roughness * roughness;\n  float denom = 3.141592653589793 * roughness2 * cos2Alpha * cos2Alpha;\n  return exp(tan2Alpha / roughness2) / denom;\n}\n\nfloat cookTorranceSpecular(\n  vec3 lightDirection,\n  vec3 viewDirection,\n  vec3 surfaceNormal,\n  float roughness,\n  float fresnel) {\n\n  float VdotN = max(dot(viewDirection, surfaceNormal), 0.0);\n  float LdotN = max(dot(lightDirection, surfaceNormal), 0.0);\n\n  //Half angle vector\n  vec3 H = normalize(lightDirection + viewDirection);\n\n  //Geometric term\n  float NdotH = max(dot(surfaceNormal, H), 0.0);\n  float VdotH = max(dot(viewDirection, H), 0.000001);\n  float LdotH = max(dot(lightDirection, H), 0.000001);\n  float G1 = (2.0 * NdotH * VdotN) / VdotH;\n  float G2 = (2.0 * NdotH * LdotN) / LdotH;\n  float G = min(1.0, min(G1, G2));\n  \n  //Distribution term\n  float D = beckmannDistribution(NdotH, roughness);\n\n  //Fresnel term\n  float F = pow(1.0 - VdotN, fresnel);\n\n  //Multiply terms and done\n  return  G * F * D / max(3.14159265 * VdotN, 0.000001);\n}\n\n//#pragma glslify: beckmann = require(glsl-specular-beckmann) // used in gl-surface3d\n\nbool outOfRange(float a, float b, float p) {\n  return ((p > max(a, b)) || \n          (p < min(a, b)));\n}\n\nbool outOfRange(vec2 a, vec2 b, vec2 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y));\n}\n\nbool outOfRange(vec3 a, vec3 b, vec3 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y) ||\n          outOfRange(a.z, b.z, p.z));\n}\n\nbool outOfRange(vec4 a, vec4 b, vec4 p) {\n  return outOfRange(a.xyz, b.xyz, p.xyz);\n}\n\nuniform vec3 clipBounds[2];\nuniform float roughness\n            , fresnel\n            , kambient\n            , kdiffuse\n            , kspecular\n            , opacity;\nuniform sampler2D texture;\n\nvarying vec3 f_normal\n           , f_lightDirection\n           , f_eyeDirection\n           , f_data;\nvarying vec4 f_color;\nvarying vec2 f_uv;\n\nvoid main() {\n  if (outOfRange(clipBounds[0], clipBounds[1], f_data)) discard;\n\n  vec3 N = normalize(f_normal);\n  vec3 L = normalize(f_lightDirection);\n  vec3 V = normalize(f_eyeDirection);\n\n  if(gl_FrontFacing) {\n    N = -N;\n  }\n\n  float specular = min(1.0, max(0.0, cookTorranceSpecular(L, V, N, roughness, fresnel)));\n  //float specular = max(0.0, beckmann(L, V, N, roughness)); // used in gl-surface3d\n\n  float diffuse  = min(kambient + kdiffuse * max(dot(N, L), 0.0), 1.0);\n\n  vec4 surfaceColor = f_color * texture2D(texture, f_uv);\n  vec4 litColor = surfaceColor.a * vec4(diffuse * surfaceColor.rgb + kspecular * vec3(1,1,1) * specular,  1.0);\n\n  gl_FragColor = litColor * opacity;\n}\n"])
 var edgeVertSrc = glslify(["precision mediump float;\n#define GLSLIFY 1\n\nattribute vec3 position;\nattribute vec4 color;\nattribute vec2 uv;\n\nuniform mat4 model, view, projection;\n\nvarying vec4 f_color;\nvarying vec3 f_data;\nvarying vec2 f_uv;\n\nvoid main() {\n  gl_Position = projection * view * model * vec4(position, 1.0);\n  f_color = color;\n  f_data  = position;\n  f_uv    = uv;\n}"])
 var edgeFragSrc = glslify(["precision mediump float;\n#define GLSLIFY 1\n\nbool outOfRange(float a, float b, float p) {\n  return ((p > max(a, b)) || \n          (p < min(a, b)));\n}\n\nbool outOfRange(vec2 a, vec2 b, vec2 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y));\n}\n\nbool outOfRange(vec3 a, vec3 b, vec3 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y) ||\n          outOfRange(a.z, b.z, p.z));\n}\n\nbool outOfRange(vec4 a, vec4 b, vec4 p) {\n  return outOfRange(a.xyz, b.xyz, p.xyz);\n}\n\nuniform vec3 clipBounds[2];\nuniform sampler2D texture;\nuniform float opacity;\n\nvarying vec4 f_color;\nvarying vec3 f_data;\nvarying vec2 f_uv;\n\nvoid main() {\n  if (outOfRange(clipBounds[0], clipBounds[1], f_data)) discard;\n\n  gl_FragColor = f_color * texture2D(texture, f_uv) * opacity;\n}"])
 var pointVertSrc = glslify(["precision mediump float;\n#define GLSLIFY 1\n\nbool outOfRange(float a, float b, float p) {\n  return ((p > max(a, b)) || \n          (p < min(a, b)));\n}\n\nbool outOfRange(vec2 a, vec2 b, vec2 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y));\n}\n\nbool outOfRange(vec3 a, vec3 b, vec3 p) {\n  return (outOfRange(a.x, b.x, p.x) ||\n          outOfRange(a.y, b.y, p.y) ||\n          outOfRange(a.z, b.z, p.z));\n}\n\nbool outOfRange(vec4 a, vec4 b, vec4 p) {\n  return outOfRange(a.xyz, b.xyz, p.xyz);\n}\n\nattribute vec3 position;\nattribute vec4 color;\nattribute vec2 uv;\nattribute float pointSize;\n\nuniform mat4 model, view, projection;\nuniform vec3 clipBounds[2];\n\nvarying vec4 f_color;\nvarying vec2 f_uv;\n\nvoid main() {\n  if (outOfRange(clipBounds[0], clipBounds[1], position)) {\n\n    gl_Position = vec4(0,0,0,0);\n  } else {\n    gl_Position = projection * view * model * vec4(position, 1.0);\n  }\n  gl_PointSize = pointSize;\n  f_color = color;\n  f_uv = uv;\n}"])
@@ -63183,8 +63177,9 @@ function createHoverText(hoverData, opts, gd) {
         if(d.extraText !== undefined) text += (text ? '<br>' : '') + d.extraText;
 
         // if 'text' is empty at this point,
+        // and hovertemplate is not defined,
         // put 'name' in main label and don't show secondary label
-        if(text === '') {
+        if(text === '' && !d.hovertemplate) {
             // if 'name' is also empty, remove entire label
             if(name === '') g.remove();
             text = name;
@@ -65722,7 +65717,8 @@ function drawTexts(g, gd, maxLength) {
     textEl.attr('text-anchor', 'start')
         .classed('user-select-none', true)
         .call(Drawing.font, fullLayout.legend.font)
-        .text(isEditable ? ensureLength(name, maxLength) : name);
+        .text('whatever');
+//        .text(isEditable ? ensureLength(name, maxLength) : name);
 
     svgTextUtils.positionText(textEl, constants.textOffsetX, 0);
 
@@ -65844,6 +65840,17 @@ function computeTextDimensions(g, gd) {
         // to avoid getBoundingClientRect
         var textY = lineHeight * (0.3 + (1 - textLines) / 2);
         svgTextUtils.positionText(text, constants.textOffsetX, textY);
+
+        /* var anchor3 = annText.selectAll('a');
+        if(anchor3.size() === 1 && anchor3.text() === annText.text()) {
+            var wholeLink = annTextGroupInner.insert('a', ':first-child').attr({
+                'xlink:xlink:href': anchor3.attr('xlink:href'),
+                'xlink:xlink:show': anchor3.attr('xlink:show')
+            })
+            .style({cursor: 'pointer'});
+
+            wholeLink.node().appendChild(annTextBG.node());
+        }*/
     }
 
     legendItem.lineHeight = lineHeight;
@@ -67784,7 +67791,7 @@ proto.update = function(graphInfo, buttons) {
             }
 
             if(fullLayout.modebar.orientation === 'v') {
-                this.element.prepend(logoGroup);
+                this.element.insertBefore(logoGroup, this.element.childNodes[0]);
             } else {
                 this.element.appendChild(logoGroup);
             }

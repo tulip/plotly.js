@@ -412,7 +412,8 @@ function drawTexts(g, gd, maxLength) {
     textEl.attr('text-anchor', 'start')
         .classed('user-select-none', true)
         .call(Drawing.font, fullLayout.legend.font)
-        .text(isEditable ? ensureLength(name, maxLength) : name);
+        .text('whatever');
+//        .text(isEditable ? ensureLength(name, maxLength) : name);
 
     svgTextUtils.positionText(textEl, constants.textOffsetX, 0);
 
@@ -534,6 +535,17 @@ function computeTextDimensions(g, gd) {
         // to avoid getBoundingClientRect
         var textY = lineHeight * (0.3 + (1 - textLines) / 2);
         svgTextUtils.positionText(text, constants.textOffsetX, textY);
+
+        /* var anchor3 = annText.selectAll('a');
+        if(anchor3.size() === 1 && anchor3.text() === annText.text()) {
+            var wholeLink = annTextGroupInner.insert('a', ':first-child').attr({
+                'xlink:xlink:href': anchor3.attr('xlink:href'),
+                'xlink:xlink:show': anchor3.attr('xlink:show')
+            })
+            .style({cursor: 'pointer'});
+
+            wholeLink.node().appendChild(annTextBG.node());
+        }*/
     }
 
     legendItem.lineHeight = lineHeight;
