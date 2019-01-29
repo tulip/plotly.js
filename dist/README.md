@@ -111,7 +111,7 @@ The `basic` partial bundle contains trace modules `scatter`, `bar` and `pie`.
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.3 MB | 810.6 kB | 264.7 kB |
+| 2.3 MB | 810.7 kB | 264.7 kB |
 
 #### CDN links
 
@@ -157,7 +157,7 @@ The `cartesian` partial bundle contains trace modules `scatter`, `bar`, `box`, `
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.6 MB | 924.2 kB | 300.7 kB |
+| 2.6 MB | 924.3 kB | 300.7 kB |
 
 #### CDN links
 
@@ -203,7 +203,7 @@ The `geo` partial bundle contains trace modules `scatter`, `scattergeo` and `cho
 
 | Raw size | Minified size | Minified + gzip size |
 |------|-----------------|------------------------|
-| 2.3 MB | 828.9 kB | 272.8 kB |
+| 2.3 MB | 829 kB | 272.8 kB |
 
 #### CDN links
 
