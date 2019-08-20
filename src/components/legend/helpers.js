@@ -21,6 +21,6 @@ exports.isReversed = function isReversed(legendLayout) {
     return (legendLayout.traceorder || '').indexOf('reversed') !== -1;
 };
 
-exports.isHorizontalColumn = function isHorizontalColumn(legendLayout) {
-    return legendLayout.horizontalspacing === 'column';
+exports.isHorizontalWrapped = function isHorizontalWrapped(legendLayout) {
+    return legendLayout.horizontalspacing === 'wrapped';
 }

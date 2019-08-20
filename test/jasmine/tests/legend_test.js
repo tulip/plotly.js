@@ -500,12 +500,12 @@ describe('legend helpers:', function() {
         });
     });
 
-    describe('isHorizontalColumn', function() {
-        var isHorizontalColumn = helpers.isHorizontalColumn;
+    describe('isHorizontalWrapped', function() {
+        var isHorizontalWrapped = helpers.isHorizontalWrapped;
 
-        it('should return true when option horizontalspacing is "column"', function() {
-            expect(isHorizontalColumn({ horizontalspacing: 'column'})).toBe(true);
-            expect(isHorizontalColumn({ horizontalspacing: 'wrapped'})).toBe(false);
+        it('should return true when option horizontalspacing is "wrapped"', function() {
+            expect(isHorizontalWrapped({ horizontalspacing: 'wrapped'})).toBe(true);
+            expect(isHorizontalWrapped({ horizontalspacing: 'column'})).toBe(false);
         });
     });
 });

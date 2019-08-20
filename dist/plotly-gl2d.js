@@ -59562,7 +59562,7 @@ function computeLegendDimensions(gd, groups, traces) {
     var opts = fullLayout.legend;
     var borderwidth = opts.borderwidth;
     var isGrouped = helpers.isGrouped(opts);
-    var isHorizontalColumn = helpers.isHorizontalColumn(opts);
+    var isHorizontalWrapped = helpers.isHorizontalWrapped(opts);
 
     var extraWidth = 0;
 
@@ -59686,11 +59686,11 @@ function computeLegendDimensions(gd, groups, traces) {
         });
 
         // check if legend fits in one row
-        var oneRowLegend = !isHorizontalColumn || (fullLayout._size.w > borderwidth + fullTracesWidth - traceGap);
+        var oneRowLegend = fullLayout._size.w > borderwidth + fullTracesWidth - traceGap;
 
         traces.each(function(d) {
             var legendItem = d[0];
-            var traceWidth = oneRowLegend ? 40 + d[0].width : maxTraceWidth;
+            var traceWidth = (oneRowLegend || isHorizontalWrapped) ? 40 + d[0].width : maxTraceWidth;
 
             if((borderwidth + offsetX + traceGap + traceWidth) > fullLayout._size.w) {
                 offsetX = 0;
@@ -60152,8 +60152,8 @@ exports.isReversed = function isReversed(legendLayout) {
     return (legendLayout.traceorder || '').indexOf('reversed') !== -1;
 };
 
-exports.isHorizontalColumn = function isHorizontalColumn(legendLayout) {
-    return legendLayout.horizontalspacing === 'column';
+exports.isHorizontalWrapped = function isHorizontalWrapped(legendLayout) {
+    return legendLayout.horizontalspacing === 'wrapped';
 }
 },{}],379:[function(_dereq_,module,exports){
 /**
