@@ -299,11 +299,11 @@ var extraFormatKeys = [
  *   is a list of all the transform modules invoked.
  *
  */
-plots.supplyDefaults = function(gd, opts, dynamicBehavior) {
+plots.supplyDefaults = function(gd, opts) {
     var skipUpdateCalc = opts && opts.skipUpdateCalc;
     var oldFullLayout = gd._fullLayout || {};
 
-    dynamicBehavior = dynamicBehavior || {};
+    var dynamicBehavior = gd.dynamicBehavior || {};
 
     if(oldFullLayout._skipDefaults) {
         delete oldFullLayout._skipDefaults;

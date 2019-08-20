@@ -71,6 +71,8 @@ function plot(gd, data, layout, config, dynamicBehavior) {
 
     gd = Lib.getGraphDiv(gd);
 
+    gd.dynamicBehavior = dynamicBehavior || gd.dynamicBehavior || {};
+
     // Events.init is idempotent and bails early if gd has already been init'd
     Events.init(gd);
 
@@ -82,7 +84,7 @@ function plot(gd, data, layout, config, dynamicBehavior) {
         frames = obj.frames;
     }
 
-    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config, dynamicBehavior]);
+    var okToPlot = Events.triggerHandler(gd, 'plotly_beforeplot', [data, layout, config]);
     if(okToPlot === false) return Promise.reject();
 
     // if there's no data or layout, and this isn't yet a plotly plot
@@ -91,8 +93,6 @@ function plot(gd, data, layout, config, dynamicBehavior) {
         Lib.warn('Calling Plotly.plot as if redrawing ' +
             'but this container doesn\'t yet have a plot.', gd);
     }
-    
-    gd.dynamicBehavior = dynamicBehavior || {};
 
     function addFrames() {
         if(frames) {
@@ -102,7 +102,7 @@ function plot(gd, data, layout, config, dynamicBehavior) {
 
     // transfer configuration options to gd until we move over to
     // a more OO like model
-    setPlotContext(gd, config, dynamicBehavior.config);
+    setPlotContext(gd, config);
 
     if(!layout) layout = {};
 
@@ -141,7 +141,7 @@ function plot(gd, data, layout, config, dynamicBehavior) {
         gd.layout = helpers.cleanLayout(layout);
     }
 
-    Plots.supplyDefaults(gd, dynamicBehavior);
+    Plots.supplyDefaults(gd);
 
     var fullLayout = gd._fullLayout;
     var hasCartesian = fullLayout._has('cartesian');
@@ -410,7 +410,7 @@ function opaqueSetBackground(gd, bgColor) {
     setBackground(gd, blend);
 }
 
-function setPlotContext(gd, config, dynamicConfig) {
+function setPlotContext(gd, config) {
     if(!gd._context) {
         gd._context = Lib.extendDeep({}, dfltConfig);
 
@@ -439,7 +439,8 @@ function setPlotContext(gd, config, dynamicConfig) {
             }
         }
 
-        if (dynamicConfig) {
+        var dynamicConfig = gd.dynamicBehavior ? gd.dynamicBehavior.config : null;
+        if(dynamicConfig) {
             keys = Object.keys(dynamicConfig);
             for(i = 0; i < keys.length; i++) {
                 key = keys[i];
@@ -2355,8 +2356,6 @@ function update(gd, traceUpdate, layoutUpdate, _traces) {
     gd = Lib.getGraphDiv(gd);
     helpers.clearPromiseQueue(gd);
 
-    var dynamicBehavior = gd.dynamicBehavior;
-
     if(gd.framework && gd.framework.isPolar) {
         return Promise.resolve(gd);
     }
@@ -2390,7 +2389,7 @@ function update(gd, traceUpdate, layoutUpdate, _traces) {
         seq.push(exports.plot);
     } else {
         seq.push(Plots.previousPromises);
-        axRangeSupplyDefaultsByPass(gd, relayoutFlags, relayoutSpecs) || Plots.supplyDefaults(gd, dynamicBehavior);
+        axRangeSupplyDefaultsByPass(gd, relayoutFlags, relayoutSpecs) || Plots.supplyDefaults(gd);
 
         if(restyleFlags.style) seq.push(subroutines.doTraceStyle);
         if(restyleFlags.colorbars || relayoutFlags.colorbars) seq.push(subroutines.doColorBars);

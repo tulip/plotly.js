@@ -1,5 +1,5 @@
 /**
-* plotly.js (geo) v1.49.2
+* plotly.js (geo) v1.49.2-tulip.0
 * Copyright 2012-2019, Plotly, Inc.
 * All rights reserved.
 * Licensed under the MIT license
@@ -25849,6 +25849,13 @@ module.exports = {
         editType: 'legend',
         
     },
+    horizontalspacing: {
+        valType: 'enumerated',
+        values: ['column', 'wrapped'],
+        dflt: ['column'],
+        
+        
+    },
     traceorder: {
         valType: 'flaglist',
         flags: ['reversed', 'grouped'],
@@ -25987,6 +25994,7 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     var legendTraceCount = 0;
     var legendReallyHasATrace = false;
     var defaultOrder = 'normal';
+    var defaultHorizontalSpacing = 'column';
 
     var defaultX, defaultY, defaultXAnchor, defaultYAnchor;
 
@@ -26075,6 +26083,7 @@ module.exports = function legendDefaults(layoutIn, layoutOut, fullData) {
     coerce('y', defaultY);
     coerce('yanchor', defaultYAnchor);
     coerce('valign');
+    coerce('horizontalspacing', defaultHorizontalSpacing);
     Lib.noneOrAll(containerIn, containerOut, ['x', 'y']);
 };
 
@@ -26624,6 +26633,7 @@ function computeLegendDimensions(gd, groups, traces) {
     var opts = fullLayout.legend;
     var borderwidth = opts.borderwidth;
     var isGrouped = helpers.isGrouped(opts);
+    var isHorizontalColumn = helpers.isHorizontalColumn(opts);
 
     var extraWidth = 0;
 
@@ -26740,14 +26750,14 @@ function computeLegendDimensions(gd, groups, traces) {
         var offsetX = 0;
         var fullTracesWidth = 0;
 
-        // calculate largest width for traces and use for width of all legend items
+        // calculate largest width for traces and use for width of all legend items (if horizontalspacing mode is 'column')
         traces.each(function(d) {
             maxTraceWidth = Math.max(40 + d[0].width, maxTraceWidth);
             fullTracesWidth += 40 + d[0].width + traceGap;
         });
 
         // check if legend fits in one row
-        var oneRowLegend = fullLayout._size.w > borderwidth + fullTracesWidth - traceGap;
+        var oneRowLegend = !isHorizontalColumn || (fullLayout._size.w > borderwidth + fullTracesWidth - traceGap);
 
         traces.each(function(d) {
             var legendItem = d[0];
@@ -27213,6 +27223,9 @@ exports.isReversed = function isReversed(legendLayout) {
     return (legendLayout.traceorder || '').indexOf('reversed') !== -1;
 };
 
+exports.isHorizontalColumn = function isHorizontalColumn(legendLayout) {
+    return legendLayout.horizontalspacing === 'column';
+}
 },{}],100:[function(_dereq_,module,exports){
 /**
 * Copyright 2012-2019, Plotly, Inc.
@@ -34771,7 +34784,7 @@ exports.svgAttrs = {
 'use strict';
 
 // package version injected by `npm run preprocess`
-exports.version = '1.49.2';
+exports.version = '1.49.2-tulip.0';
 
 // inject promise polyfill
 _dereq_('es6-promise').polyfill();
@@ -42841,6 +42854,9 @@ var numericNameWarningCountLimit = 5;
  *      all the stuff that doesn't pertain to any individual trace
  * @param {object} config
  *      configuration options (see ./plot_config.js for more info)
+ * @param {object} dynamicBehavior
+ *      object containing Javascript functions that mirror the behavior of options
+ *      in data, layout, and config.
  *
  * OR
  *
@@ -42850,10 +42866,12 @@ var numericNameWarningCountLimit = 5;
  *      object containing `data`, `layout`, `config`, and `frames` members
  *
  */
-function plot(gd, data, layout, config) {
+function plot(gd, data, layout, config, dynamicBehavior) {
     var frames;
 
     gd = Lib.getGraphDiv(gd);
+
+    gd.dynamicBehavior = dynamicBehavior || gd.dynamicBehavior || {};
 
     // Events.init is idempotent and bails early if gd has already been init'd
     Events.init(gd);
@@ -43221,6 +43239,18 @@ function setPlotContext(gd, config) {
             }
         }
 
+        var dynamicConfig = gd.dynamicBehavior ? gd.dynamicBehavior.config : null;
+        if(dynamicConfig) {
+            keys = Object.keys(dynamicConfig);
+            for(i = 0; i < keys.length; i++) {
+                key = keys[i];
+                // Prefer dynamic functions over static options
+                if(key in context && typeof dynamicConfig[key] === 'function') {
+                    context[key] = dynamicConfig[key];
+                }
+            }
+        }
+
         // map plot3dPixelRatio to plotGlPixelRatio for backward compatibility
         if(config.plot3dPixelRatio && !context.plotGlPixelRatio) {
             context.plotGlPixelRatio = context.plot3dPixelRatio;
@@ -43418,15 +43448,16 @@ function redraw(gd) {
  * @param {Object[]} data
  * @param {Object} layout
  * @param {Object} config
+ * @param {Object} dynamicBehavior
  */
-function newPlot(gd, data, layout, config) {
+function newPlot(gd, data, layout, config, dynamicBehavior) {
     gd = Lib.getGraphDiv(gd);
 
     // remove gl contexts
     Plots.cleanPlot([], {}, gd._fullData || [], gd._fullLayout || {});
 
     Plots.purge(gd);
-    return exports.plot(gd, data, layout, config);
+    return exports.plot(gd, data, layout, config, dynamicBehavior);
 }
 
 /**
@@ -48498,7 +48529,7 @@ exports.doColorBars = function(gd) {
 exports.layoutReplot = function(gd) {
     var layout = gd.layout;
     gd.layout = undefined;
-    return Registry.call('plot', gd, '', layout);
+    return Registry.call('plot', gd, '', layout, gd.dynamicBehavior);
 };
 
 exports.doLegend = function(gd) {
@@ -51978,6 +52009,9 @@ function numFormat(v, ax, fmtoverride, hover) {
     var exponent = ax._tickexponent;
     var tickformat = axes.getTickFormat(ax);
     var separatethousands = ax.separatethousands;
+
+    // Dynamic tickformat function
+    if(typeof tickformat === 'function') return tickformat(v);
 
     // special case for hover: set exponent just for this value, and
     // add a couple more digits of precision over tick labels
@@ -63760,6 +63794,28 @@ plots.sendDataToCloud = function(gd) {
     return false;
 };
 
+// Recursively copy any function properties of b into a if a
+// already has the corresponding key.
+// If a = {key1: "val1", key2: "val2"} and b = {key1: func1, key3: func2},
+// sets a to {key1: func1, key2: "val2"}.
+function recursivelyCopyFunctions(a, b) {
+    if(!b) return;
+
+    Object.keys(a).forEach(function(key) {
+        // If a[key] and b[key] are objects, recurse down.
+        // Note that typeof returns 'object' on arrays.
+        if(typeof a[key] === 'object') {
+            if(typeof b[key] === 'object') {
+                recursivelyCopyFunctions(a[key], b[key]);
+            }
+        // If a[key] is anything besides an object and
+        // b[key] is a funciton, replace a[key] with b[key]
+        } else if(typeof b[key] === 'function') {
+            a[key] = b[key];
+        }
+    });
+}
+
 var d3FormatKeys = [
     'days', 'shortDays', 'months', 'shortMonths', 'periods',
     'dateTime', 'date', 'time',
@@ -63805,6 +63861,8 @@ var extraFormatKeys = [
 plots.supplyDefaults = function(gd, opts) {
     var skipUpdateCalc = opts && opts.skipUpdateCalc;
     var oldFullLayout = gd._fullLayout || {};
+
+    var dynamicBehavior = gd.dynamicBehavior || {};
 
     if(oldFullLayout._skipDefaults) {
         delete oldFullLayout._skipDefaults;
@@ -63950,7 +64008,7 @@ plots.supplyDefaults = function(gd, opts) {
         }
     }
 
-    // finally, fill in the pieces of layout that may need to look at data
+    // fill in the pieces of layout that may need to look at data
     plots.supplyLayoutModuleDefaults(newLayout, newFullLayout, newFullData, gd._transitionData);
 
     // Special cases that introduce interactions between traces.
@@ -63989,6 +64047,10 @@ plots.supplyDefaults = function(gd, opts) {
 
     // relink / initialize subplot axis objects
     plots.linkSubplots(newFullData, newFullLayout, oldFullData, oldFullLayout);
+
+    // finally, fill in any functions from dynamicBehavior.data and .layout
+    recursivelyCopyFunctions(newFullData, dynamicBehavior.data);
+    recursivelyCopyFunctions(newFullLayout, dynamicBehavior.layout);
 
     // clean subplots and other artifacts from previous plot calls
     plots.cleanPlot(newFullData, newFullLayout, oldFullData, oldFullLayout);
